@@ -42,7 +42,7 @@ def download_AIS(year):
     # parse the html
     soup = BeautifulSoup(html_text, 'html.parser')
 
-    # iterate over the <a> tags and save each in file in a table
+    # iterate over the <a> tags and save each in a list
     files = []
     for a in soup.find_all('a', href=True):
         if a.text and a.text.endswith('zip'):
@@ -78,25 +78,21 @@ def subsample_AIS_to_CSV(year, min_time_interval=30):
     # check already processed files in the
     resume = check_dir(output)
     last_index = len(resume)
+    cols = ['BaseDateTime', 'LAT', 'LON', 'SOG', 'COG', 'Heading', 'IMO', 'VesselType', 'Length', 'Width', 'Draft']
     for path, dirs, files in os.walk(str(year)):
         for file in files:
             if file.endswith('.csv') and file not in resume:
                 last_index += 1
-                sys.stdout.write("\r File  %s/%s:   %s" % (last_index, len(files), file))
+                sys.stdout.write("\r %s Files:   %s" % (len(files), file))
                 sys.stdout.flush()
                 df = pd.read_csv(Path(path, file))
                 df = df.drop(['MMSI', 'VesselName', 'CallSign', 'Cargo', 'TranscieverClass'], axis=1, errors='ignore')
                 df = df.dropna()
                 df = df.query(
                     '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0) & (VesselType == 1016 or 89 >= VesselType >= 70) & SOG > 3 & Length > 3 & Width > 3 & Draft > 3 ')
-                df.drop('Status', axis=1, errors='ignore', inplace=True)
-
+                df = df.drop(['Status'], axis=1, errors='ignore')
                 # parse and set seconds to zero
                 df['BaseDateTime'] = pd.to_datetime(df.BaseDateTime, format='%Y-%m-%dT%H:%M:%S').apply(rm_sec)
                 df.index = df.BaseDateTime
-
                 df = df.resample("%dT" % int(min_time_interval)).last()
-                pd.DataFrame(df.values,
-                             columns=['BaseDateTime', 'LAT', 'LON', 'SOG', 'COG', 'Heading', 'IMO', 'VesselType',
-                                      'Length', 'Width', 'Draft']).to_csv(
-                    Path(output, str(file)))
+                pd.DataFrame(df.values, columns=cols).to_csv(Path(output, str(file)))
