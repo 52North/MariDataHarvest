@@ -211,23 +211,21 @@ def append_environment_data(year, min_time_interval):
         if last_index < len(df):
             print('\n' + file)
             print('Resuming download from row %s ' % len(data_list))
-        for x in df.values[last_index:]:
-            date, lat, lon = x[:3]
 
-            # wind, wind_cols = get_global_wind(date, lat, lon)
-            #
-            # wave, wave_cols = get_global_wave(date, lat, lon)
-            #
-            # phy_0, phy_cols_0 = get_global_phy_hourly(date, lat, lon, 0)
-            #
-            # phy_1, phy_cols_1 = get_global_phy_hourly(date, lat, lon, 1)
-            #
-            # data_list.append(np.concatenate([x, wind, wave, phy_0, phy_1]))
-            # pd.DataFrame(data_list, columns=cols + wind_cols + wave_cols + phy_cols_0 + phy_cols_1).to_csv(
-            #     output_csv_path)
-            data_list.append(x)
-            pd.DataFrame(data_list, columns=cols).to_csv(
-                Path(output_csv_path, file))
+        for x in df.values[last_index:]:
             last_index += 1
             sys.stdout.write("\rEntry index: %s/%s" % (last_index, len(df)))
             sys.stdout.flush()
+            date, lat, lon = x[:3]
+
+            wind, wind_cols = get_global_wind(date, lat, lon)
+
+            wave, wave_cols = get_global_wave(date, lat, lon)
+
+            phy_0, phy_cols_0 = get_global_phy_hourly(date, lat, lon, 0)
+
+            phy_1, phy_cols_1 = get_global_phy_hourly(date, lat, lon, 1)
+
+            data_list.append(np.concatenate([x, wind, wave, phy_0, phy_1]))
+            pd.DataFrame(data_list, columns=cols + wind_cols + wave_cols + phy_cols_0 + phy_cols_1).to_csv(
+                Path(output_csv_path, file))

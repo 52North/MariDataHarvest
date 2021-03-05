@@ -7,9 +7,9 @@ import argparse
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Give a year and minuets for subsampling to start harvesting AIS-Data.')
-    parser.add_argument('year', help='A given year to start a task.')
-    parser.add_argument('min', help='A given minutes interval to downscale the data to start a task.')
+        description='Give a year and minutes for subsampling to start harvesting AIS-Data.')
+    parser.add_argument('--year', help='A given year to start a task.', required=True)
+    parser.add_argument('--minutes', help='A given minutes interval to downscale the data.', required=True)
     args = parser.parse_args()
 
     if len(str(args.year)) == 4:
@@ -33,7 +33,7 @@ if __name__ == '__main__':
         while True:
             try:
                 print('\n  2/3 subsampling CSV data \n')
-                subsample_AIS_to_CSV(args.year, min_time_interval=args.min)
+                subsample_AIS_to_CSV(args.year, min_time_interval=args.minutes)
                 break
             except Exception as e:
 
@@ -48,7 +48,7 @@ if __name__ == '__main__':
         while True:
             try:
                 print('\n  3/3 appending weather data .... \n')
-                append_environment_data(args.year, min_time_interval=args.min)
+                append_environment_data(args.year, min_time_interval=args.minutes)
                 break
             except Exception as e:
                 print(traceback.format_exc())

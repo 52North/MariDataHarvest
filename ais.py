@@ -47,7 +47,7 @@ def download_AIS(year):
     for a in soup.find_all('a', href=True):
         if a.text and a.text.endswith('zip'):
             name, _ = a['href'].split('.')
-            if name + '.csv' in resume_download or 1: continue
+            if name + '.csv' in resume_download: continue
             files.append(a['href'])
 
     #  download
