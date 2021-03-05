@@ -20,8 +20,8 @@ str_to_date = lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
 date_to_str = lambda x: x.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 # credentials for the dataset
-UN_CMEMS = 'szaabalawi'
-PW_CMEMS = 'QZXfgSk1$'
+# UN_CMEMS =
+# PW_CMEMS =
 
 
 def get_global_wave(date, lat, lon):
