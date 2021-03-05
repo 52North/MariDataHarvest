@@ -11,13 +11,10 @@ from bs4 import BeautifulSoup
 import sys
 from ais import download_AIS, check_dir
 
-# url without variables
-glob_wave_027 = 'http://nrt.cmems-du.eu/motu-web/Motu?action=productdownload&service=GLOBAL_ANALYSIS_FORECAST_WAV_001_027-TDS&product=global-analysis-forecast-wav-001-027'
-glob_phy_024 = 'http://nrt.cmems-du.eu/motu-web/Motu?action=productdownload&service=GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
-
 # utils to convert dates
 str_to_date = lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
 date_to_str = lambda x: x.strftime('%Y-%m-%dT%H:%M:%SZ')
+
 
 # credentials for the dataset
 # UN_CMEMS =
@@ -95,6 +92,8 @@ def get_global_phy_hourly(date, lat, lon, product):
         use 0 to select global-analysis-forecast-phy-001-024-hourly-t-u-v-ssh
         use 1 to select global-analysis-forecast-phy-001-024-hourly-merged-uv
     """
+    base_url = 'http://nrt.cmems-du.eu/motu-web/Motu?action=productdownload&service' \
+               '=GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS '
     products = ['global-analysis-forecast-phy-001-024-hourly-t-u-v-ssh',
                 'global-analysis-forecast-phy-001-024-hourly-merged-uv']
     dataset_temporal_resolution = 60
@@ -121,7 +120,7 @@ def get_global_phy_hourly(date, lat, lon, product):
     z_hi = 0.50
     z_lo = 0.49
 
-    url = glob_phy_024 + '&product=' + products[
+    url = base_url + '&product=' + products[
         product] + '&product=global-analysis-forecast-phy-001-024-hourly-t-u-v-ssh' + \
           '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&z_lo={6}&z_hi={7}&mode=console'.format(x_lo, x_hi,
                                                                                                          y_lo,
