@@ -1,13 +1,9 @@
 import wget
 import os
 import pandas as pd
-from os import walk
-from glob import glob
-import numpy as np
 from bs4 import BeautifulSoup
 import requests
 import zipfile
-from datetime import datetime, timedelta
 from pathlib import Path
 
 pd.options.mode.chained_assignment = None
@@ -78,7 +74,6 @@ def subsample_AIS_to_CSV(year, min_time_interval=30):
     # check already processed files in the
     resume = check_dir(output)
     last_index = len(resume)
-    cols = ['BaseDateTime', 'LAT', 'LON', 'SOG', 'COG', 'Heading', 'IMO', 'VesselType', 'Length', 'Width', 'Draft']
     for path, dirs, files in os.walk(str(year)):
         for file in files:
             if file.endswith('.csv') and file not in resume:
@@ -95,4 +90,4 @@ def subsample_AIS_to_CSV(year, min_time_interval=30):
                 df['BaseDateTime'] = pd.to_datetime(df.BaseDateTime, format='%Y-%m-%dT%H:%M:%S').apply(rm_sec)
                 df.index = df.BaseDateTime
                 df = df.resample("%dT" % int(min_time_interval)).last()
-                pd.DataFrame(df.values, columns=cols).to_csv(Path(output, str(file)))
+                df.to_csv(Path(output, str(file)))
