@@ -172,8 +172,7 @@ def get_cached(dataset, date, lat, lon, name):
         df.drop(columns=['uo', 'vo'], inplace=True)
     return np.ravel(df.values), list(df.columns)
 
-
-def run_thread(in_path, out_path):
+def append_to_csv(in_path, out_path):
     # get extracted AIS data and remove index column
     df = pd.read_csv(in_path, parse_dates=['BaseDateTime'], date_parser=str_to_date)
     df.drop(['Unnamed: 0'], axis=1, errors='ignore', inplace=True)
@@ -213,10 +212,10 @@ def run_thread(in_path, out_path):
 
 def append_environment_data(year, min_time_interval):
     src_csv_path = Path(str(year) + '_filtered_%s' % min_time_interval)
-    output_csv_path = Path(str(year) + '_merged')
+    output_csv_path = Path(str(year) + '_merged_%s' % min_time_interval)
     Path(output_csv_path).mkdir(parents=True, exist_ok=True)
     csv_list = check_dir(src_csv_path)
     for file in csv_list:
         if Path(output_csv_path, file).exists(): continue
         print('  -', Path(src_csv_path, file))
-        run_thread(Path(src_csv_path, file), Path(output_csv_path, file))
+        append_to_csv(Path(src_csv_path, file), Path(output_csv_path, file))
