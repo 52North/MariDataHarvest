@@ -10,6 +10,8 @@ from bs4 import BeautifulSoup
 from ais import check_dir
 
 # utils to convert dates
+from check_connection import CheckConnection
+
 str_to_date = lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
 date_to_str = lambda x: x.strftime('%Y-%m-%dT%H:%M:%SZ')
 import os
@@ -57,8 +59,7 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
         date_to_str(
             t_hi))
 
-    url_auth = authenticate_CAS_for_URL(url, UN_CMEMS, PW_CMEMS)
-    data = try_get_data(url, url_auth)
+    data = try_get_data(url)
     return data
 
 
@@ -74,7 +75,7 @@ def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     time_in_min = (date_lo.hour * 60) + date_lo.minute
     rest = time_in_min % dataset_temporal_resolution
 
-    # time starting at min 30 of each hour
+    # available times are at min 30 of each hour
     if date_lo.minute >= 30:
         t_lo = date_lo - timedelta(minutes=rest) + timedelta(minutes=30)
     else:
@@ -106,8 +107,7 @@ def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                                                                                                              t_lo)
                                                                                                          , date_to_str(
                   t_hi), z_lo, z_hi)
-    url_auth = authenticate_CAS_for_URL(url, UN_CMEMS, PW_CMEMS)
-    data = try_get_data(url, url_auth)
+    data = try_get_data(url)
     time.sleep(1)
 
     url = base_url + '&product=' + products[1] + '&product=global-analysis-forecast-phy-001-024-hourly-t-u-v-ssh' + \
@@ -118,14 +118,18 @@ def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                                                                                                              t_lo)
                                                                                                          , date_to_str(
                   t_hi), z_lo, z_hi)
-    url_auth = authenticate_CAS_for_URL(url, UN_CMEMS, PW_CMEMS)
-    data1 = try_get_data(url, url_auth)
+
+    data1 = try_get_data(url)
     return data, data1
 
 
-def try_get_data(url, url_auth):
+def try_get_data(url):
     try:
+        CheckConnection.is_online()
+        url_auth = authenticate_CAS_for_URL(url, UN_CMEMS, PW_CMEMS)
+        CheckConnection.is_online()
         bytes_data = open_url(url_auth).read()
+        CheckConnection.is_online()
         return xr.open_dataset(bytes_data)
     except Exception as e:
         # print the error tag from html
@@ -158,8 +162,7 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
             t_lo),
         date_to_str(
             t_hi))
-    url_auth = authenticate_CAS_for_URL(url, UN_CMEMS, PW_CMEMS)
-    data = try_get_data(url, url_auth)
+    data = try_get_data(url)
     return data
 
 

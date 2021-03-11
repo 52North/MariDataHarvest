@@ -1,6 +1,7 @@
 import time
 import traceback
 from ais import download_AIS, subsample_AIS_to_CSV
+from check_connection import CheckConnection
 from weather import append_environment_data
 import argparse
 
@@ -14,6 +15,9 @@ if __name__ == '__main__':
     if len(str(args.year)) == 4:
         print('Starting a task for year %s .... \n' % str(args.year))
         interval = 10
+        connectionChecker = CheckConnection(check_interval=8)
+        connectionChecker.daemon = True
+        connectionChecker.start()
         while True:
             try:
                 print('  1/3 downloading AIS data \n')

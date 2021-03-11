@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import requests
 import zipfile
 from pathlib import Path
-
+from check_connection import CheckConnection
 pd.options.mode.chained_assignment = None
 import sys
 import warnings
@@ -48,6 +48,7 @@ def download_AIS(year):
 
     #  download
     for file in files:
+        CheckConnection.is_online()
         # create output name and directory
         output = os.path.join(str(year), '%s_%s' % (year, file.split('.')[0]))
         Path(output).mkdir(parents=True, exist_ok=True)
