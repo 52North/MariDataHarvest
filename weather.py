@@ -171,9 +171,45 @@ def get_cached(dataset, date, lat, lon, name):
         df = dataset.interp(longitude=[lon], latitude=[lat], time=[date], method='linear').to_dataframe()
     elif name == 'wind':
         df = dataset.interp(lon=[lon], lat=[lat], time=[date], method='linear').to_dataframe()
+    elif name == 'daily':
+        df = dataset.sel(longitude=[lon], latitude=[lat], time=[date], method='nearest').to_dataframe()
+
+    # remove duplicates
     if name == 'phy_1':
         df.drop(columns=['uo', 'vo'], inplace=True)
+    if name == 'daily':
+        df.drop(columns=['thetao', 'uo', 'vo', 'zos'], inplace=True)
     return np.ravel(df.values), list(df.columns)
+
+
+def get_global_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
+    base_url = 'http://nrt.cmems-du.eu/motu-web/Motu?action=productdownload&service=GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
+    product = 'global-analysis-forecast-phy-001-024'
+
+    t_lo = datetime(date_lo.year, date_lo.month, date_lo.day, 12)
+    t_hi = datetime(date_hi.year, date_hi.month, date_hi.day + 1, 12)
+
+    # coordinates
+    y_lo = float(lat_lo)
+    y_hi = float(lat_hi)
+    x_lo = float(lon_lo)
+    x_hi = float(lon_hi)
+
+    # depth
+    z_hi = 0.50
+    z_lo = 0.49
+
+    url = base_url + '&product=' + product + '&product=global-analysis-forecast-phy-001-024-hourly-t-u-v-ssh' + \
+          '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&z_lo={6}&z_hi={7}&mode=console'.format(x_lo, x_hi,
+                                                                                                         y_lo,
+                                                                                                         y_hi,
+                                                                                                         date_to_str(
+                                                                                                             t_lo)
+                                                                                                         , date_to_str(
+                  t_hi), z_lo, z_hi)
+    data = try_get_data(url)
+    return data
+
 
 def append_to_csv(in_path, out_path):
     # get extracted AIS data and remove index column
@@ -191,6 +227,8 @@ def append_to_csv(in_path, out_path):
     date_hi = df.BaseDateTime.max()
 
     # the datasets could have different resolutions therefore get each separately
+
+    daily_dataset = get_global_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
     wind_dataset = get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
     wave_dataset = get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
     phy_0_dataset, phy_1_dataset = get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
@@ -208,8 +246,11 @@ def append_to_csv(in_path, out_path):
         phy_0_val, phy_cols_0 = get_cached(phy_0_dataset, date, lat, lon, 'phy_0')
 
         phy_1_val, phy_cols_1 = get_cached(phy_1_dataset, date, lat, lon, 'phy_1')
-        data_list.append(np.concatenate([x, wind_val, wave_val, phy_0_val, phy_1_val]))
-    pd.DataFrame(data_list, columns=cols + wind_cols + wave_cols + phy_cols_0 + phy_cols_1).to_csv(
+
+        daily_val, daily_cols = get_cached(daily_dataset, date, lat, lon, 'daily')
+
+        data_list.append(np.concatenate([x, wind_val, wave_val, phy_0_val, phy_1_val, daily_val]))
+    pd.DataFrame(data_list, columns=cols + wind_cols + wave_cols + phy_cols_0 + phy_cols_1 + daily_cols).to_csv(
         out_path)
 
 
@@ -220,5 +261,5 @@ def append_environment_data(year, min_time_interval):
     csv_list = check_dir(src_csv_path)
     for file in csv_list:
         if Path(output_csv_path, file).exists(): continue
-        print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),'  -', Path(src_csv_path, file))
+        print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), '  -', Path(src_csv_path, file))
         append_to_csv(Path(src_csv_path, file), Path(output_csv_path, file))
