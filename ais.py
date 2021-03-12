@@ -6,9 +6,11 @@ import requests
 import zipfile
 from pathlib import Path
 from check_connection import CheckConnection
+
 pd.options.mode.chained_assignment = None
 import sys
 import warnings
+import time
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -52,7 +54,7 @@ def download_AIS(year):
         # create output name and directory
         output = os.path.join(str(year), '%s_%s' % (year, file.split('.')[0]))
         Path(output).mkdir(parents=True, exist_ok=True)
-        print(file)
+        print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), file)
 
         # download zip file using wget with url and file name
         wget.download(os.path.join(url, file))
@@ -91,4 +93,5 @@ def subsample_AIS_to_CSV(year, min_time_interval=30):
                 df['BaseDateTime'] = pd.to_datetime(df.BaseDateTime, format='%Y-%m-%dT%H:%M:%S').apply(rm_sec)
                 df.index = df.BaseDateTime
                 df = df.resample("%dT" % int(min_time_interval)).last()
+                df.reset_index(drop=True, inplace=True)
                 df.to_csv(Path(output, str(file)))

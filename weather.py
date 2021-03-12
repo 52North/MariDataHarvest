@@ -220,5 +220,5 @@ def append_environment_data(year, min_time_interval):
     csv_list = check_dir(src_csv_path)
     for file in csv_list:
         if Path(output_csv_path, file).exists(): continue
-        print('  -', Path(src_csv_path, file))
+        print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),'  -', Path(src_csv_path, file))
         append_to_csv(Path(src_csv_path, file), Path(output_csv_path, file))

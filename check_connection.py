@@ -16,10 +16,12 @@ class CheckConnection(Thread):
             try:
                 # check connection
                 conn.request("HEAD", "/")
+                if not CheckConnection.online:
+                    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), 'Internet Connection is established')
                 CheckConnection.online = True
             except Exception as e:
                 CheckConnection.online = False
-                print('No Internet Connection')
+                print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),'No Internet Connection')
             finally:
                 conn.close()
             time.sleep(self.check_interval)

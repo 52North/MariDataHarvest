@@ -13,11 +13,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if len(str(args.year)) == 4:
-        print('Starting a task for year %s .... \n' % str(args.year))
-        interval = 10
         connectionChecker = CheckConnection(check_interval=8)
         connectionChecker.daemon = True
         connectionChecker.start()
+
+        print('Starting a task for year %s .... \n' % str(args.year))
+        interval = 10
         while True:
             try:
                 print('  1/3 downloading AIS data \n')
@@ -26,7 +27,8 @@ if __name__ == '__main__':
                 break
             except Exception as e:
                 print(traceback.format_exc())
-                print('    Error when downloading AIS data .... \n')
+                print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+                      , '    Error when downloading AIS data .... \n')
                 print('\n\nRe-run in %s sec....\n\n' % interval)
                 time.sleep(interval)
                 interval += 10
@@ -40,7 +42,8 @@ if __name__ == '__main__':
                 break
             except Exception as e:
                 print(traceback.format_exc())
-                print('    Error when subsampling CSV data .... \n')
+                print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+                      , '    Error when subsampling CSV data .... \n')
                 print('\n\nRe-run in %s sec....\n\n' % interval)
                 time.sleep(interval)
                 interval += 10
@@ -54,7 +57,8 @@ if __name__ == '__main__':
                 break
             except Exception as e:
                 print(traceback.format_exc())
-                print('    Error when appending environment data .... \n')
+                print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+                      , '    Error when appending environment data .... \n')
                 print('\n\nRe-run in %s sec....\n\n' % interval)
                 time.sleep(interval)
                 interval += 10
