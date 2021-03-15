@@ -10,7 +10,6 @@ import time
 from pathlib import Path
 from bs4 import BeautifulSoup
 from ais import check_dir
-import netCDF4 as nc
 from xarray.backends import NetCDF4DataStore
 from siphon.catalog import TDSCatalog, Dataset
 # utils to convert dates
@@ -178,9 +177,7 @@ def get_cached(dataset, date, lat, lon, name):
     elif name == 'daily':
         df = dataset.sel(longitude=[lon], latitude=[lat], time=[date], method='nearest').to_dataframe()
     elif name == 'gfs':
-        df = dataset.interp(lon=[lon], lat=[lat], time=[date], time1=[date], method='nearest').to_dataframe()
-        if np.count_nonzero(np.isnan(df.values)) < len(df.values) / 2:
-            df = dataset.sel(lon=[lon], lat=[lat], time=[date], time1=[date], method='nearest').to_dataframe()
+        df = dataset.sel(lon=[lon], lat=[lat], time=[date], time1=[date], method='nearest').to_dataframe()
 
     # remove duplicates and non-info variables
     if name == 'phy_1':
@@ -230,9 +227,9 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     base_url = 'https://www.ncei.noaa.gov/thredds/model-gfs-g4-anl-files-old/'
     dataList = []
     for day in range((date_hi - date_lo).days + 1):
-        Hour_Averages = [3]
+        Hour_Averages = [0, 3, 6]
         for Hour_Average in Hour_Averages:
-            for a in [0, 6]:
+            for a in [0, 6, 12, 18]:
                 attempts = 0
                 while True:
                     try:
@@ -257,14 +254,12 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                             print('dataset %s is not found' % ds_name)
                         break
                     except Exception as e:
-                        time.sleep(4)
                         CheckConnection.is_online()
-                        if attempts % 5 == 0:
+                        time.sleep(1.5)
+                        if attempts % 20 == 0:
                             print(e)
                             print('Filename %s - Failed connecting to GFS Server - number of attempts: %d' % (
                                 ds_name, attempts))
-                        if attempts % 30 == 0:
-                            print(traceback.format_exc())
     return xr.merge(dataList, compat='override').squeeze().ffill(dim='time1').ffill(dim='time')
 
 
@@ -312,7 +307,7 @@ def append_to_csv(in_path, out_path):
     date_lo = df.BaseDateTime.min()
     date_hi = df.BaseDateTime.max()
 
-    # the datasets could have different resolutions therefore get each separately
+    # the datasets could have different resolutions
     gfs_dataset = get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
     daily_phy_dataset = get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
     wind_dataset = get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
