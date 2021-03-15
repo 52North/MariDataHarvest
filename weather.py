@@ -1,3 +1,5 @@
+import traceback
+
 import pandas as pd
 import numpy as np
 from motu_utils.utils_cas import authenticate_CAS_for_URL
@@ -8,7 +10,9 @@ import time
 from pathlib import Path
 from bs4 import BeautifulSoup
 from ais import check_dir
-
+import netCDF4 as nc
+from xarray.backends import NetCDF4DataStore
+from siphon.catalog import TDSCatalog, Dataset
 # utils to convert dates
 from check_connection import CheckConnection
 
@@ -27,11 +31,11 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
         the temporal resolution of the dataset to calculate interpolated values
     """
     if date_lo < datetime(2019, 1, 1):
-        base_url = 'http://my.cmems-du.eu/motu-web/Motu?action=productdownload'
+        base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_REANALYSIS_WAV_001_032-TDS'
         product = 'global-reanalysis-wav-001-032'
     else:
-        base_url = 'http://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
+        base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_ANALYSIS_FORECAST_WAV_001_027-TDS'
         product = 'global-analysis-forecast-wav-001-027'
     dataset_temporal_resolution = 180
@@ -68,7 +72,7 @@ def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
         retrieve <phy> including ... variables for a specific timestamp, latitude, longitude considering
         the temporal resolution of the dataset to calculate interpolated values
     """
-    base_url = 'http://nrt.cmems-du.eu/motu-web/Motu?action=productdownload&service=GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
+    base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload&service=GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
     products = ['global-analysis-forecast-phy-001-024-hourly-t-u-v-ssh',
                 'global-analysis-forecast-phy-001-024-hourly-merged-uv']
     dataset_temporal_resolution = 60
@@ -138,7 +142,7 @@ def try_get_data(url):
 
 
 def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
-    base_url = 'http://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
+    base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
     service = 'WIND_GLO_WIND_L4_NRT_OBSERVATIONS_012_004-TDS'
     product = 'CERSAT-GLO-BLENDED_WIND_L4-V6-OBS_FULL_TIME_SERIE'
     dataset_temporal_resolution = 360
@@ -173,21 +177,103 @@ def get_cached(dataset, date, lat, lon, name):
         df = dataset.interp(lon=[lon], lat=[lat], time=[date], method='linear').to_dataframe()
     elif name == 'daily':
         df = dataset.sel(longitude=[lon], latitude=[lat], time=[date], method='nearest').to_dataframe()
+    elif name == 'gfs':
+        df = dataset.interp(lon=[lon], lat=[lat], time=[date], time1=[date], method='nearest').to_dataframe()
+        if np.count_nonzero(np.isnan(df.values)) < len(df.values) / 2:
+            df = dataset.sel(lon=[lon], lat=[lat], time=[date], time1=[date], method='nearest').to_dataframe()
 
-    # remove duplicates
+    # remove duplicates and non-info variables
     if name == 'phy_1':
         df.drop(columns=['uo', 'vo'], inplace=True)
     if name == 'daily':
         df.drop(columns=['thetao', 'uo', 'vo', 'zos'], inplace=True)
+    if name == 'gfs':
+        df.drop(columns=['LatLon_Projection'], inplace=True)
     return np.ravel(df.values), list(df.columns)
 
 
-def get_global_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
-    base_url = 'http://nrt.cmems-du.eu/motu-web/Motu?action=productdownload&service=GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
+def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
+    vars = {'0': [
+        'Temperature_surface',
+        'Wind_speed_gust_surface',
+        'u-component_of_wind_maximum_wind',
+        'v-component_of_wind_maximum_wind',
+        'Dewpoint_temperature_height_above_ground',
+        'U-Component_Storm_Motion_height_above_ground_layer',
+        'V-Component_Storm_Motion_height_above_ground_layer',
+        'Relative_humidity_height_above_ground'],
+
+        '3': ['Precipitation_rate_surface_3_Hour_Average',
+              'Temperature_surface',
+              'Wind_speed_gust_surface',
+              'u-component_of_wind_maximum_wind',
+              'v-component_of_wind_maximum_wind',
+              'Categorical_Freezing_Rain_surface_3_Hour_Average',
+              'Categorical_Ice_Pellets_surface_3_Hour_Average',
+              'Categorical_Rain_surface_3_Hour_Average',
+              'Categorical_Snow_surface_3_Hour_Average',
+              'Dewpoint_temperature_height_above_ground',
+              'U-Component_Storm_Motion_height_above_ground_layer',
+              'V-Component_Storm_Motion_height_above_ground_layer',
+              'Relative_humidity_height_above_ground'],
+
+        '6': ['Precipitation_rate_surface_6_Hour_Average',
+              'Temperature_surface',
+              'Wind_speed_gust_surface',
+              'u-component_of_wind_maximum_wind',
+              'v-component_of_wind_maximum_wind',
+              'Dewpoint_temperature_height_above_ground',
+              'U-Component_Storm_Motion_height_above_ground_layer',
+              'V-Component_Storm_Motion_height_above_ground_layer',
+              'Relative_humidity_height_above_ground']}
+
+    base_url = 'https://www.ncei.noaa.gov/thredds/model-gfs-g4-anl-files-old/'
+    dataList = []
+    for day in range((date_hi - date_lo).days + 1):
+        Hour_Averages = [3]
+        for Hour_Average in Hour_Averages:
+            for a in [0, 6]:
+                attempts = 0
+                while True:
+                    try:
+                        attempts += 1
+                        dt = datetime(date_lo.year, date_lo.month, date_lo.day, a) + timedelta(days=day)
+                        catalog = TDSCatalog(
+                            '%s%s%.2d/%s%.2d%.2d/catalog.xml' % (
+                                base_url, dt.year, dt.month, dt.year, dt.month, dt.day))
+                        ds_name = 'gfsanl_4_%s%.2d%.2d_%.2d00_00%s.grb2' % (
+                            dt.year, dt.month, dt.day, dt.hour, Hour_Average)
+                        datasets = list(catalog.datasets)
+                        if ds_name in datasets:
+                            ncss = catalog.datasets[ds_name].subset()
+                            query = ncss.query().time(dt + timedelta(hours=Hour_Average)).lonlat_box(
+                                north=lat_hi, south=lat_lo, east=lon_hi, west=lon_lo).variables(
+                                *vars[str(Hour_Average)])
+                            data = ncss.get_data(query)
+                            ncss.unit_handler(data)
+                            x_arr = xr.open_dataset(NetCDF4DataStore(data))
+                            dataList.append(x_arr)
+                        else:
+                            print('dataset %s is not found' % ds_name)
+                        break
+                    except Exception as e:
+                        time.sleep(4)
+                        CheckConnection.is_online()
+                        if attempts % 5 == 0:
+                            print(e)
+                            print('Filename %s - Failed connecting to GFS Server - number of attempts: %d' % (
+                                ds_name, attempts))
+                        if attempts % 30 == 0:
+                            print(traceback.format_exc())
+    return xr.merge(dataList, compat='override').squeeze().ffill(dim='time1').ffill(dim='time')
+
+
+def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
+    base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload&service=GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
     product = 'global-analysis-forecast-phy-001-024'
 
     t_lo = datetime(date_lo.year, date_lo.month, date_lo.day, 12)
-    t_hi = datetime(date_hi.year, date_hi.month, date_hi.day + 1, 12)
+    t_hi = datetime(date_hi.year, date_hi.month, date_hi.day, 12) + timedelta(days=1)
 
     # coordinates
     y_lo = float(lat_lo)
@@ -227,8 +313,8 @@ def append_to_csv(in_path, out_path):
     date_hi = df.BaseDateTime.max()
 
     # the datasets could have different resolutions therefore get each separately
-
-    daily_dataset = get_global_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
+    gfs_dataset = get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
+    daily_phy_dataset = get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
     wind_dataset = get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
     wave_dataset = get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
     phy_0_dataset, phy_1_dataset = get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
@@ -247,10 +333,13 @@ def append_to_csv(in_path, out_path):
 
         phy_1_val, phy_cols_1 = get_cached(phy_1_dataset, date, lat, lon, 'phy_1')
 
-        daily_val, daily_cols = get_cached(daily_dataset, date, lat, lon, 'daily')
+        daily_phy_val, daily_phy_cols = get_cached(daily_phy_dataset, date, lat, lon, 'daily')
 
-        data_list.append(np.concatenate([x, wind_val, wave_val, phy_0_val, phy_1_val, daily_val]))
-    pd.DataFrame(data_list, columns=cols + wind_cols + wave_cols + phy_cols_0 + phy_cols_1 + daily_cols).to_csv(
+        gfs_val, gfs_cols = get_cached(gfs_dataset, date, lat, lon, 'gfs')
+
+        data_list.append(np.concatenate([x, wind_val, wave_val, phy_0_val, phy_1_val, daily_phy_val, gfs_val]))
+    pd.DataFrame(data_list,
+                 columns=cols + wind_cols + wave_cols + phy_cols_0 + phy_cols_1 + daily_phy_cols + gfs_cols).to_csv(
         out_path)
 
 

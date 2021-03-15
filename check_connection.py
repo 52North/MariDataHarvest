@@ -12,7 +12,7 @@ class CheckConnection(Thread):
 
     def run(self):
         while True:
-            conn = httplib.HTTPConnection('google.com', timeout=2)
+            conn = httplib.HTTPConnection('google.com', timeout=5)
             try:
                 # check connection
                 conn.request("HEAD", "/")
