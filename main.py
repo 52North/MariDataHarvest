@@ -4,6 +4,7 @@ from ais import download_AIS, subsample_AIS_to_CSV
 from check_connection import CheckConnection
 from weather import append_environment_data
 import argparse
+import logging
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -11,25 +12,28 @@ if __name__ == '__main__':
     parser.add_argument('--year', help='A given year to start a task.', required=True)
     parser.add_argument('--minutes', help='A given minutes interval to downscale the data.', required=True)
     args = parser.parse_args()
-
+    logging.getLogger().handlers = []
+    logging.basicConfig(filename='maridataharvest.log',
+                        level=logging.NOTSET,
+                        format='%(asctime)s %(message)s',
+                        datefmt='%d.%m.%Y %H:%M:%S')
     if len(str(args.year)) == 4:
         connectionChecker = CheckConnection(check_interval=8)
         connectionChecker.daemon = True
         connectionChecker.start()
 
-        print('Starting a task for year %s .... \n' % str(args.year))
+        logging.info('Starting a task for year %s' % str(args.year))
         interval = 10
         while True:
             try:
-                print('  1/3 downloading AIS data \n')
+                logging.debug('STEP 1/3 downloading AIS data')
                 # download AIS data
                 download_AIS(args.year)
                 break
             except Exception as e:
-                print(traceback.format_exc())
-                print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-                      , '    Error when downloading AIS data .... \n')
-                print('\n\nRe-run in %s sec....\n\n' % interval)
+                logging.error(traceback.format_exc())
+                logging.warning('Error when downloading AIS data')
+                logging.warning('Re-run in %s sec....' % interval)
                 time.sleep(interval)
                 interval += 10
 
@@ -37,14 +41,13 @@ if __name__ == '__main__':
         interval = 10
         while True:
             try:
-                print('\n  2/3 subsampling CSV data \n')
+                logging.debug('STEP 2/3 subsampling CSV data')
                 subsample_AIS_to_CSV(args.year, min_time_interval=args.minutes)
                 break
             except Exception as e:
-                print(traceback.format_exc())
-                print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-                      , '    Error when subsampling CSV data .... \n')
-                print('\n\nRe-run in %s sec....\n\n' % interval)
+                logging.error(traceback.format_exc())
+                logging.warning('Error when subsampling CSV data')
+                logging.warning('Re-run in %s sec....' % interval)
                 time.sleep(interval)
                 interval += 10
 
@@ -52,15 +55,14 @@ if __name__ == '__main__':
         interval = 10
         while True:
             try:
-                print('\n  3/3 appending weather data .... \n')
+                logging.debug('STEP 3/3 appending weather data')
                 append_environment_data(args.year, min_time_interval=args.minutes)
                 break
             except Exception as e:
-                print(traceback.format_exc())
-                print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-                      , '    Error when appending environment data .... \n')
-                print('\n\nRe-run in %s sec....\n\n' % interval)
+                logging.error(traceback.format_exc())
+                logging.warning('Error when appending environment data ....')
+                logging.warning('Re-run in %s sec....' % interval)
                 time.sleep(interval)
                 interval += 10
     else:
-        print('please enter the year parameter as YYYY')
+        logging.error('please enter the year parameter as YYYY')

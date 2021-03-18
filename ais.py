@@ -1,3 +1,5 @@
+import logging
+
 import wget
 import os
 import pandas as pd
@@ -54,7 +56,7 @@ def download_AIS(year):
         # create output name and directory
         output = os.path.join(str(year), '%s_%s' % (year, file.split('.')[0]))
         Path(output).mkdir(parents=True, exist_ok=True)
-        print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), file)
+        logging.debug('downloading ais files %s' % file)
 
         # download zip file using wget with url and file name
         wget.download(os.path.join(url, file))
@@ -81,8 +83,7 @@ def subsample_AIS_to_CSV(year, min_time_interval=30):
         for file in files:
             if file.endswith('.csv') and file not in resume:
                 last_index += 1
-                sys.stdout.write("\r %s Files:   %s" % (len(files), file))
-                sys.stdout.flush()
+                logging.debug("Subsampling  %s " % str(path))
                 df = pd.read_csv(Path(path, file))
                 df = df.drop(['MMSI', 'VesselName', 'CallSign', 'Cargo', 'TranscieverClass'], axis=1, errors='ignore')
                 df = df.dropna()

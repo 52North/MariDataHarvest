@@ -1,3 +1,4 @@
+import logging
 import time
 from threading import Thread
 import http.client as httplib
@@ -17,11 +18,11 @@ class CheckConnection(Thread):
                 # check connection
                 conn.request("HEAD", "/")
                 if not CheckConnection.online:
-                    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), 'Internet Connection is established')
+                    logging.warning('Internet Connection is established')
                 CheckConnection.online = True
             except Exception as e:
                 CheckConnection.online = False
-                print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),'No Internet Connection')
+                logging.warning('No Internet Connection')
             finally:
                 conn.close()
             time.sleep(self.check_interval)
