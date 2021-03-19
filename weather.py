@@ -34,17 +34,20 @@ GFS_VAR_LIST = ['Temperature_surface', 'Wind_speed_gust_surface', 'u-component_o
 
 def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     logging.debug('obtaining GLOBAL_REANALYSIS_WAV dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
-    str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
+        str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
 
     """
         retrieve all wave variables for a specific timestamp, latitude, longitude concidering
         the temporal resolution of the dataset to calculate interpolated values
     """
+
     if date_lo < datetime(2019, 1, 1):
+        CheckConnection.set_url('my.cmems-du.eu')
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_REANALYSIS_WAV_001_032-TDS'
         product = 'global-reanalysis-wav-001-032'
     else:
+        CheckConnection.set_url('nrt.cmems-du.eu')
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_ANALYSIS_FORECAST_WAV_001_027-TDS'
         product = 'global-analysis-forecast-wav-001-027'
@@ -80,11 +83,12 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     logging.debug(
         'obtaining GLOBAL_ANALYSIS_FORECAST_PHY Hourly dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
-        str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
+            str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     """
         retrieve <phy> including ... variables for a specific timestamp, latitude, longitude considering
         the temporal resolution of the dataset to calculate interpolated values
     """
+    CheckConnection.set_url('nrt.cmems-du.eu')
     base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload&service=GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
     products = ['global-analysis-forecast-phy-001-024-hourly-t-u-v-ssh',
                 'global-analysis-forecast-phy-001-024-hourly-merged-uv']
@@ -155,7 +159,9 @@ def try_get_data(url):
 
 def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     logging.debug('obtaining WIND_GLO_WIND_L4_NRT_OBSERVATIONS dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
-    str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
+        str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
+
+    CheckConnection.set_url('nrt.cmems-du.eu')
     base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
     service = 'WIND_GLO_WIND_L4_NRT_OBSERVATIONS_012_004-TDS'
     product = 'CERSAT-GLO-BLENDED_WIND_L4-V6-OBS_FULL_TIME_SERIE'
@@ -186,7 +192,7 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 
 def get_cached(dataset, date, lat, lon, name):
     logging.debug('Interpolate cached data for %s dataset with DATE %s, LAT %s and LON %s' % (
-    str(name), str(date), str(lat), str(lon)))
+        str(name), str(date), str(lat), str(lon)))
     if name in ['wave', 'phy_0', 'phy_1']:
         df = dataset.interp(longitude=[lon], latitude=[lat], time=[date], method='linear').to_dataframe()
         if name == 'phy_1':
@@ -208,10 +214,10 @@ def get_cached(dataset, date, lat, lon, name):
 
 def get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     logging.debug('obtaining GFS 0.25 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
-    str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
+        str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     x_arr_list = []
     base_url = 'https://rda.ucar.edu/thredds/catalog/files/g/ds084.1'
-
+    CheckConnection.set_url('rda.ucar.edu')
     # calculate a day prior for midnight interpolation
     http_util.session_manager.set_session_options(auth=(UN_RDA, PW_RDA))
     start_date = datetime(date_lo.year, date_lo.month, date_lo.day) - timedelta(days=1)
@@ -235,7 +241,7 @@ def get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
         for cycle in [0, 6, 12, 18]:
             for hours in [3, 6]:
                 name = 'gfs.0p25.%s%.2d%.2d%.2d.f0%.2d.grib2' % (
-                end_date.year, end_date.month, end_date.day, cycle, hours)
+                    end_date.year, end_date.month, end_date.day, cycle, hours)
                 ds_subset = end_cat.datasets[name].subset()
                 query = ds_subset.query().lonlat_box(north=lat_hi, south=lat_lo, east=lon_hi, west=lon_lo).variables(
                     *GFS_VAR_LIST)
@@ -286,6 +292,8 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
               'Relative_humidity_height_above_ground']}
 
     base_url = 'https://www.ncei.noaa.gov/thredds/model-gfs-g4-anl-files-old/'
+    CheckConnection.set_url('https://ncei.noaa.gov')
+
     dataList = []
     for day in range((date_hi - date_lo).days + 1):
         Hour_Averages = [0, 3, 6]
@@ -312,21 +320,23 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                             x_arr = xr.open_dataset(NetCDF4DataStore(data))
                             dataList.append(x_arr)
                         else:
-                            print('dataset %s is not found' % ds_name)
+                            logging.warning('dataset %s is not found' % ds_name)
                         break
                     except Exception as e:
                         CheckConnection.is_online()
                         time.sleep(1.5)
                         if attempts % 20 == 0:
-                            print(e)
-                            print('Filename %s - Failed connecting to GFS Server - number of attempts: %d' % (
+                            logging.error(e)
+                            logging.error('Filename %s - Failed connecting to GFS Server - number of attempts: %d' % (
                                 ds_name, attempts))
     return xr.merge(dataList, compat='override').squeeze().ffill(dim='time1').ffill(dim='time')
 
 
 def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     logging.debug('obtaining GLOBAL_ANALYSIS_FORECAST_PHY Daily dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
-    str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
+        str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
+
+    CheckConnection.set_url('nrt.cmems-du.eu')
     base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload&service=GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
     product = 'global-analysis-forecast-phy-001-024'
 
@@ -356,6 +366,7 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 
 
 def append_to_csv(in_path, out_path):
+    logging.info('append_environment_data in file %s' % str(in_path))
     # get extracted AIS data and remove index column
     df = pd.read_csv(in_path, parse_dates=['BaseDateTime'], date_parser=str_to_date)
     df.drop(['Unnamed: 0'], axis=1, errors='ignore', inplace=True)
@@ -401,12 +412,11 @@ def append_to_csv(in_path, out_path):
         out_path)
 
 
-def append_environment_data(year, min_time_interval):
-    src_csv_path = Path(str(year) + '_filtered_%s' % min_time_interval)
-    output_csv_path = Path(str(year) + '_merged_%s' % min_time_interval)
+def append_environment_data(year, min_time_interval, work_dir):
+    src_csv_path = Path(work_dir, str(year) + '_filtered_%s' % min_time_interval)
+    output_csv_path = Path(work_dir, str(year) + '_merged_%s' % min_time_interval)
     Path(output_csv_path).mkdir(parents=True, exist_ok=True)
     csv_list = check_dir(src_csv_path)
     for file in csv_list:
         if Path(output_csv_path, file).exists(): continue
-        logging.debug('append_environment_data in file %s' % str(Path(src_csv_path, file)))
         append_to_csv(Path(src_csv_path, file), Path(output_csv_path, file))
