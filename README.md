@@ -31,13 +31,13 @@ Example:
 ```sh
 python main.py --year=2019 --minutes=30 --work_dir=C:\..
 ```
-both arguments are required:
+both arguments `minutes` and `year` are required:
 
 >year: the year to download AIS-data.
 
 >minutes: is the subsampling interval in minutes.
 
->work_dir: the absolute path where to keep data.
+>work_dir: the absolute path where to keep data. If emtpy,the directory is same as the project directory. 
 
 
 
