@@ -1,5 +1,4 @@
 import logging
-import traceback
 import pandas as pd
 import numpy as np
 from motu_utils.utils_cas import authenticate_CAS_for_URL
@@ -20,6 +19,8 @@ str_to_date = lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
 date_to_str = lambda x: x.strftime('%Y-%m-%dT%H:%M:%SZ')
 import os
 
+logger = logging.getLogger(__name__)
+
 # credentials for the dataset
 UN_CMEMS = os.environ['UN_CMEMS']
 PW_CMEMS = os.environ['PW_CMEMS']
@@ -33,7 +34,7 @@ GFS_VAR_LIST = ['Temperature_surface', 'Wind_speed_gust_surface', 'u-component_o
 
 
 def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
-    logging.debug('obtaining GLOBAL_REANALYSIS_WAV dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
+    logger.debug('obtaining GLOBAL_REANALYSIS_WAV dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
     str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
 
     """
@@ -78,7 +79,7 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 
 
 def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
-    logging.debug(
+    logger.debug(
         'obtaining GLOBAL_ANALYSIS_FORECAST_PHY Hourly dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     """
@@ -154,7 +155,7 @@ def try_get_data(url):
 
 
 def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
-    logging.debug('obtaining WIND_GLO_WIND_L4_NRT_OBSERVATIONS dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
+    logger.debug('obtaining WIND_GLO_WIND_L4_NRT_OBSERVATIONS dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
     str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
     service = 'WIND_GLO_WIND_L4_NRT_OBSERVATIONS_012_004-TDS'
@@ -185,7 +186,7 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 
 
 def get_cached(dataset, date, lat, lon, name):
-    logging.debug('Interpolate cached data for %s dataset with DATE %s, LAT %s and LON %s' % (
+    logger.debug('Interpolate cached data for %s dataset with DATE %s, LAT %s and LON %s' % (
     str(name), str(date), str(lat), str(lon)))
     if name in ['wave', 'phy_0', 'phy_1']:
         df = dataset.interp(longitude=[lon], latitude=[lat], time=[date], method='linear').to_dataframe()
@@ -207,7 +208,7 @@ def get_cached(dataset, date, lat, lon, name):
 
 
 def get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
-    logging.debug('obtaining GFS 0.25 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
+    logger.debug('obtaining GFS 0.25 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
     str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     x_arr_list = []
     base_url = 'https://rda.ucar.edu/thredds/catalog/files/g/ds084.1'
@@ -249,7 +250,7 @@ def get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 
 
 def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
-    logging.debug('obtaining GFS 0.50 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
+    logger.debug('obtaining GFS 0.50 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     vars = {'0': [
         'Temperature_surface',
@@ -325,7 +326,7 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 
 
 def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
-    logging.debug('obtaining GLOBAL_ANALYSIS_FORECAST_PHY Daily dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
+    logger.debug('obtaining GLOBAL_ANALYSIS_FORECAST_PHY Daily dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
     str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload&service=GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
     product = 'global-analysis-forecast-phy-001-024'
@@ -408,5 +409,5 @@ def append_environment_data(year, min_time_interval):
     csv_list = check_dir(src_csv_path)
     for file in csv_list:
         if Path(output_csv_path, file).exists(): continue
-        logging.debug('append_environment_data in file %s' % str(Path(src_csv_path, file)))
+        logger.debug('append_environment_data in file %s' % str(Path(src_csv_path, file)))
         append_to_csv(Path(src_csv_path, file), Path(output_csv_path, file))

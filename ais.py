@@ -14,6 +14,8 @@ import sys
 import warnings
 import time
 
+logger = logging.getLogger(__name__)
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
@@ -56,10 +58,10 @@ def download_AIS(year):
         # create output name and directory
         output = os.path.join(str(year), '%s_%s' % (year, file.split('.')[0]))
         Path(output).mkdir(parents=True, exist_ok=True)
-        logging.debug('downloading ais files %s' % file)
+        logger.debug('downloading ais files {0}'.format(file))
 
         # download zip file using wget with url and file name
-        wget.download(os.path.join(url, file))
+        wget.download(os.path.join(url, file), bar = None)
 
         # extract each zip file into output directory then delete it
         with zipfile.ZipFile(file, 'r') as zip_ref:
@@ -73,26 +75,26 @@ def rm_sec(date):
 
 def subsample_AIS_to_CSV(year, min_time_interval=30):
     # create a directory named after the given year if not exist
-    output = str(year) + '_filtered_%s' % min_time_interval
+    logger.info('Subsampling year {0} to {1} minutes.'.format(year, min_time_interval))
+    output = '{0}_filtered_{1}'.format(year, min_time_interval)
     Path(output).mkdir(parents=True, exist_ok=True)
 
     # check already processed files in the
     resume = check_dir(output)
     last_index = len(resume)
-    for path, dirs, files in os.walk(str(year)):
-        for file in files:
-            if file.endswith('.csv') and file not in resume:
-                last_index += 1
-                logging.debug("Subsampling  %s " % str(path))
-                df = pd.read_csv(Path(path, file))
-                df = df.drop(['MMSI', 'VesselName', 'CallSign', 'Cargo', 'TranscieverClass'], axis=1, errors='ignore')
-                df = df.dropna()
-                df = df.query(
-                    '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0) & (VesselType == 1016 or 89 >= VesselType >= 70) & SOG > 3 & Length > 3 & Width > 3 & Draft > 3 ')
-                df = df.drop(['Status'], axis=1, errors='ignore')
-                # parse and set seconds to zero
-                df['BaseDateTime'] = pd.to_datetime(df.BaseDateTime, format='%Y-%m-%dT%H:%M:%S').apply(rm_sec)
-                df.index = df.BaseDateTime
-                df = df.resample("%dT" % int(min_time_interval)).last()
-                df.reset_index(drop=True, inplace=True)
-                df.to_csv(Path(output, str(file)))
+    for path, dirs, files in os.walk(str(year), followlinks=True):
+        for file in [file for file in files if file.lower().endswith('.csv') and file not in resume]:
+            last_index += 1
+            logger.info("Subsampling {0}/{1} ".format(str(path), file))
+            df = pd.read_csv(Path(path, file))
+            df = df.drop(['MMSI', 'VesselName', 'CallSign', 'Cargo', 'TranscieverClass'], axis=1, errors='ignore')
+            df = df.dropna()
+            df = df.query(
+                '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0) & (VesselType == 1016 or 89 >= VesselType >= 70) & SOG > 3 & Length > 3 & Width > 3 & Draft > 3 ')
+            df = df.drop(['Status'], axis=1, errors='ignore')
+            # parse and set seconds to zero
+            df['BaseDateTime'] = pd.to_datetime(df.BaseDateTime, format='%Y-%m-%dT%H:%M:%S').apply(rm_sec)
+            df.index = df.BaseDateTime
+            df = df.resample("%dT" % int(min_time_interval)).last()
+            df.reset_index(drop=True, inplace=True)
+            df.to_csv(Path(output, str(file)))
