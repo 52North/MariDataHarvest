@@ -16,14 +16,6 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def check_dir(dir_name):
-    history = []
-    # for path, dirs, files in os.walk(dir_name):
-    #     for file in files:
-    #         if file.endswith('.csv'):
-    #             history.append(file)
-    #         if file.endswith('gdb'):
-    #             history.append(file)
-
     return os.listdir(dir_name)
 
 
