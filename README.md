@@ -38,6 +38,25 @@ both arguments are required:
 >minutes: is the subsampling interval in minutes.
 
 
+### Docker
+
+You can use the Dockerfile to build an docker image and run the script in its own isolated container. It is recommend to provide a volume to persist the data between each run. You can specify the arguments `year` and `minutes` as environment variables when creating/starting the container:
+
+1. Build:
+
+   ```sh
+   docker build --build-arg GIT_COMMIT=$(git rev-parse -q --verify HEAD) --build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") -t 52north/mari-data_harvester:1.0.0 .
+   ```
+
+   Ensure, that the version of the image tag is matching the version in the Dockerfile, here: `1.0.0`.
+
+1. Run:
+
+   ```sh
+   docker run --env YEAR=2019 --env MINUTES=30 --rm --volume $(pwd)/AIS-data:/data --name=mari-data_harvester 52north/mari-data_harvester:1.0.0
+   ```
+
+
 ## Contact
 
 - [Sufian Zaabalawi](https://github.com/SufianZa)
