@@ -19,6 +19,7 @@ This tool is developed with in the [MariData](https://www.maridata.org) project.
 - wget
 - xarray
 - netCDF4
+- scipy
 
 Install via pip:
 
@@ -84,6 +85,7 @@ You can use the Dockerfile to build an docker image and run the script in its ow
 | numpy           | 1.20.1    | BSD License                                         |
 | pandas          | 1.2.3     | BSD                                                 |
 | protobuf        | 3.15.6    | 3-Clause BSD License                                |
+| scipy           |  1.6.1    | BSD License                                         |
 | python-dateutil | 2.8.1     | BSD License, Apache Software License                |
 | pytz            | 2021.1    | MIT License                                         |
 | requests        | 2.25.1    | Apache Software License                             |
