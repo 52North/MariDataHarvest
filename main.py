@@ -36,7 +36,7 @@ if __name__ == '__main__':
     parser.add_argument('--year',    help='A given year to start a task.',
                         required=True,  type=int, choices=range(2009, int(time.strftime("%Y"))))
     parser.add_argument('--minutes', help='A given minutes interval to downscale the data.',
-                        required=True,  type=int, choices=range(5, 60))
+                        required=True,  type=int, choices=range(1, 1440))
     parser.add_argument('--step',    help='Select the specific step to perform.',
                         required=False, type=int, choices=range(0, 4), default=0)
     parser.add_argument('--dir',
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     connectionChecker.start()
     
     logger.info('Starting a task for year %s with subsampling of %d minutes. The output files will be saved to %s' % (
-            str(args.year), int(args.minutes), args.dir if args.dir != '' else 'project directory))
+            str(args.year), int(args.minutes), args.dir if args.dir != '' else 'project directory'))
     interval = 10
     if args.step != 0:
         logger.info('Single step selected')
@@ -74,7 +74,7 @@ if __name__ == '__main__':
         while True:
             try:
                 logger.info('STEP 2/3 subsampling CSV data')
-                subsample_AIS_to_CSV(args.year, args.dir, args.minutes)
+                subsample_AIS_to_CSV(str(args.year), args.dir, args.minutes)
                 break
             except Exception as e:
                 logger.error(traceback.format_exc())
@@ -89,7 +89,7 @@ if __name__ == '__main__':
         while True:
             try:
                 logger.info('STEP 3/3 appending weather data')
-                append_environment_data(args.year, args.minutes, args.dir)
+                append_environment_data(str(args.year), args.minutes, args.dir)
                 break
             except Exception as e:
                 logger.error(traceback.format_exc())

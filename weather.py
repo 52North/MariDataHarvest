@@ -40,7 +40,7 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     """
     logger.debug('obtaining GLOBAL_REANALYSIS_WAV dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
     str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
-    
+
     if date_lo < datetime(2019, 1, 1):
         CheckConnection.set_url('my.cmems-du.eu')
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
@@ -81,12 +81,12 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 
 
 def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
-      """
+    """
         retrieve <phy> including ... variables for a specific timestamp, latitude, longitude considering
         the temporal resolution of the dataset to calculate interpolated values
     """
-    logger.debug(
-        'obtaining GLOBAL_ANALYSIS_FORECAST_PHY Hourly dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
+
+    logger.debug('obtaining GLOBAL_ANALYSIS_FORECAST_PHY Hourly dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
             str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
 
     CheckConnection.set_url('nrt.cmems-du.eu')
@@ -192,8 +192,6 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 
 
 def get_cached(dataset, date, lat, lon, name):
-    logger.debug('Interpolate cached data for %s dataset with DATE %s, LAT %s and LON %s' % (
-    str(name), str(date), str(lat), str(lon)))
     if name in ['wave', 'phy_0', 'phy_1']:
         df = dataset.interp(longitude=[lon], latitude=[lat], time=[date], method='linear').to_dataframe()
         if name == 'phy_1':
@@ -391,6 +389,8 @@ def append_to_csv(in_path, out_path):
     cols = list(df.columns)
     data_list = []
     for x in df.values:
+        logger.debug('Interpolate cached data for DATE %s, LAT %s and LON %s' % (
+            str(date), str(lat), str(lon)))
         date, lat, lon = x[:3]
 
         wind_val, wind_cols = get_cached(wind_dataset, date, lat, lon, 'wind')
