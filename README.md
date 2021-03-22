@@ -29,7 +29,7 @@ pip install -r requirements.txt
 
 Example:
 ```sh
-python main.py --year=2019 --minutes=30 --work_dir=C:\..
+python main.py --year=2019 --minutes=30 --dir=C:\..
 ```
 both arguments `minutes` and `year` are required:
 
@@ -37,11 +37,12 @@ both arguments `minutes` and `year` are required:
 
 >minutes: is the subsampling interval in minutes.
 
->work_dir: the absolute path where to keep data. If emtpy,the directory is same as the project directory. 
+>dir: the absolute path where to keep data. If emtpy, the directory is same as the project directory. 
 
 
 
 ### Docker
+- [ ] add --dir to docker arguments
 
 You can use the Dockerfile to build an docker image and run the script in its own isolated container. It is recommend to provide a volume to persist the data between each run. You can specify the arguments `year` and `minutes` as environment variables when creating/starting the container:
 
@@ -60,7 +61,7 @@ You can use the Dockerfile to build an docker image and run the script in its ow
    ```
 
 ## Contact
-- [Sufian Zaabalawi](https://github.com/SufianZa)
+- [Zaabalawi, Sufian ](https://github.com/SufianZa)
 - [Jürrens, Eike Hinderk](https://github.com/EHJ-52n)
 
 
@@ -68,7 +69,30 @@ You can use the Dockerfile to build an docker image and run the script in its ow
 ## License
 
 - [ ] Add License Header to source files
-- [ ] Add license file and information to repository
+
+| Name            | Version   | License                                             |
+|-----------------|-----------|-----------------------------------------------------|
+| beautifulsoup4  | 4.9.3     | MIT License                                         |
+| bs4             | 0.0.1     | MIT License                                         |
+| certifi         | 2020.12.5 | Mozilla Public License 2.0 (MPL 2.0)                |
+| cftime          | 1.4.1     | MIT License                                         |
+| chardet         | 4.0.0     | GNU Library or Lesser General Public License (LGPL) |
+| idna            | 2.10      | BSD License                                         |
+| motuclient      | 1.8.8     | GNU Lesser General Public License v3 (LGPLv3)       |
+| netCDF4         | 1.5.6     | MIT License                                         |
+| numpy           | 1.20.1    | BSD License                                         |
+| pandas          | 1.2.3     | BSD                                                 |
+| protobuf        | 3.15.6    | 3-Clause BSD License                                |
+| python-dateutil | 2.8.1     | BSD License, Apache Software License                |
+| pytz            | 2021.1    | MIT License                                         |
+| requests        | 2.25.1    | Apache Software License                             |
+| siphon          | 0.9       | BSD License                                         |
+| six             | 1.15.0    | MIT License                                         |
+| soupsieve       | 2.2.1     | MIT License                                         |
+| urllib3         | 1.26.4    | MIT License                                         |
+| wget            | 3.2       | Public Domain                                       |
+| xarray          | 0.15.1    | Apache Software License                             |
+
 
 
 ## Funding

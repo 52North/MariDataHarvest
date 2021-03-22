@@ -7,10 +7,10 @@ import http.client as httplib
 class CheckConnection(Thread):
     online = True
     domain_url = ''
+
     def __init__(self, check_interval):
         super().__init__()
         self.check_interval = check_interval
-
 
     def run(self):
         while True:
