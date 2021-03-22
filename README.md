@@ -10,16 +10,17 @@ This tool is developed with in the [MariData](https://www.maridata.org) project.
 
 ## Required modules/libraries
 
-- bs4
 - beautifulsoup4
+- bs4
 - motuclient
+- netCDF4
 - pandas
+- pyyaml
 - requests
+- scipy
 - siphon
 - wget
 - xarray
-- netCDF4
-- scipy
 
 Install via pip:
 
