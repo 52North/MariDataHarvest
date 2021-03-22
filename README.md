@@ -31,7 +31,7 @@ pip install -r requirements.txt
 
 Example:
 ```sh
-python main.py --year=2019 --minutes=30 --dir=C:\..
+python main.py --year=2019 --minutes=30 --dir=C:\.. --step=0
 ```
 both arguments `minutes` and `year` are required:
 
@@ -40,6 +40,8 @@ both arguments `minutes` and `year` are required:
 >minutes: is the subsampling interval in minutes.
 
 >dir: the absolute path where to keep data. If empty, the directory is same as the project directory. 
+
+>step: starts the script at a specific step (1. Download, 2. Subsample, 3. Appending weather data). If equals 0, the script runs all steps starting from step 1. 
 
 
 
