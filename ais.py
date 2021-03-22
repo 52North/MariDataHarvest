@@ -10,9 +10,7 @@ from pathlib import Path
 from check_connection import CheckConnection
 
 pd.options.mode.chained_assignment = None
-import sys
 import warnings
-import time
 
 logger = logging.getLogger(__name__)
 
@@ -20,21 +18,17 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def check_dir(dir_name):
-    history = []
-    for path, dirs, files in os.walk(dir_name):
-        for file in files:
-            if file.endswith('.csv'):
-                history.append(file)
-    return history
+    return os.listdir(dir_name)
 
 
-def download_AIS(year):
+def download_AIS(year, work_dir):
     # create a directory named after the given year if not exist
-    Path(str(year)).mkdir(parents=True, exist_ok=True)
+    p = Path(work_dir, str(year))
+    p.mkdir(parents=True, exist_ok=True)
 
     # check already installed files in the
-    resume_download = check_dir(str(year))
-
+    resume_download = check_dir(p)
+    CheckConnection.set_url('coast.noaa.gov')
     # url link to data
     url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{0}/".format(year)
 
@@ -49,23 +43,25 @@ def download_AIS(year):
     for a in soup.find_all('a', href=True):
         if a.text and a.text.endswith('zip'):
             name, _ = a['href'].split('.')
-            if name + '.csv' in resume_download: continue
+            name = name.split('/')[-1] if len(name.split('/')) > 1 else name
+            if name + '.csv' in resume_download or name + '.gdb' in resume_download: continue
             files.append(a['href'])
 
     #  download
     for file in files:
         CheckConnection.is_online()
-        # create output name and directory
-        output = os.path.join(str(year), '%s_%s' % (year, file.split('.')[0]))
-        Path(output).mkdir(parents=True, exist_ok=True)
-        logger.debug('downloading ais files {0}'.format(file))
-
+        logger.debug('downloading AIS file: %s' % file)
+        
         # download zip file using wget with url and file name
-        wget.download(os.path.join(url, file), bar = None)
-
+        wget.download(os.path.join(url, file))
+        file = file.split('/')[-1] if len(file.split('/')) > 1 else file
         # extract each zip file into output directory then delete it
         with zipfile.ZipFile(file, 'r') as zip_ref:
-            zip_ref.extractall(output)
+            for f in zip_ref.namelist():
+                if f.endswith('.csv'):
+                    zip_ref.extract(f, p)
+                if f.endswith('.gdb'):
+                    zip_ref.extractall(p)
         os.remove(file)
 
 
@@ -73,20 +69,21 @@ def rm_sec(date):
     return date.replace(second=0)
 
 
-def subsample_AIS_to_CSV(year, min_time_interval=30):
+def subsample_AIS_to_CSV(year, work_dir, min_time_interval=30):
     # create a directory named after the given year if not exist
-    logger.info('Subsampling year {0} to {1} minutes.'.format(year, min_time_interval))
     output = '{0}_filtered_{1}'.format(year, min_time_interval)
-    Path(output).mkdir(parents=True, exist_ok=True)
-
+    path = Path(work_dir, output)
+    Path(work_dir, output).mkdir(parents=True, exist_ok=True)
+    logger.info('Subsampling year {0} to {1} minutes.'.format(year, min_time_interval))
     # check already processed files in the
-    resume = check_dir(output)
+    resume = check_dir(Path(work_dir, output))
     last_index = len(resume)
-    for path, dirs, files in os.walk(str(year), followlinks=True):
-        for file in [file for file in files if file.lower().endswith('.csv') and file not in resume]:
+
+    for file in os.listdir(str(Path(work_dir, year))):
+        if file.endswith('.csv') and file not in resume:
             last_index += 1
-            logger.info("Subsampling {0}/{1} ".format(str(path), file))
-            df = pd.read_csv(Path(path, file))
+            logging.info("Subsampling  %s " % str(file))
+            df = pd.read_csv(Path(Path(work_dir, year), file))
             df = df.drop(['MMSI', 'VesselName', 'CallSign', 'Cargo', 'TranscieverClass'], axis=1, errors='ignore')
             df = df.dropna()
             df = df.query(
@@ -97,4 +94,4 @@ def subsample_AIS_to_CSV(year, min_time_interval=30):
             df.index = df.BaseDateTime
             df = df.resample("%dT" % int(min_time_interval)).last()
             df.reset_index(drop=True, inplace=True)
-            df.to_csv(Path(output, str(file)))
+            df.to_csv(Path(path, str(file)))
