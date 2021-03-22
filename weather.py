@@ -1,5 +1,4 @@
 import logging
-import traceback
 import pandas as pd
 import numpy as np
 from motu_utils.utils_cas import authenticate_CAS_for_URL
@@ -20,6 +19,8 @@ str_to_date = lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
 date_to_str = lambda x: x.strftime('%Y-%m-%dT%H:%M:%SZ')
 import os
 
+logger = logging.getLogger(__name__)
+
 # credentials for the dataset
 UN_CMEMS = os.environ['UN_CMEMS']
 PW_CMEMS = os.environ['PW_CMEMS']
@@ -33,14 +34,13 @@ GFS_VAR_LIST = ['Temperature_surface', 'Wind_speed_gust_surface', 'u-component_o
 
 
 def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
-    logging.debug('obtaining GLOBAL_REANALYSIS_WAV dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
-        str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
-
     """
         retrieve all wave variables for a specific timestamp, latitude, longitude concidering
         the temporal resolution of the dataset to calculate interpolated values
     """
-
+    logger.debug('obtaining GLOBAL_REANALYSIS_WAV dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
+    str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
+    
     if date_lo < datetime(2019, 1, 1):
         CheckConnection.set_url('my.cmems-du.eu')
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
@@ -81,13 +81,14 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 
 
 def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
-    logging.debug(
-        'obtaining GLOBAL_ANALYSIS_FORECAST_PHY Hourly dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
-            str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
-    """
+      """
         retrieve <phy> including ... variables for a specific timestamp, latitude, longitude considering
         the temporal resolution of the dataset to calculate interpolated values
     """
+    logger.debug(
+        'obtaining GLOBAL_ANALYSIS_FORECAST_PHY Hourly dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
+            str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
+
     CheckConnection.set_url('nrt.cmems-du.eu')
     base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload&service=GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
     products = ['global-analysis-forecast-phy-001-024-hourly-t-u-v-ssh',
@@ -158,9 +159,9 @@ def try_get_data(url):
 
 
 def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
-    logging.debug('obtaining WIND_GLO_WIND_L4_NRT_OBSERVATIONS dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
-        str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
 
+    logger.debug('obtaining WIND_GLO_WIND_L4_NRT_OBSERVATIONS dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
+    str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     CheckConnection.set_url('nrt.cmems-du.eu')
     base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
     service = 'WIND_GLO_WIND_L4_NRT_OBSERVATIONS_012_004-TDS'
@@ -191,8 +192,8 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 
 
 def get_cached(dataset, date, lat, lon, name):
-    logging.debug('Interpolate cached data for %s dataset with DATE %s, LAT %s and LON %s' % (
-        str(name), str(date), str(lat), str(lon)))
+    logger.debug('Interpolate cached data for %s dataset with DATE %s, LAT %s and LON %s' % (
+    str(name), str(date), str(lat), str(lon)))
     if name in ['wave', 'phy_0', 'phy_1']:
         df = dataset.interp(longitude=[lon], latitude=[lat], time=[date], method='linear').to_dataframe()
         if name == 'phy_1':
@@ -213,8 +214,8 @@ def get_cached(dataset, date, lat, lon, name):
 
 
 def get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
-    logging.debug('obtaining GFS 0.25 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
-        str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
+    logger.debug('obtaining GFS 0.25 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
+    str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     x_arr_list = []
     base_url = 'https://rda.ucar.edu/thredds/catalog/files/g/ds084.1'
     CheckConnection.set_url('rda.ucar.edu')
@@ -255,7 +256,7 @@ def get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 
 
 def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
-    logging.debug('obtaining GFS 0.50 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
+    logger.debug('obtaining GFS 0.50 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     vars = {'0': [
         'Temperature_surface',
@@ -320,22 +321,21 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                             x_arr = xr.open_dataset(NetCDF4DataStore(data))
                             dataList.append(x_arr)
                         else:
-                            logging.warning('dataset %s is not found' % ds_name)
+                            logger.warning('dataset %s is not found' % ds_name)
                         break
                     except Exception as e:
                         CheckConnection.is_online()
                         time.sleep(1.5)
                         if attempts % 20 == 0:
-                            logging.error(e)
-                            logging.error('Filename %s - Failed connecting to GFS Server - number of attempts: %d' % (
+                            logger.error(e)
+                            logger.error('Filename %s - Failed connecting to GFS Server - number of attempts: %d' % (
                                 ds_name, attempts))
     return xr.merge(dataList, compat='override').squeeze().ffill(dim='time1').ffill(dim='time')
 
 
 def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
-    logging.debug('obtaining GLOBAL_ANALYSIS_FORECAST_PHY Daily dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
-        str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
-
+    logger.debug('obtaining GLOBAL_ANALYSIS_FORECAST_PHY Daily dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
+    str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     CheckConnection.set_url('nrt.cmems-du.eu')
     base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload&service=GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
     product = 'global-analysis-forecast-phy-001-024'
@@ -366,7 +366,6 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 
 
 def append_to_csv(in_path, out_path):
-    logging.info('append_environment_data in file %s' % str(in_path))
     # get extracted AIS data and remove index column
     df = pd.read_csv(in_path, parse_dates=['BaseDateTime'], date_parser=str_to_date)
     df.drop(['Unnamed: 0'], axis=1, errors='ignore', inplace=True)
@@ -419,4 +418,5 @@ def append_environment_data(year, min_time_interval, work_dir):
     csv_list = check_dir(src_csv_path)
     for file in csv_list:
         if Path(output_csv_path, file).exists(): continue
+        logger.debug('append_environment_data in file %s' % str(Path(src_csv_path, file)))
         append_to_csv(Path(src_csv_path, file), Path(output_csv_path, file))

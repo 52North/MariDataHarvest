@@ -3,7 +3,7 @@ import time
 from threading import Thread
 import http.client as httplib
 
-
+logger = logging.getLogger(__name__)
 class CheckConnection(Thread):
     online = True
     domain_url = ''
@@ -20,16 +20,16 @@ class CheckConnection(Thread):
                     # check connection
                     conn.request("HEAD", "/")
                     if not CheckConnection.online:
-                        logging.warning('Internet Connection is established to server %s' % CheckConnection.domain_url)
+                        logger.warning('Internet Connection is established to server %s' % CheckConnection.domain_url)
                     CheckConnection.online = True
                 except Exception as e:
                     CheckConnection.online = False
-                    logging.error(e)
-                    logging.warning('No Internet Connection to server %s' % CheckConnection.domain_url)
+                    logger.error(e)
+                    logger.warning('No Internet Connection to server %s' % CheckConnection.domain_url)
                 finally:
                     conn.close()
                 time.sleep(self.check_interval)
-
+                
     @staticmethod
     def is_online():
         if CheckConnection.online:

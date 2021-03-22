@@ -12,6 +12,8 @@ from check_connection import CheckConnection
 pd.options.mode.chained_assignment = None
 import warnings
 
+logger = logging.getLogger(__name__)
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
@@ -48,8 +50,8 @@ def download_AIS(year, work_dir):
     #  download
     for file in files:
         CheckConnection.is_online()
-        # create output name and directory
-        logging.info('downloading AIS file: %s' % file)
+        logger.debug('downloading AIS file: %s' % file)
+        
         # download zip file using wget with url and file name
         wget.download(os.path.join(url, file))
         file = file.split('/')[-1] if len(file.split('/')) > 1 else file
@@ -69,13 +71,14 @@ def rm_sec(date):
 
 def subsample_AIS_to_CSV(year, work_dir, min_time_interval=30):
     # create a directory named after the given year if not exist
-    output = str(year) + '_filtered_%s' % min_time_interval
+    output = '{0}_filtered_{1}'.format(year, min_time_interval)
     path = Path(work_dir, output)
     Path(work_dir, output).mkdir(parents=True, exist_ok=True)
-
+    logger.info('Subsampling year {0} to {1} minutes.'.format(year, min_time_interval))
     # check already processed files in the
     resume = check_dir(Path(work_dir, output))
     last_index = len(resume)
+
     for file in os.listdir(str(Path(work_dir, year))):
         if file.endswith('.csv') and file not in resume:
             last_index += 1
