@@ -18,6 +18,7 @@ This tool is developed with in the [MariData](https://www.maridata.org) project.
 - siphon
 - wget
 - xarray
+- netCDF4
 
 Install via pip:
 
@@ -37,7 +38,7 @@ both arguments `minutes` and `year` are required:
 
 >minutes: is the subsampling interval in minutes.
 
->dir: the absolute path where to keep data. If emtpy, the directory is same as the project directory. 
+>dir: the absolute path where to keep data. If empty, the directory is same as the project directory. 
 
 
 
