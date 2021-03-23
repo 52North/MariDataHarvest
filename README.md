@@ -105,6 +105,6 @@ You can use the Dockerfile to build an docker image and run the script in its ow
 
 | Project/Logo | Description |
 | :-------------: | :------------- |
-| [<img alt="MariData" align="middle" width="267" height="50" src="./img/maridata_logo.png"/>](https://www.maridata.rg/) | MariGeoRoute is funded by the German Federal Ministry of Economic Affairs and Energy (BMWi)[<img alt="BMWi" align="middle" width="144" height="72" src="./img/bmwi_logo_en.png"/>](https://www.bmvi.de/) |
+| [<img alt="MariData" align="middle" width="267" height="50" src="./img/maridata_logo.png"/>](https://www.maridata.org/) | MariGeoRoute is funded by the German Federal Ministry of Economic Affairs and Energy (BMWi)[<img alt="BMWi" align="middle" width="144" height="72" src="./img/bmwi_logo_en.png"/>](https://www.bmvi.de/) |
 
 🚧🏗🚧👷🚧👷🚧🏗🚧👷🚧🏗🚧
