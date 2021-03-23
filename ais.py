@@ -51,7 +51,6 @@ def download_AIS(year, work_dir):
     for file in files:
         CheckConnection.is_online()
         logger.debug('downloading AIS file: %s' % file)
-        
         # download zip file using wget with url and file name
         wget.download(os.path.join(url, file))
         file = file.split('/')[-1] if len(file.split('/')) > 1 else file
@@ -61,8 +60,9 @@ def download_AIS(year, work_dir):
                 if f.filename.endswith('.csv'):
                     f.filename = os.path.basename(f.filename)
                     zip_ref.extract(f, p)
-                if f.filename.endswith('.gdb'):
+                if f.filename.endswith('.gdb/'):
                     zip_ref.extractall(p)
+                    break
         os.remove(file)
 
 
