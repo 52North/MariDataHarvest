@@ -1,8 +1,6 @@
 # MariDataHarvest
 
-🚧🏗🚧👷🚧👷🚧🏗🚧👷🚧🏗🚧
-
-MariDataHarvest is a tool for scrapping and harvesting Automatic Identification System (AIS) data provided by [marinecadastre](https://marinecadastre.gov/AIS/) 
+MariDataHarvest is a tool for scrapping and harvesting Automatic Identification System (AIS) data provided by [marinecadastre](https://marinecadastre.gov/AIS/)
 then appending it with the weather and environment conditions provided by [CMEMS](https://nrt.cmems-du.eu) and [RDA](rda.ucar.edu) at each geographical and UTC timestamp point.
 
 This tool is developed with in the [MariData](https://www.maridata.org) project.
@@ -28,22 +26,27 @@ Install via pip:
 pip install -r requirements.txt
 ```
 
+
 ## Usage
 
 Example:
 ```sh
-python main.py --year=2019 --minutes=30 --dir=C:\.. --step=0
+python main.py --year=2019 --minutes=30 --dir=C:\..
 ```
-both arguments `minutes` and `year` are required:
 
->year: the year to download AIS-data.
+- `year`: the year to download AIS-data.
 
->minutes: is the subsampling interval in minutes.
+- `minutes`: is the subsampling interval in minutes.
 
->dir: the absolute path where to keep data. If empty, the directory is same as the project directory. 
+- `dir`: the absolute path where to keep data. If empty, the directory is same as the project directory.
 
->step: starts the script at a specific step (1. Download, 2. Subsample, 3. Appending weather data). If equals 0, the script runs all steps starting from step 1. 
+- `step` (optional): starts the script at a specific step:
 
+  1. Download,
+  2. Subsample,
+  3. Appending weather data.
+
+  If `step` equals `0` (default value), the script runs all steps starting from step 1.
 
 
 ### Docker
@@ -77,6 +80,7 @@ You can use the Dockerfile to build an docker image and run the script in its ow
 
 | Name            | Version   | License                                             |
 |-----------------|-----------|-----------------------------------------------------|
+| PyYAML          | 5.4.1     | MIT License                                         |
 | beautifulsoup4  | 4.9.3     | MIT License                                         |
 | bs4             | 0.0.1     | MIT License                                         |
 | certifi         | 2020.12.5 | Mozilla Public License 2.0 (MPL 2.0)                |
@@ -88,16 +92,22 @@ You can use the Dockerfile to build an docker image and run the script in its ow
 | numpy           | 1.20.1    | BSD License                                         |
 | pandas          | 1.2.3     | BSD                                                 |
 | protobuf        | 3.15.6    | 3-Clause BSD License                                |
-| scipy           |  1.6.1    | BSD License                                         |
 | python-dateutil | 2.8.1     | BSD License, Apache Software License                |
 | pytz            | 2021.1    | MIT License                                         |
 | requests        | 2.25.1    | Apache Software License                             |
+| scipy           | 1.6.1     | BSD License                                         |
 | siphon          | 0.9       | BSD License                                         |
 | six             | 1.15.0    | MIT License                                         |
 | soupsieve       | 2.2.1     | MIT License                                         |
 | urllib3         | 1.26.4    | MIT License                                         |
 | wget            | 3.2       | Public Domain                                       |
 | xarray          | 0.15.1    | Apache Software License                             |
+
+Generate this list via the following command:
+
+```sh
+docker run --rm --interactive --tty 52north/mari-data_harvester:1.0.0 /bin/bash -c "pip install --no-warn-script-location --no-cache-dir pip-licenses > /dev/null && .local/bin/pip-licenses -f markdown"
+```
 
 
 
@@ -106,5 +116,3 @@ You can use the Dockerfile to build an docker image and run the script in its ow
 | Project/Logo | Description |
 | :-------------: | :------------- |
 | [<img alt="MariData" align="middle" width="267" height="50" src="./img/maridata_logo.png"/>](https://www.maridata.org/) | MariGeoRoute is funded by the German Federal Ministry of Economic Affairs and Energy (BMWi)[<img alt="BMWi" align="middle" width="144" height="72" src="./img/bmwi_logo_en.png"/>](https://www.bmvi.de/) |
-
-🚧🏗🚧👷🚧👷🚧🏗🚧👷🚧🏗🚧
