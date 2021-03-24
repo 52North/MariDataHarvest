@@ -14,6 +14,7 @@ This tool is developed with in the [MariData](https://www.maridata.org) project.
 - netCDF4
 - pandas
 - pyyaml
+- python-dotenv
 - requests
 - scipy
 - siphon
@@ -29,7 +30,21 @@ pip install -r requirements.txt
 
 ## Usage
 
-Example:
+The script requires accounts for the following webservices:
+
+- [CMEMS](https://resources.marine.copernicus.eu/?option=com_csw&task=results?option=com_csw&view=account)
+- [RDA](https://rda.ucar.edu/index.html?hash=data_user&action=register)
+
+The credentials of these services MUST be entered into a file called `.env.secret` as outlined here:
+
+   ```sh
+   UN_CMEMS=
+   PW_CMEMS=
+   UN_RDA=
+   PW_RDA=
+   ```
+
+Start harvesting with the following command:
 ```sh
 python main.py --year=2019 --minutes=30 --dir=C:\..
 ```
@@ -65,8 +80,25 @@ You can use the Dockerfile to build an docker image and run the script in its ow
 1. Run:
 
    ```sh
-   docker run --env YEAR=2019 --env MINUTES=30 --rm --volume $(pwd)/AIS-data:/data --name=mari-data_harvester 52north/mari-data_harvester:1.0.0
+   docker run --env-file docker.env --rm --volume $(pwd)/AIS-data:/data --volume $(pwd)/.env.secret:/maridata/.env.secret:ro --name=mari-data_harvester 52north/mari-data_harvester:1.0.0
    ```
+
+   with `docker.env` containing the following information:
+
+   ```sh
+   YEAR=2019
+   MINUTES=30
+   DATA_DIR=/data
+   ```
+
+
+## Deployment
+
+Use the following command to send the code to any server for building the image and run it:
+
+```sh
+rsync --recursive --verbose --times --rsh ssh --exclude='AIS-DATA' --exclude='*.tmp' --exclude='*.swp' --exclude='.vscode' --exclude='__pycache__' --delete . mari-data-harvester.example.org:/home/user/maridata-harvester
+```
 
 ## Contact
 - [Zaabalawi, Sufian ](https://github.com/SufianZa)
@@ -93,6 +125,7 @@ You can use the Dockerfile to build an docker image and run the script in its ow
 | pandas          | 1.2.3     | BSD                                                 |
 | protobuf        | 3.15.6    | 3-Clause BSD License                                |
 | python-dateutil | 2.8.1     | BSD License, Apache Software License                |
+| python-dotenv   | 0.15.0    | BSD License                                         |
 | pytz            | 2021.1    | MIT License                                         |
 | requests        | 2.25.1    | Apache Software License                             |
 | scipy           | 1.6.1     | BSD License                                         |
@@ -115,4 +148,4 @@ docker run --rm --interactive --tty 52north/mari-data_harvester:1.0.0 /bin/bash 
 
 | Project/Logo | Description |
 | :-------------: | :------------- |
-| [<img alt="MariData" align="middle" width="267" height="50" src="./img/maridata_logo.png"/>](https://www.maridata.org/) | MariGeoRoute is funded by the German Federal Ministry of Economic Affairs and Energy (BMWi)[<img alt="BMWi" align="middle" width="144" height="72" src="./img/bmwi_logo_en.png"/>](https://www.bmvi.de/) |
+| [<img alt="MariData" align="middle" width="267" height="50" src="./img/maridata_logo.png"/>](https://www.maridata.org/) | MariGeoRoute is funded by the German Federal Ministry of Economic Affairs and Energy (BMWi)[<img alt="BMWi" align="middle" width="144" height="72" src="./img/bmwi_logo_en.png" style="float:right"/>](https://www.bmvi.de/) |

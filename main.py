@@ -9,30 +9,33 @@ import argparse
 import os
 import yaml
 
-config_file_path = 'logging.yaml'
+
+logging_config_file = 'logging.yaml'
 level = logging.DEBUG
 
-if os.path.exists(config_file_path):
-    with open(config_file_path, 'rt') as file:
+if os.path.exists(logging_config_file):
+    with open(logging_config_file, 'rt') as file:
         try:
             config = yaml.safe_load(file.read())
             logging.config.dictConfig(config)
         except Exception as e:
             print(e)
             print(
-                'Error while loading logging configuration from file "%s". Using defaults' % config_file_path)
+                'Error while loading logging configuration from file "%s". Using defaults' % logging_config_file)
             logging.basicConfig(level=level)
 else:
     print('Logging file configuration does not exist: "%s". Using defaults.' %
-          config_file_path)
+          logging_config_file)
     logging.basicConfig(level=level)
 
 logger = logging.getLogger(__name__)
 
+
 if __name__ == '__main__':
     # arguments parameters
     parser = argparse.ArgumentParser(
-        description='For a given a year and minutes interval of subsampling to start harvesting AIS-Data.')
+        description='For a given a year and minutes interval of subsampling to start harvesting AIS-Data.',
+        epilog='The following exit codes are configured:\n16 -> service secrets configuration file not found.')
     parser.add_argument('--year',    help='A given year to start a task.',
                         required=True,  type=int, choices=range(2009, int(time.strftime("%Y"))))
     parser.add_argument('--minutes', help='A given minutes interval to downscale the data.',
@@ -43,12 +46,12 @@ if __name__ == '__main__':
                         help='The output directory to collect csv files. By default the root directory is used.',
                         default='',type=str , required=False)
     args = parser.parse_args()
-    
-    # initialize a Thread to check connection  
+
+    # initialize a Thread to check connection
     connectionChecker = CheckConnection(check_interval=8)
     connectionChecker.daemon = True
     connectionChecker.start()
-    
+
     logger.info('Starting a task for year %s with subsampling of %d minutes. The output files will be saved to %s' % (
             str(args.year), int(args.minutes), args.dir if args.dir != '' else 'project directory'))
     interval = 10

@@ -8,6 +8,7 @@ import requests
 import zipfile
 from pathlib import Path
 from check_connection import CheckConnection
+from config import config
 
 pd.options.mode.chained_assignment = None
 import warnings
@@ -50,10 +51,10 @@ def download_AIS(year, work_dir):
     #  download
     for file in files:
         CheckConnection.is_online()
-        logger.debug('downloading AIS file: %s' % file)
-        
+        logger.info('downloading AIS file: %s' % file)
+
         # download zip file using wget with url and file name
-        wget.download(os.path.join(url, file))
+        wget.download(url=os.path.join(url, file), bar=None)
         file = file.split('/')[-1] if len(file.split('/')) > 1 else file
         # extract each zip file into output directory then delete it
         with zipfile.ZipFile(file, 'r') as zip_ref:
