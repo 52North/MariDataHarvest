@@ -10,6 +10,7 @@ import zipfile
 from pathlib import Path
 from check_connection import CheckConnection
 import geopandas as gpd
+from config import config
 
 pd.options.mode.chained_assignment = None
 import warnings
@@ -52,9 +53,9 @@ def download_AIS(year, work_dir):
     #  download
     for file in files:
         CheckConnection.is_online()
-        logger.debug('downloading AIS file: %s' % file)
+        logger.info('downloading AIS file: %s' % file)
         # download zip file using wget with url and file name
-        wget.download(os.path.join(url, file))
+        wget.download(url=os.path.join(url, file), bar=None)
         file = file.split('/')[-1] if len(file.split('/')) > 1 else file
         # extract each zip file into output directory then delete it
         with zipfile.ZipFile(file, 'r') as zip_ref:
@@ -88,11 +89,9 @@ def subsample_AIS_to_CSV(year, work_dir, min_time_interval=30):
     logger.info('Subsampling year {0} to {1} minutes.'.format(year, min_time_interval))
     # check already processed files in the
     resume = check_dir(Path(work_dir, output))
-    last_index = len(resume)
 
     for file in os.listdir(str(Path(work_dir, year))):
         if file.endswith('.csv') and file not in resume:
-            last_index += 1
             logging.info("Subsampling  %s " % str(file))
             df = pd.read_csv(Path(Path(work_dir, year), file))
             df = df.drop(['MMSI', 'VesselName', 'CallSign', 'Cargo', 'TranscieverClass', 'ReceiverType', 'ReceiverID'], axis=1, errors='ignore')

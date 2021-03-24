@@ -34,8 +34,8 @@ FROM python:3-slim-buster
 
 ENV YEAR=2019
 ENV MINUTES=30
-ENV UN_CMEMS=
-ENV PW_CMEMS=
+ENV DATA_DIR=/maridata/data
+ENV PYTHONUNBUFFERED=1
 ARG USER=maridata
 ARG HOME=/${USER}
 ARG GROUP=${USER}
@@ -55,14 +55,17 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY *.py ./
+COPY logging.yaml ./
 
 RUN addgroup --system --gid ${ID} ${GROUP} && \
       adduser --system --home ${HOME} --no-create-home --uid ${ID} --ingroup ${GROUP} ${USER} && \
-      chown --recursive ${USER}:${GROUP} ${HOME}
+      chown --recursive ${USER}:${GROUP} ${HOME} && \
+      mkdir --parents ${DATA_DIR} && \
+      chown --recursive ${USER}:${GROUP} ${DATA_DIR}
 
 USER ${USER}
 
-CMD python ./main.py --year="$YEAR" --minutes="$MINUTES"
+CMD python ./main.py --year="$YEAR" --minutes="$MINUTES" --dir="$DATA_DIR"
 
 ARG GIT_COMMIT
 LABEL org.opencontainers.image.revision "${GIT_COMMIT}"

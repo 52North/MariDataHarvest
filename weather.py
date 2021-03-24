@@ -12,20 +12,14 @@ from ais import check_dir
 from xarray.backends import NetCDF4DataStore
 from siphon.catalog import TDSCatalog
 from siphon import http_util
-import os
 from check_connection import CheckConnection
+from config import config
 
 # utils to convert dates
 str_to_date = lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
 date_to_str = lambda x: x.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 logger = logging.getLogger(__name__)
-
-# credentials for the dataset
-UN_CMEMS = os.environ['UN_CMEMS']
-PW_CMEMS = os.environ['PW_CMEMS']
-UN_RDA = os.environ['UN_RDA']
-PW_RDA = os.environ['PW_RDA']
 
 WIND_VAR_LIST = ['surface_downward_eastward_stress', 'wind_stress_divergence', 'northward_wind', 'sampling_length',
                  'wind_speed_rms', 'wind_vector_curl',
@@ -162,7 +156,7 @@ def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 def try_get_data(url):
     try:
         CheckConnection.is_online()
-        url_auth = authenticate_CAS_for_URL(url, UN_CMEMS, PW_CMEMS)
+        url_auth = authenticate_CAS_for_URL(url, config['UN_CMEMS'], config['PW_CMEMS'])
         CheckConnection.is_online()
         bytes_data = open_url(url_auth).read()
         CheckConnection.is_online()
@@ -229,7 +223,7 @@ def get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     base_url = 'https://rda.ucar.edu/thredds/catalog/files/g/ds084.1'
     CheckConnection.set_url('rda.ucar.edu')
     # calculate a day prior for midnight interpolation
-    http_util.session_manager.set_session_options(auth=(UN_RDA, PW_RDA))
+    http_util.session_manager.set_session_options(auth=(config['UN_RDA'], config['PW_RDA']))
     start_date = datetime(date_lo.year, date_lo.month, date_lo.day) - timedelta(days=1)
 
     # consider the supported time range
