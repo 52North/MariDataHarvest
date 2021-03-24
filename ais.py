@@ -1,4 +1,5 @@
 import logging
+import shutil
 
 import wget
 import os
@@ -8,6 +9,7 @@ import requests
 import zipfile
 from pathlib import Path
 from check_connection import CheckConnection
+import geopandas as gpd
 
 pd.options.mode.chained_assignment = None
 import warnings
@@ -62,6 +64,14 @@ def download_AIS(year, work_dir):
                     zip_ref.extract(f, p)
                 if f.filename.endswith('.gdb/'):
                     zip_ref.extractall(p)
+                    gdb_file = Path(p, f.filename[:-1])
+                    gdf = gpd.read_file(gdb_file)
+                    name = f.filename.split('.')[0]
+                    gdf['LON'] = gdf.geometry.apply(lambda point: point.x)
+                    gdf['LAT'] = gdf.geometry.apply(lambda point: point.y)
+                    gdf.drop(columns=['geometry'], inplace=True)
+                    gdf.to_csv(Path(p, name + '.csv'))
+                    shutil.rmtree(gdb_file)
                     break
         os.remove(file)
 
@@ -85,14 +95,19 @@ def subsample_AIS_to_CSV(year, work_dir, min_time_interval=30):
             last_index += 1
             logging.info("Subsampling  %s " % str(file))
             df = pd.read_csv(Path(Path(work_dir, year), file))
-            df = df.drop(['MMSI', 'VesselName', 'CallSign', 'Cargo', 'TranscieverClass'], axis=1, errors='ignore')
+            df = df.drop(['MMSI', 'VesselName', 'CallSign', 'Cargo', 'TranscieverClass', 'ReceiverType', 'ReceiverID'], axis=1, errors='ignore')
             df = df.dropna()
-            df = df.query(
-                '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0) & (VesselType == 1016 or 89 >= VesselType >= 70) & SOG > 3 & Length > 3 & Width > 3 & Draft > 3 ')
+            if 'VesselType' in df.columns:
+                df = df.query(
+                    '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0) & (VesselType == 1016 or 89 >= VesselType >= 70) & SOG > 3')
+            else:
+                df = df.query(
+                    '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0) & SOG > 3')
             df = df.drop(['Status'], axis=1, errors='ignore')
             # parse and set seconds to zero
             df['BaseDateTime'] = pd.to_datetime(df.BaseDateTime, format='%Y-%m-%dT%H:%M:%S').apply(rm_sec)
             df.index = df.BaseDateTime
             df = df.resample("%dT" % int(min_time_interval)).last()
             df.reset_index(drop=True, inplace=True)
+            df = df.dropna()
             df.to_csv(Path(path, str(file)))

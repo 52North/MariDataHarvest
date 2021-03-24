@@ -19,6 +19,7 @@ This tool is developed with in the [MariData](https://www.maridata.org) project.
 - siphon
 - wget
 - xarray
+- geopandas
 
 Install via pip:
 
@@ -86,6 +87,7 @@ You can use the Dockerfile to build an docker image and run the script in its ow
 | certifi         | 2020.12.5 | Mozilla Public License 2.0 (MPL 2.0)                |
 | cftime          | 1.4.1     | MIT License                                         |
 | chardet         | 4.0.0     | GNU Library or Lesser General Public License (LGPL) |
+| geopandas       | 0.9.0     | BSD License                                         |
 | idna            | 2.10      | BSD License                                         |
 | motuclient      | 1.8.8     | GNU Lesser General Public License v3 (LGPLv3)       |
 | netCDF4         | 1.5.6     | MIT License                                         |
