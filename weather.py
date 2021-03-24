@@ -27,6 +27,20 @@ PW_CMEMS = os.environ['PW_CMEMS']
 UN_RDA = os.environ['UN_RDA']
 PW_RDA = os.environ['PW_RDA']
 
+WIND_VAR_LIST = ['surface_downward_eastward_stress', 'wind_stress_divergence', 'northward_wind', 'sampling_length',
+                 'wind_speed_rms', 'wind_vector_curl',
+                 'northward_wind_rms', 'eastward_wind', 'wind_speed', 'wind_vector_divergence', 'wind_stress',
+                 'wind_stress_curl', 'eastward_wind_rms', 'surface_type',
+                 'surface_downward_northward_stress']
+
+WAVE_VAR_LIST = ['VHM0_WW', 'VMDR_SW2', 'VMDR_SW1', 'VMDR', 'VTM10', 'VTPK', 'VPED',
+                 'VTM02', 'VMDR_WW', 'VTM01_SW2', 'VHM0_SW1',
+                 'VTM01_SW1', 'VSDX', 'VSDY', 'VHM0', 'VTM01_WW', 'VHM0_SW2']
+
+PHY_VAR_LIST = ['vo', 'thetao', 'uo', 'zos', 'utotal', 'vtide', 'utide', 'vtotal']
+
+DAILY_PHY_VAR_LIST = ['mlotst', 'siconc', 'usi', 'sithick', 'bottomT', 'vsi', 'so']
+
 GFS_VAR_LIST = ['Temperature_surface', 'Wind_speed_gust_surface', 'u-component_of_wind_maximum_wind',
                 'v-component_of_wind_maximum_wind', 'Dewpoint_temperature_height_above_ground',
                 'U-Component_Storm_Motion_height_above_ground_layer',
@@ -142,7 +156,7 @@ def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                   t_hi), z_lo, z_hi)
 
     data1 = try_get_data(url)
-    return data, data1
+    return xr.combine_by_coords([data, data1.drop_vars(['uo', 'vo', 'vsdx', 'vsdy'])])
 
 
 def try_get_data(url):
@@ -191,10 +205,8 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 
 
 def get_cached(dataset, date, lat, lon, name):
-    if name in ['wave', 'phy_0', 'phy_1']:
+    if name in ['wave', 'phy']:
         df = dataset.interp(longitude=[lon], latitude=[lat], time=[date], method='linear').to_dataframe()
-        if name == 'phy_1':
-            df.drop(columns=['uo', 'vo'], inplace=True)
     elif name == 'wind':
         df = dataset.interp(lon=[lon], lat=[lat], time=[date], method='linear').to_dataframe()
     elif name == 'phy_daily':
@@ -207,7 +219,7 @@ def get_cached(dataset, date, lat, lon, name):
         lon = ((lon + 180) % 360) + 180
         df = dataset.interp(latitude=[lat], longitude=[lon], bounds_dim=1, time=[date]).to_dataframe()
         df = df[GFS_VAR_LIST]
-    return np.ravel(df.values), list(df.columns)
+    return np.ravel(df.values)
 
 
 def get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
@@ -381,38 +393,27 @@ def append_to_csv(in_path, out_path):
     date_lo = df.BaseDateTime.min()
     date_hi = df.BaseDateTime.max()
 
-    # the datasets could have different resolutions
-    gfs_dataset = get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
-    daily_phy_dataset = get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
-    wind_dataset = get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
-    wave_dataset = get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
-    phy_0_dataset, phy_1_dataset = get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
+    ds = get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
+    df[PHY_VAR_LIST] = df.apply(
+        lambda x: get_cached(ds, x.BaseDateTime, x.LAT, x.LON, 'phy'), axis=1).apply(pd.Series)
 
-    # define new columns for the output dataframe
-    cols = list(df.columns)
-    data_list = []
-    for idx, x in df.iterrows():
+    ds = get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
+    df[WIND_VAR_LIST] = df.apply(
+        lambda x: get_cached(ds, x.BaseDateTime, x.LAT, x.LON, 'wind'), axis=1).apply(pd.Series)
 
-        date, lat, lon = x[['BaseDateTime', 'LON', 'LAT']]
-        logger.debug('Interpolate cached data for DATE %s, LAT %s and LON %s' % (
-            str(date), str(lat), str(lon)))
+    ds = get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
+    df[WAVE_VAR_LIST] = df.apply(
+        lambda x: get_cached(ds, x.BaseDateTime, x.LAT, x.LON, 'wave'), axis=1).apply(pd.Series)
 
-        wind_val, wind_cols = get_cached(wind_dataset, date, lat, lon, 'wind')
+    ds = get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
+    df[DAILY_PHY_VAR_LIST] = df.apply(
+        lambda x: get_cached(ds, x.BaseDateTime, x.LAT, x.LON, 'phy_daily'), axis=1).apply(pd.Series)
 
-        wave_val, wave_cols = get_cached(wave_dataset, date, lat, lon, 'wave')
+    ds = get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
+    df[GFS_VAR_LIST] = df.apply(
+        lambda x: get_cached(ds, x.BaseDateTime, x.LAT, x.LON, 'gfs25'), axis=1).apply(pd.Series)
 
-        phy_0_val, phy_cols_0 = get_cached(phy_0_dataset, date, lat, lon, 'phy_0')
-
-        phy_1_val, phy_cols_1 = get_cached(phy_1_dataset, date, lat, lon, 'phy_1')
-
-        daily_phy_val, daily_phy_cols = get_cached(daily_phy_dataset, date, lat, lon, 'phy_daily')
-
-        gfs_val, gfs_cols = get_cached(gfs_dataset, date, lat, lon, 'gfs25')
-
-        data_list.append(np.concatenate([x.values, wind_val, wave_val, phy_0_val, phy_1_val, daily_phy_val, gfs_val]))
-    pd.DataFrame(data_list,
-                 columns=cols + wind_cols + wave_cols + phy_cols_0 + phy_cols_1 + daily_phy_cols + gfs_cols).to_csv(
-        out_path)
+    df.to_csv(out_path)
 
 
 def append_environment_data(year, min_time_interval, work_dir):
