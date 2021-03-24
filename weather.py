@@ -48,17 +48,17 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     """
     logger.debug('obtaining GLOBAL_REANALYSIS_WAV dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
-
-    if date_lo < datetime(2019, 1, 1):
-        CheckConnection.set_url('my.cmems-du.eu')
-        base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
-        service = 'GLOBAL_REANALYSIS_WAV_001_032-TDS'
-        product = 'global-reanalysis-wav-001-032'
-    else:
+    if date_lo >= datetime(2019, 1, 1, 3):
         CheckConnection.set_url('nrt.cmems-du.eu')
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_ANALYSIS_FORECAST_WAV_001_027-TDS'
         product = 'global-analysis-forecast-wav-001-027'
+    elif date_lo >= datetime(1993, 1, 1, 3):
+        CheckConnection.set_url('my.cmems-du.eu')
+        base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
+        service = 'GLOBAL_REANALYSIS_WAV_001_032-TDS'
+        product = 'global-reanalysis-wav-001-032'
+
     dataset_temporal_resolution = 180
 
     y_lo = float(lat_lo)
@@ -170,9 +170,16 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     logger.debug('obtaining WIND_GLO_WIND_L4_NRT_OBSERVATIONS dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     CheckConnection.set_url('nrt.cmems-du.eu')
-    base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
-    service = 'WIND_GLO_WIND_L4_NRT_OBSERVATIONS_012_004-TDS'
-    product = 'CERSAT-GLO-BLENDED_WIND_L4-V6-OBS_FULL_TIME_SERIE'
+
+    if date_lo >= datetime(2018, 1, 1):
+        base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
+        service = 'WIND_GLO_WIND_L4_NRT_OBSERVATIONS_012_004-TDS'
+        product = 'CERSAT-GLO-BLENDED_WIND_L4-V6-OBS_FULL_TIME_SERIE'
+    elif date_lo >= datetime(1992, 1, 1):
+        base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
+        service = 'WIND_GLO_WIND_L4_REP_OBSERVATIONS_012_006-TDS'
+        product = 'CERSAT-GLO-BLENDED_WIND_L4_REP-V6-OBS_FULL_TIME_SERIE'
+
     dataset_temporal_resolution = 360
     time_in_min = (date_lo.hour * 60) + date_lo.minute
     rest = time_in_min % dataset_temporal_resolution
