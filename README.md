@@ -68,12 +68,15 @@ python main.py --year=2019 --minutes=30 --dir=C:\..
 ### Docker
 - [ ] add --dir to docker arguments
 
-You can use the Dockerfile to build an docker image and run the script in its own isolated container. It is recommend to provide a volume to persist the data between each run. You can specify the arguments `year` and `minutes` as environment variables when creating/starting the container:
+You can use the Dockerfile to build an docker image and run the script in its own isolated enviroment. It is recommend to provide a volume to persist the data between each run. You can specify the arguments `year`, `minutes`, and `dir` as environment variables when creating/starting the container as outlined in the following. The labels used are following the [Image And Container Label Specification](https://wiki.52north.org/Documentation/ImageAndContainerLabelSpecification) of 52°North.
 
 1. Build:
 
    ```sh
-   docker build --build-arg GIT_COMMIT=$(git rev-parse -q --verify HEAD) --build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") -t 52north/mari-data_harvester:1.0.0 .
+   docker build \
+      --build-arg GIT_COMMIT=$(git rev-parse -q --verify HEAD) \
+      --build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+      -t 52north/mari-data_harvester:1.0.0 .
    ```
 
    Ensure, that the version of the image tag is matching the version in the Dockerfile, here: `1.0.0`.
@@ -96,10 +99,11 @@ You can use the Dockerfile to build an docker image and run the script in its ow
       --label org.52north.contact=dev-opser+maridata_harvester@example.org \
       --label org.52north.context="MariData Project: Data Harvesting Script" \
       --label org.52north.end-of-life="2021-12-31T23:59:59Z" \
-      --env-file docker.env --detach \
       --volume maridata-harvester_data:/maridata/data \
       --volume $(pwd)/.env.secret:/maridata/.env.secret:ro \
       --name=mari-data_harvester \
+      --env-file docker.env \
+      --detach \
       52north/mari-data_harvester:1.0.0 \
       && docker logs --follow mari-data_harvester
    ```
@@ -118,7 +122,11 @@ You can use the Dockerfile to build an docker image and run the script in its ow
 Use the following command to send the code to any server for building the image and run it:
 
 ```sh
-rsync --recursive --verbose --times --rsh ssh --exclude='AIS-DATA' --exclude='*.tmp' --exclude='*.swp' --exclude='.vscode' --exclude='__pycache__' --delete . mari-data-harvester.example.org:/home/user/maridata-harvester
+rsync --recursive --verbose --times --rsh ssh \
+   --exclude='AIS-DATA' --exclude='*.tmp' \
+   --exclude='*.swp' --exclude='.vscode' \
+   --exclude='__pycache__' --delete . \
+   mari-data-harvester.example.org:/home/user/maridata-harvester
 ```
 
 ## Contact
