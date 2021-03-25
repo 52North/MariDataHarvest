@@ -30,6 +30,9 @@
 #      --build-arg GIT_COMMIT=$(git rev-parse -q --verify HEAD)
 #      --build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 #
+# See https://wiki.52north.org/Documentation/ImageAndContainerLabelSpecification
+# regarding the used labels
+#
 FROM python:3-slim-buster
 
 ENV YEAR=2019

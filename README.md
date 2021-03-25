@@ -78,10 +78,30 @@ You can use the Dockerfile to build an docker image and run the script in its ow
 
    Ensure, that the version of the image tag is matching the version in the Dockerfile, here: `1.0.0`.
 
+1. Create named volume:
+
+   ```sh
+   docker volume create \
+      --label org.52north.contact=dev-opser+maridata_harvester@example.org \
+      --label org.52north.context="MariData Project: Data Harvesting Script" \
+      --label org.52north.end-of-life="2021-12-31T23:59:59Z" \
+      maridata-harvester_data
+   ```
+
+
 1. Run:
 
    ```sh
-   docker run --env-file docker.env --rm --volume $(pwd)/AIS-data:/data --volume $(pwd)/.env.secret:/maridata/.env.secret:ro --name=mari-data_harvester 52north/mari-data_harvester:1.0.0
+   docker run \
+      --label org.52north.contact=dev-opser+maridata_harvester@example.org \
+      --label org.52north.context="MariData Project: Data Harvesting Script" \
+      --label org.52north.end-of-life="2021-12-31T23:59:59Z" \
+      --env-file docker.env --detach \
+      --volume maridata-harvester_data:/maridata/data \
+      --volume $(pwd)/.env.secret:/maridata/.env.secret:ro \
+      --name=mari-data_harvester \
+      52north/mari-data_harvester:1.0.0 \
+      && docker logs --follow mari-data_harvester
    ```
 
    with `docker.env` containing the following information:
