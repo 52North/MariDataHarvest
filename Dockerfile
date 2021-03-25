@@ -38,6 +38,7 @@ FROM python:3-slim-buster
 ENV YEAR=2019
 ENV MINUTES=30
 ENV DATA_DIR=/maridata/data
+ENV STEP=0
 ENV PYTHONUNBUFFERED=1
 ARG USER=maridata
 ARG HOME=/${USER}
@@ -68,7 +69,7 @@ RUN addgroup --system --gid ${ID} ${GROUP} && \
 
 USER ${USER}
 
-CMD python ./main.py --year="$YEAR" --minutes="$MINUTES" --dir="$DATA_DIR"
+CMD python ./main.py --year="$YEAR" --minutes="$MINUTES" --dir="$DATA_DIR" --step="$STEP"
 
 ARG GIT_COMMIT
 LABEL org.opencontainers.image.revision "${GIT_COMMIT}"

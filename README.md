@@ -102,6 +102,7 @@ You can use the Dockerfile to build an docker image and run the script in its ow
    YEAR=2019
    MINUTES=30
    DATA_DIR=/data
+   STEP=0
    ```
 
 
