@@ -8,19 +8,7 @@ This tool is developed with in the [MariData](https://www.maridata.org) project.
 
 ## Required modules/libraries
 
-- beautifulsoup4
-- bs4
-- motuclient
-- netCDF4
-- pandas
-- pyyaml
-- python-dotenv
-- requests
-- scipy
-- siphon
-- wget
-- xarray
-- geopandas
+For a detailed list, see section License below.
 
 Install via pip:
 
@@ -141,24 +129,32 @@ rsync --recursive --verbose --times --rsh ssh \
 
 | Name            | Version   | License                                             |
 |-----------------|-----------|-----------------------------------------------------|
+| Fiona           | 1.8.18    | BSD License                                         |
 | PyYAML          | 5.4.1     | MIT License                                         |
+| Shapely         | 1.7.1     | BSD License                                         |
+| attrs           | 20.3.0    | MIT License                                         |
 | beautifulsoup4  | 4.9.3     | MIT License                                         |
 | bs4             | 0.0.1     | MIT License                                         |
 | certifi         | 2020.12.5 | Mozilla Public License 2.0 (MPL 2.0)                |
 | cftime          | 1.4.1     | MIT License                                         |
 | chardet         | 4.0.0     | GNU Library or Lesser General Public License (LGPL) |
-| geopandas       | 0.9.0     | BSD License                                         |
+| click           | 7.1.2     | BSD License                                         |
+| click-plugins   | 1.1.1     | BSD License                                         |
+| cligj           | 0.7.1     | BSD                                                 |
+| geopandas       | 0.9.0     | BSD                                                 |
 | idna            | 2.10      | BSD License                                         |
 | motuclient      | 1.8.8     | GNU Lesser General Public License v3 (LGPLv3)       |
+| munch           | 2.5.0     | MIT License                                         |
 | netCDF4         | 1.5.6     | MIT License                                         |
 | numpy           | 1.20.1    | BSD License                                         |
 | pandas          | 1.2.3     | BSD                                                 |
 | protobuf        | 3.15.6    | 3-Clause BSD License                                |
+| pyproj          | 3.0.1     | MIT License                                         |
 | python-dateutil | 2.8.1     | BSD License, Apache Software License                |
 | python-dotenv   | 0.15.0    | BSD License                                         |
 | pytz            | 2021.1    | MIT License                                         |
 | requests        | 2.25.1    | Apache Software License                             |
-| scipy           | 1.6.1     | BSD License                                         |
+| scipy           | 1.6.2     | BSD License                                         |
 | siphon          | 0.9       | BSD License                                         |
 | six             | 1.15.0    | MIT License                                         |
 | soupsieve       | 2.2.1     | MIT License                                         |
@@ -169,7 +165,8 @@ rsync --recursive --verbose --times --rsh ssh \
 Generate this list via the following command:
 
 ```sh
-docker run --rm --interactive --tty 52north/mari-data_harvester:1.0.0 /bin/bash -c "pip install --no-warn-script-location --no-cache-dir pip-licenses > /dev/null && .local/bin/pip-licenses -f markdown"
+docker run --rm --interactive --tty 52north/mari-data_harvester:1.0.0 /bin/bash \
+   -c "pip install --no-warn-script-location --no-cache-dir pip-licenses > /dev/null && .local/bin/pip-licenses -f markdown"
 ```
 
 
