@@ -1,3 +1,4 @@
+import warnings
 import logging
 import os
 import shutil
@@ -14,7 +15,6 @@ from check_connection import CheckConnection
 from config import config
 
 pd.options.mode.chained_assignment = None
-import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def check_dir(dir_name):
-    return os.listdir(dir_name)
+    return sorted(os.listdir(dir_name), key=str.lower)
 
 
 def download_AIS(year, work_dir):
@@ -48,7 +48,8 @@ def download_AIS(year, work_dir):
         if a.text and a.text.endswith('zip'):
             name = a['href'].split('.')[0]
             name = name.split('/')[-1] if len(name.split('/')) > 1 else name
-            if name + '.csv' in resume_download or name + '.gdb' in resume_download: continue
+            if name + '.csv' in resume_download or name + '.gdb' in resume_download:
+                continue
             files.append(a['href'])
 
     #  download
@@ -87,27 +88,31 @@ def subsample_AIS_to_CSV(year, work_dir, min_time_interval=30):
     output = '{0}_filtered_{1}'.format(year, min_time_interval)
     path = Path(work_dir, output)
     Path(work_dir, output).mkdir(parents=True, exist_ok=True)
-    logger.info('Subsampling year {0} to {1} minutes.'.format(year, min_time_interval))
+    logger.info('Subsampling year {0} to {1} minutes.'.format(
+        year, min_time_interval))
     # check already processed files in the
     resume = check_dir(Path(work_dir, output))
 
-    for file in os.listdir(str(Path(work_dir, year))):
-        if file.endswith('.csv') and file not in resume:
-            logging.info("Subsampling  %s " % str(file))
-            df = pd.read_csv(Path(Path(work_dir, year), file))
-            df = df.drop(['MMSI', 'VesselName', 'CallSign', 'Cargo', 'TranscieverClass', 'ReceiverType', 'ReceiverID'], axis=1, errors='ignore')
-            df = df.dropna()
-            if 'VesselType' in df.columns:
-                df = df.query(
-                    '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0) & (VesselType == 1016 or 89 >= VesselType >= 70) & SOG > 3')
-            else:
-                df = df.query(
-                    '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0) & SOG > 3')
-            df = df.drop(['Status'], axis=1, errors='ignore')
-            # parse and set seconds to zero
-            df['BaseDateTime'] = pd.to_datetime(df.BaseDateTime, format='%Y-%m-%dT%H:%M:%S').apply(rm_sec)
-            df.index = df.BaseDateTime
-            df = df.resample("%dT" % int(min_time_interval)).last()
-            df.reset_index(drop=True, inplace=True)
-            df = df.dropna()
-            df.to_csv(Path(path, str(file)))
+    files = [f for f in sorted(os.listdir(str(
+        Path(work_dir, year))), key=str.lower) if f.endswith('.csv') and f not in resume]
+    for file in files:
+        logging.info("Subsampling  %s " % str(file))
+        df = pd.read_csv(Path(Path(work_dir, year), file))
+        df = df.drop(['MMSI', 'VesselName', 'CallSign', 'Cargo', 'TranscieverClass',
+                     'ReceiverType', 'ReceiverID'], axis=1, errors='ignore')
+        df = df.dropna()
+        if 'VesselType' in df.columns:
+            df = df.query(
+                '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0) & (VesselType == 1016 or 89 >= VesselType >= 70) & SOG > 3')
+        else:
+            df = df.query(
+                '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0) & SOG > 3')
+        df = df.drop(['Status'], axis=1, errors='ignore')
+        # parse and set seconds to zero
+        df['BaseDateTime'] = pd.to_datetime(
+            df.BaseDateTime, format='%Y-%m-%dT%H:%M:%S').apply(rm_sec)
+        df.index = df.BaseDateTime
+        df = df.resample("%dT" % int(min_time_interval)).last()
+        df.reset_index(drop=True, inplace=True)
+        df = df.dropna()
+        df.to_csv(Path(path, str(file)))
