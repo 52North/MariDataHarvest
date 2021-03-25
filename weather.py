@@ -1,17 +1,19 @@
 import logging
-import pandas as pd
+import time
+from datetime import datetime, timedelta
+from pathlib import Path
+
 import numpy as np
+import pandas as pd
+import xarray as xr
+from bs4 import BeautifulSoup
 from motu_utils.utils_cas import authenticate_CAS_for_URL
 from motu_utils.utils_http import open_url
-import xarray as xr
-from datetime import datetime, timedelta
-import time
-from pathlib import Path
-from bs4 import BeautifulSoup
-from ais import check_dir
-from xarray.backends import NetCDF4DataStore
-from siphon.catalog import TDSCatalog
 from siphon import http_util
+from siphon.catalog import TDSCatalog
+from xarray.backends import NetCDF4DataStore
+
+from ais import check_dir
 from check_connection import CheckConnection
 from config import config
 

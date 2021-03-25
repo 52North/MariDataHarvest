@@ -1,7 +1,8 @@
-from dotenv import dotenv_values
-import sys
 import logging
 import os
+import sys
+
+from dotenv import dotenv_values
 
 secrets_file = '.env.secret'
 

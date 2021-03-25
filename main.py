@@ -1,13 +1,15 @@
-import time
-import traceback
+import argparse
 import logging
 import logging.config
+import os
+import time
+import traceback
+
+import yaml
+
 from ais import download_AIS, subsample_AIS_to_CSV
 from check_connection import CheckConnection
 from weather import append_environment_data
-import argparse
-import os
-import yaml
 
 logging_config_file = 'logging.yaml'
 level = logging.DEBUG

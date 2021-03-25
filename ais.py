@@ -1,15 +1,16 @@
 import logging
-import shutil
-
-import wget
 import os
-import pandas as pd
-from bs4 import BeautifulSoup
-import requests
+import shutil
 import zipfile
 from pathlib import Path
-from check_connection import CheckConnection
+
 import geopandas as gpd
+import pandas as pd
+import requests
+import wget
+from bs4 import BeautifulSoup
+
+from check_connection import CheckConnection
 from config import config
 
 pd.options.mode.chained_assignment = None
