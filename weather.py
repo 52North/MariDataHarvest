@@ -33,7 +33,7 @@ WAVE_VAR_LIST = ['VHM0_WW', 'VMDR_SW2', 'VMDR_SW1', 'VMDR', 'VTM10', 'VTPK', 'VP
                  'VTM02', 'VMDR_WW', 'VTM01_SW2', 'VHM0_SW1',
                  'VTM01_SW1', 'VSDX', 'VSDY', 'VHM0', 'VTM01_WW', 'VHM0_SW2']
 
-PHY_VAR_LIST = ['vo', 'thetao', 'uo', 'zos', 'utotal', 'vtide', 'utide', 'vtotal']
+PHY_VAR_LIST = ['vo', 'thetao', 'uo', 'zos']  # , 'utotal', 'vtide', 'utide', 'vtotal']
 
 DAILY_PHY_VAR_LIST = ['mlotst', 'siconc', 'usi', 'sithick', 'bottomT', 'vsi', 'so']
 
@@ -48,6 +48,7 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
         retrieve all wave variables for a specific timestamp, latitude, longitude concidering
         the temporal resolution of the dataset to calculate interpolated values
     """
+    if date_lo < datetime(2019, 1, 1): return None
     logger.debug('obtaining GLOBAL_REANALYSIS_WAV dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     if date_lo >= datetime(2019, 1, 1, 3):
@@ -95,7 +96,7 @@ def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
         retrieve <phy> including ... variables for a specific timestamp, latitude, longitude considering
         the temporal resolution of the dataset to calculate interpolated values
     """
-
+    if date_lo < datetime(2019, 1, 1): return None
     logger.debug('obtaining GLOBAL_ANALYSIS_FORECAST_PHY Hourly dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
 
@@ -140,19 +141,20 @@ def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                                                                                                          , date_to_str(
                   t_hi), z_lo, z_hi)
     data = try_get_data(url)
-    time.sleep(1)
-
-    url = base_url + '&product=' + products[1] + '&product=global-analysis-forecast-phy-001-024-hourly-t-u-v-ssh' + \
-          '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&z_lo={6}&z_hi={7}&mode=console'.format(x_lo, x_hi,
-                                                                                                         y_lo,
-                                                                                                         y_hi,
-                                                                                                         date_to_str(
-                                                                                                             t_lo)
-                                                                                                         , date_to_str(
-                  t_hi), z_lo, z_hi)
-
-    data1 = try_get_data(url)
-    return xr.combine_by_coords([data, data1.drop_vars(['uo', 'vo', 'vsdx', 'vsdy'])])
+    # ignore ['utotal', 'vtide', 'utide', 'vtotal'] information due to very slow dataset
+    # time.sleep(1)
+    #
+    # url = base_url + '&product=' + products[1] + '&product=global-analysis-forecast-phy-001-024-hourly-t-u-v-ssh' + \
+    #       '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&z_lo={6}&z_hi={7}&mode=console'.format(x_lo, x_hi,
+    #                                                                                                      y_lo,
+    #                                                                                                      y_hi,
+    #                                                                                                      date_to_str(
+    #                                                                                                          t_lo)
+    #                                                                                                      , date_to_str(
+    #               t_hi), z_lo, z_hi)
+    #
+    # data1 = try_get_data(url)
+    return data
 
 
 def try_get_data(url):
@@ -207,25 +209,29 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     return data
 
 
-def get_cached(dataset, date, lat, lon, name):
-    if name in ['wave', 'phy']:
-        df = dataset.interp(longitude=[lon], latitude=[lat], time=[date], method='linear').to_dataframe()
+def interpolate_data(dataset, lon_points, lat_points, time_points, name):
+    if name == 'wave':
+        res = dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[WAVE_VAR_LIST]
+    elif name == 'phy':
+        res = dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[PHY_VAR_LIST]
     elif name == 'wind':
-        df = dataset.interp(lon=[lon], lat=[lat], time=[date], method='linear').to_dataframe()
+        res = dataset.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[WIND_VAR_LIST]
     elif name == 'phy_daily':
-        df = dataset.sel(longitude=[lon], latitude=[lat], time=[date], method='nearest').to_dataframe()
-        df.drop(columns=['thetao', 'uo', 'vo', 'zos'], inplace=True)
-    elif name == 'gfs50':
-        df = dataset.sel(lon=[lon], lat=[lat], time=[date], time1=[date], method='nearest').to_dataframe()
-        df.drop(columns=['LatLon_Projection'], inplace=True)
+        res = dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
+            DAILY_PHY_VAR_LIST]
     elif name == 'gfs25':
-        lon = ((lon + 180) % 360) + 180
-        df = dataset.interp(latitude=[lat], longitude=[lon], bounds_dim=1, time=[date]).to_dataframe()
-        df = df[GFS_VAR_LIST]
-    return np.ravel(df.values)
+        lon_points = ((lon_points + 180) % 360) + 180
+        b = xr.DataArray([1] * len(lon_points))
+        res = dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points, bounds_dim=b).to_dataframe()[
+            GFS_VAR_LIST]
+    return res.values
 
 
 def get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
+    start_date = datetime(date_lo.year, date_lo.month, date_lo.day) - timedelta(days=1)
+    # consider the supported time range
+    if start_date < datetime(2015, 1, 15): return None
+
     logger.debug('obtaining GFS 0.25 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     x_arr_list = []
@@ -233,11 +239,6 @@ def get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     CheckConnection.set_url('rda.ucar.edu')
     # calculate a day prior for midnight interpolation
     http_util.session_manager.set_session_options(auth=(config['UN_RDA'], config['PW_RDA']))
-    start_date = datetime(date_lo.year, date_lo.month, date_lo.day) - timedelta(days=1)
-
-    # consider the supported time range
-    if start_date < datetime(2015, 1, 15): return xr.Dataset()
-
     start_cat = TDSCatalog(
         "%s/%s/%s%.2d%.2d/catalog.xml" % (base_url, start_date.year, start_date.year, start_date.month, start_date.day))
     ds_subset = start_cat.datasets[
@@ -395,26 +396,24 @@ def append_to_csv(in_path, out_path):
 
     date_lo = df.BaseDateTime.min()
     date_hi = df.BaseDateTime.max()
+    time_points = xr.DataArray(list(df['BaseDateTime'].values))
+    lat_points = xr.DataArray(list(df['LAT'].values))
+    lon_points = xr.DataArray(list(df['LON'].values))
 
     ds = get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
-    df[PHY_VAR_LIST] = df.apply(
-        lambda x: get_cached(ds, x.BaseDateTime, x.LAT, x.LON, 'phy'), axis=1).apply(pd.Series)
+    df[PHY_VAR_LIST] = interpolate_data(ds, lon_points, lat_points, time_points, 'phy')
 
     ds = get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
-    df[WIND_VAR_LIST] = df.apply(
-        lambda x: get_cached(ds, x.BaseDateTime, x.LAT, x.LON, 'wind'), axis=1).apply(pd.Series)
+    df[WIND_VAR_LIST] = interpolate_data(ds, lon_points, lat_points, time_points, 'wind')
 
     ds = get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
-    df[WAVE_VAR_LIST] = df.apply(
-        lambda x: get_cached(ds, x.BaseDateTime, x.LAT, x.LON, 'wave'), axis=1).apply(pd.Series)
+    df[WAVE_VAR_LIST] = interpolate_data(ds, lon_points, lat_points, time_points, 'wave')
 
     ds = get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
-    df[DAILY_PHY_VAR_LIST] = df.apply(
-        lambda x: get_cached(ds, x.BaseDateTime, x.LAT, x.LON, 'phy_daily'), axis=1).apply(pd.Series)
+    df[DAILY_PHY_VAR_LIST] = interpolate_data(ds, lon_points, lat_points, time_points, 'phy_daily')
 
-    ds = get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
-    df[GFS_VAR_LIST] = df.apply(
-        lambda x: get_cached(ds, x.BaseDateTime, x.LAT, x.LON, 'gfs25'), axis=1).apply(pd.Series)
+    ds = get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi).interpolate_na()
+    df[GFS_VAR_LIST] = interpolate_data(ds, lon_points, lat_points, time_points, 'gfs25')
 
     df.to_csv(out_path)
 
