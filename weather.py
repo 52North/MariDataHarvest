@@ -33,9 +33,7 @@ WAVE_VAR_LIST = ['VHM0_WW', 'VMDR_SW2', 'VMDR_SW1', 'VMDR', 'VTM10', 'VTPK', 'VP
                  'VTM02', 'VMDR_WW', 'VTM01_SW2', 'VHM0_SW1',
                  'VTM01_SW1', 'VSDX', 'VSDY', 'VHM0', 'VTM01_WW', 'VHM0_SW2']
 
-PHY_VAR_LIST = ['vo', 'thetao', 'uo', 'zos']  # , 'utotal', 'vtide', 'utide', 'vtotal']
-
-DAILY_PHY_VAR_LIST = ['mlotst', 'siconc', 'usi', 'sithick', 'bottomT', 'vsi', 'so']
+DAILY_PHY_VAR_LIST = ['thetao', 'so', 'uo', 'vo', 'zos', 'mlotst', 'bottomT', 'siconc', 'sithick', 'usi', 'vsi']
 
 GFS_VAR_LIST = ['Temperature_surface', 'Wind_speed_gust_surface', 'u-component_of_wind_maximum_wind',
                 'v-component_of_wind_maximum_wind', 'Dewpoint_temperature_height_above_ground',
@@ -48,21 +46,20 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
         retrieve all wave variables for a specific timestamp, latitude, longitude concidering
         the temporal resolution of the dataset to calculate interpolated values
     """
-    if date_lo < datetime(2019, 1, 1): return None
     logger.debug('obtaining GLOBAL_REANALYSIS_WAV dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
-    if date_lo >= datetime(2019, 1, 1, 3):
+
+    dataset_temporal_resolution = 180
+    if date_lo >= datetime(2019, 1, 1, 6):
         CheckConnection.set_url('nrt.cmems-du.eu')
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_ANALYSIS_FORECAST_WAV_001_027-TDS'
         product = 'global-analysis-forecast-wav-001-027'
-    elif date_lo >= datetime(1993, 1, 1, 3):
+    elif date_lo >= datetime(1993, 1, 1, 6):
         CheckConnection.set_url('my.cmems-du.eu')
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_REANALYSIS_WAV_001_032-TDS'
         product = 'global-reanalysis-wav-001-032'
-
-    dataset_temporal_resolution = 180
 
     y_lo = float(lat_lo)
     y_hi = float(lat_hi)
@@ -173,18 +170,20 @@ def try_get_data(url):
 def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     logger.debug('obtaining WIND_GLO_WIND_L4_NRT_OBSERVATIONS dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
-    CheckConnection.set_url('nrt.cmems-du.eu')
 
-    if date_lo >= datetime(2018, 1, 1):
+    dataset_temporal_resolution = 360
+    if date_lo >= datetime(2018, 1, 1, 6):
+        CheckConnection.set_url('nrt.cmems-du.eu')
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'WIND_GLO_WIND_L4_NRT_OBSERVATIONS_012_004-TDS'
         product = 'CERSAT-GLO-BLENDED_WIND_L4-V6-OBS_FULL_TIME_SERIE'
-    elif date_lo >= datetime(1992, 1, 1):
+    elif date_lo >= datetime(1992, 1, 1, 6):
+        CheckConnection.set_url('my.cmems-du.eu')
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'WIND_GLO_WIND_L4_REP_OBSERVATIONS_012_006-TDS'
         product = 'CERSAT-GLO-BLENDED_WIND_L4_REP-V6-OBS_FULL_TIME_SERIE'
 
-    dataset_temporal_resolution = 360
+
     time_in_min = (date_lo.hour * 60) + date_lo.minute
     rest = time_in_min % dataset_temporal_resolution
     t_lo = date_lo - timedelta(minutes=rest)  # extract the lower bound
@@ -212,8 +211,6 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 def interpolate_data(dataset, lon_points, lat_points, time_points, name):
     if name == 'wave':
         res = dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[WAVE_VAR_LIST]
-    elif name == 'phy':
-        res = dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[PHY_VAR_LIST]
     elif name == 'wind':
         res = dataset.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[WIND_VAR_LIST]
     elif name == 'phy_daily':
@@ -228,12 +225,11 @@ def interpolate_data(dataset, lon_points, lat_points, time_points, name):
 
 
 def get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
+    logger.debug('obtaining GFS 0.25 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
+        str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     start_date = datetime(date_lo.year, date_lo.month, date_lo.day) - timedelta(days=1)
     # consider the supported time range
     if start_date < datetime(2015, 1, 15): return None
-
-    logger.debug('obtaining GFS 0.25 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
-        str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     x_arr_list = []
     base_url = 'https://rda.ucar.edu/thredds/catalog/files/g/ds084.1'
     CheckConnection.set_url('rda.ucar.edu')
@@ -353,11 +349,19 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     logger.debug('obtaining GLOBAL_ANALYSIS_FORECAST_PHY Daily dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
-    CheckConnection.set_url('nrt.cmems-du.eu')
-    base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload&service=GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
-    product = 'global-analysis-forecast-phy-001-024'
 
-    t_lo = datetime(date_lo.year, date_lo.month, date_lo.day, 12)
+    if date_lo >= datetime(2019, 1, 2):
+        CheckConnection.set_url('nrt.cmems-du.eu')
+        base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
+        service = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
+        product = 'global-analysis-forecast-phy-001-024'
+    elif date_lo >= datetime(1993, 1, 2):
+        CheckConnection.set_url('my.cmems-du.eu')
+        base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
+        service = 'GLOBAL_REANALYSIS_PHY_001_030-TDS'
+        product = 'global-reanalysis-phy-001-030-daily'
+
+    t_lo = datetime(date_lo.year, date_lo.month, date_lo.day, 12) - timedelta(days=1)
     t_hi = datetime(date_hi.year, date_hi.month, date_hi.day, 12) + timedelta(days=1)
 
     # coordinates
@@ -370,7 +374,7 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     z_hi = 0.50
     z_lo = 0.49
 
-    url = base_url + '&product=' + product + '&product=global-analysis-forecast-phy-001-024-hourly-t-u-v-ssh' + \
+    url = base_url + '&service=' + service + '&product=' + product + \
           '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&z_lo={6}&z_hi={7}&mode=console'.format(x_lo, x_hi,
                                                                                                          y_lo,
                                                                                                          y_hi,
@@ -400,20 +404,21 @@ def append_to_csv(in_path, out_path):
     lat_points = xr.DataArray(list(df['LAT'].values))
     lon_points = xr.DataArray(list(df['LON'].values))
 
-    ds = get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
-    df[PHY_VAR_LIST] = interpolate_data(ds, lon_points, lat_points, time_points, 'phy')
+    ds = get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
+    if ds:
+        df[GFS_VAR_LIST] = interpolate_data(ds, lon_points, lat_points, time_points, 'gfs25')
+    else:
+        logger.debug('GFS DATASET is out of supported range ')
+        df[GFS_VAR_LIST] = len(GFS_VAR_LIST) * [np.nan]
+
+    ds = get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
+    df[DAILY_PHY_VAR_LIST] = interpolate_data(ds, lon_points, lat_points, time_points, 'phy_daily')
 
     ds = get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
     df[WIND_VAR_LIST] = interpolate_data(ds, lon_points, lat_points, time_points, 'wind')
 
     ds = get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
     df[WAVE_VAR_LIST] = interpolate_data(ds, lon_points, lat_points, time_points, 'wave')
-
-    ds = get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
-    df[DAILY_PHY_VAR_LIST] = interpolate_data(ds, lon_points, lat_points, time_points, 'phy_daily')
-
-    ds = get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi).interpolate_na()
-    df[GFS_VAR_LIST] = interpolate_data(ds, lon_points, lat_points, time_points, 'gfs25')
 
     df.to_csv(out_path)
 
