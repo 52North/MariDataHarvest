@@ -1,5 +1,6 @@
 import logging
 import time
+import traceback
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -18,7 +19,7 @@ from check_connection import CheckConnection
 from config import config
 
 # utils to convert dates
-str_to_date = lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
+str_to_date = lambda x: datetime.strptime(x.replace('+00:00', ''), '%Y-%m-%d %H:%M:%S')
 date_to_str = lambda x: x.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 logger = logging.getLogger(__name__)
@@ -35,13 +36,18 @@ WAVE_VAR_LIST = ['VHM0_WW', 'VMDR_SW2', 'VMDR_SW1', 'VMDR', 'VTM10', 'VTPK', 'VP
 
 DAILY_PHY_VAR_LIST = ['thetao', 'so', 'uo', 'vo', 'zos', 'mlotst', 'bottomT', 'siconc', 'sithick', 'usi', 'vsi']
 
-GFS_VAR_LIST = ['Temperature_surface', 'Wind_speed_gust_surface', 'u-component_of_wind_maximum_wind',
-                'v-component_of_wind_maximum_wind', 'Dewpoint_temperature_height_above_ground',
-                'U-Component_Storm_Motion_height_above_ground_layer',
-                'V-Component_Storm_Motion_height_above_ground_layer', 'Relative_humidity_height_above_ground']
+GFS_25_VAR_LIST = ['Temperature_surface', 'Wind_speed_gust_surface', 'u-component_of_wind_maximum_wind',
+                   'v-component_of_wind_maximum_wind', 'Dewpoint_temperature_height_above_ground',
+                   'U-Component_Storm_Motion_height_above_ground_layer',
+                   'V-Component_Storm_Motion_height_above_ground_layer', 'Relative_humidity_height_above_ground']
+
+GFS_50_VAR_LIST = variables = ['Temperature_surface', 'u-component_of_wind_maximum_wind',
+                               'v-component_of_wind_maximum_wind', 'U-Component_Storm_Motion_height_above_ground_layer',
+                               'V-Component_Storm_Motion_height_above_ground_layer',
+                               'Relative_humidity_height_above_ground']
 
 
-def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
+def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
     """
         retrieve all wave variables for a specific timestamp, latitude, longitude concidering
         the temporal resolution of the dataset to calculate interpolated values
@@ -84,8 +90,9 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
         date_to_str(
             t_hi))
 
-    data = try_get_data(url)
-    return data
+    dataset = try_get_data(url)
+    return dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
+        WAVE_VAR_LIST]
 
 
 def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
@@ -167,7 +174,7 @@ def try_get_data(url):
                          url)
 
 
-def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
+def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
     logger.debug('obtaining WIND_GLO_WIND_L4_NRT_OBSERVATIONS dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
 
@@ -182,7 +189,6 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'WIND_GLO_WIND_L4_REP_OBSERVATIONS_012_006-TDS'
         product = 'CERSAT-GLO-BLENDED_WIND_L4_REP-V6-OBS_FULL_TIME_SERIE'
-
 
     time_in_min = (date_lo.hour * 60) + date_lo.minute
     rest = time_in_min % dataset_temporal_resolution
@@ -204,32 +210,18 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
             t_lo),
         date_to_str(
             t_hi))
-    data = try_get_data(url)
-    return data
+    dataset = try_get_data(url)
+    return dataset.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[WIND_VAR_LIST]
 
 
-def interpolate_data(dataset, lon_points, lat_points, time_points, name):
-    if name == 'wave':
-        res = dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[WAVE_VAR_LIST]
-    elif name == 'wind':
-        res = dataset.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[WIND_VAR_LIST]
-    elif name == 'phy_daily':
-        res = dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
-            DAILY_PHY_VAR_LIST]
-    elif name == 'gfs25':
-        lon_points = ((lon_points + 180) % 360) + 180
-        b = xr.DataArray([1] * len(lon_points))
-        res = dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points, bounds_dim=b).to_dataframe()[
-            GFS_VAR_LIST]
-    return res.values
-
-
-def get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
+def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
     logger.debug('obtaining GFS 0.25 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     start_date = datetime(date_lo.year, date_lo.month, date_lo.day) - timedelta(days=1)
     # consider the supported time range
-    if start_date < datetime(2015, 1, 15): return None
+    if start_date < datetime(2015, 1, 15):
+        logger.debug('GFS 0.25 DATASET is out of supported range')
+        return get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points)
     x_arr_list = []
     base_url = 'https://rda.ucar.edu/thredds/catalog/files/g/ds084.1'
     CheckConnection.set_url('rda.ucar.edu')
@@ -240,7 +232,7 @@ def get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     ds_subset = start_cat.datasets[
         'gfs.0p25.%s%.2d%.2d18.f006.grib2' % (start_date.year, start_date.month, start_date.day)].subset()
     query = ds_subset.query().lonlat_box(north=lat_hi, south=lat_lo, east=lon_hi, west=lon_lo).variables(
-        *GFS_VAR_LIST)
+        *GFS_25_VAR_LIST)
     CheckConnection.is_online()
     data = ds_subset.get_data(query)
     x_arr = xr.open_dataset(NetCDF4DataStore(data))
@@ -256,97 +248,74 @@ def get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
             for hours in [3, 6]:
                 name = 'gfs.0p25.%s%.2d%.2d%.2d.f0%.2d.grib2' % (
                     end_date.year, end_date.month, end_date.day, cycle, hours)
-                ds_subset = end_cat.datasets[name].subset()
-                query = ds_subset.query().lonlat_box(north=lat_hi, south=lat_lo, east=lon_hi, west=lon_lo).variables(
-                    *GFS_VAR_LIST)
-                CheckConnection.is_online()
-                data = ds_subset.get_data(query)
-                x_arr = xr.open_dataset(NetCDF4DataStore(data))
-                if 'time1' in list(x_arr.coords):
-                    x_arr = x_arr.rename({'time1': 'time'})
-                x_arr_list.append(x_arr)
-    return xr.combine_by_coords(x_arr_list).squeeze()
+                if name in list(end_cat.datasets):
+                    ds_subset = end_cat.datasets[name].subset()
+                    query = ds_subset.query().lonlat_box(north=lat_hi, south=lat_lo, east=lon_hi,
+                                                         west=lon_lo).variables(*GFS_25_VAR_LIST)
+                    CheckConnection.is_online()
+                    data = ds_subset.get_data(query)
+                    x_arr = xr.open_dataset(NetCDF4DataStore(data))
+                    if 'time1' in list(x_arr.coords):
+                        x_arr = x_arr.rename({'time1': 'time'})
+                    x_arr_list.append(x_arr)
+                else:
+                    logger.warning('dataset %s is not found' % name)
+    dataset = xr.combine_by_coords(x_arr_list).squeeze()
+    lon_points = ((lon_points + 180) % 360) + 180
+    b = xr.DataArray([1] * len(lon_points))
+    res = dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points, bounds_dim=b).to_dataframe()[
+        GFS_25_VAR_LIST]
+    return res
 
 
-def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
+def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
     logger.debug('obtaining GFS 0.50 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
-    vars = {'0': [
-        'Temperature_surface',
-        'Wind_speed_gust_surface',
-        'u-component_of_wind_maximum_wind',
-        'v-component_of_wind_maximum_wind',
-        'Dewpoint_temperature_height_above_ground',
-        'U-Component_Storm_Motion_height_above_ground_layer',
-        'V-Component_Storm_Motion_height_above_ground_layer',
-        'Relative_humidity_height_above_ground'],
-
-        '3': ['Precipitation_rate_surface_3_Hour_Average',
-              'Temperature_surface',
-              'Wind_speed_gust_surface',
-              'u-component_of_wind_maximum_wind',
-              'v-component_of_wind_maximum_wind',
-              'Categorical_Freezing_Rain_surface_3_Hour_Average',
-              'Categorical_Ice_Pellets_surface_3_Hour_Average',
-              'Categorical_Rain_surface_3_Hour_Average',
-              'Categorical_Snow_surface_3_Hour_Average',
-              'Dewpoint_temperature_height_above_ground',
-              'U-Component_Storm_Motion_height_above_ground_layer',
-              'V-Component_Storm_Motion_height_above_ground_layer',
-              'Relative_humidity_height_above_ground'],
-
-        '6': ['Precipitation_rate_surface_6_Hour_Average',
-              'Temperature_surface',
-              'Wind_speed_gust_surface',
-              'u-component_of_wind_maximum_wind',
-              'v-component_of_wind_maximum_wind',
-              'Dewpoint_temperature_height_above_ground',
-              'U-Component_Storm_Motion_height_above_ground_layer',
-              'V-Component_Storm_Motion_height_above_ground_layer',
-              'Relative_humidity_height_above_ground']}
-
     base_url = 'https://www.ncei.noaa.gov/thredds/model-gfs-g4-anl-files-old/'
-    CheckConnection.set_url('https://ncei.noaa.gov')
+    CheckConnection.set_url('ncei.noaa.gov')
 
-    dataList = []
-    for day in range((date_hi - date_lo).days + 1):
-        Hour_Averages = [0, 3, 6]
-        for Hour_Average in Hour_Averages:
-            for a in [0, 6, 12, 18]:
+    x_arr_list = []
+    start_date = datetime(date_lo.year, date_lo.month, date_lo.day) - timedelta(days=1)
+    for day in range((date_hi - start_date).days + 1):
+        dt = datetime(start_date.year, start_date.month, start_date.day) + timedelta(days=day)
+        catalog = TDSCatalog(
+            '%s%s%.2d/%s%.2d%.2d/catalog.xml' % (base_url, dt.year, dt.month, dt.year, dt.month, dt.day))
+        for hour in [3, 6]:
+            for cycle in [0, 6, 12, 18]:
                 attempts = 0
                 while True:
                     try:
                         attempts += 1
-                        dt = datetime(date_lo.year, date_lo.month, date_lo.day, a) + timedelta(days=day)
-                        catalog = TDSCatalog(
-                            '%s%s%.2d/%s%.2d%.2d/catalog.xml' % (
-                                base_url, dt.year, dt.month, dt.year, dt.month, dt.day))
-                        ds_name = 'gfsanl_4_%s%.2d%.2d_%.2d00_00%s.grb2' % (
-                            dt.year, dt.month, dt.day, dt.hour, Hour_Average)
-                        datasets = list(catalog.datasets)
-                        if ds_name in datasets:
-                            ncss = catalog.datasets[ds_name].subset()
-                            query = ncss.query().time(dt + timedelta(hours=Hour_Average)).lonlat_box(
-                                north=lat_hi, south=lat_lo, east=lon_hi, west=lon_lo).variables(
-                                *vars[str(Hour_Average)])
-                            data = ncss.get_data(query)
-                            ncss.unit_handler(data)
+                        name = 'gfsanl_4_%s%.2d%.2d_%.2d00_00%s.grb2' % (dt.year, dt.month, dt.day, cycle, hour)
+                        if name in list(catalog.datasets):
+                            ds_subset = catalog.datasets[name].subset()
+                            query = ds_subset.query().lonlat_box(north=lat_hi, south=lat_lo, east=lon_hi,
+                                                                 west=lon_lo).variables(*GFS_50_VAR_LIST)
+                            CheckConnection.is_online()
+                            data = ds_subset.get_data(query)
                             x_arr = xr.open_dataset(NetCDF4DataStore(data))
-                            dataList.append(x_arr)
+                            if 'time1' in list(x_arr.coords):
+                                x_arr = x_arr.rename({'time1': 'time'})
+                            x_arr_list.append(x_arr)
                         else:
-                            logger.warning('dataset %s is not found' % ds_name)
+                            logger.warning('dataset %s is not found' % name)
                         break
                     except Exception as e:
+                        logger.error(traceback.format_exc())
                         CheckConnection.is_online()
-                        time.sleep(1.5)
-                        if attempts % 20 == 0:
-                            logger.error(e)
-                            logger.error('Filename %s - Failed connecting to GFS Server - number of attempts: %d' % (
-                                ds_name, attempts))
-    return xr.merge(dataList, compat='override').squeeze().ffill(dim='time1').ffill(dim='time')
+                        logger.error(e)
+                        logger.error('Filename %s - Failed connecting to GFS Server - number of attempts: %d' % (
+                            name, attempts))
+                        time.sleep(2)
+
+    dataset = xr.combine_by_coords(x_arr_list).squeeze()
+    lon_points = ((lon_points + 180) % 360) + 180
+    res = dataset.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[GFS_50_VAR_LIST]
+    res[['Wind_speed_gust_surface', 'Dewpoint_temperature_height_above_ground']] = [[np.nan, np.nan]] * len(res)
+    return res
 
 
-def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
+def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
     logger.debug('obtaining GLOBAL_ANALYSIS_FORECAST_PHY Daily dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
 
@@ -382,8 +351,9 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                                                                                                              t_lo)
                                                                                                          , date_to_str(
                   t_hi), z_lo, z_hi)
-    data = try_get_data(url)
-    return data
+    dataset = try_get_data(url)
+    return dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
+        DAILY_PHY_VAR_LIST].reset_index(drop=True, inplace=True)
 
 
 def append_to_csv(in_path, out_path):
@@ -404,21 +374,17 @@ def append_to_csv(in_path, out_path):
     lat_points = xr.DataArray(list(df['LAT'].values))
     lon_points = xr.DataArray(list(df['LON'].values))
 
-    ds = get_GFS_25(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
-    if ds:
-        df[GFS_VAR_LIST] = interpolate_data(ds, lon_points, lat_points, time_points, 'gfs25')
-    else:
-        logger.debug('GFS DATASET is out of supported range ')
-        df[GFS_VAR_LIST] = len(GFS_VAR_LIST) * [np.nan]
+    df = pd.concat([df, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
+                                lat_points, lon_points)], axis=1)
 
-    ds = get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
-    df[DAILY_PHY_VAR_LIST] = interpolate_data(ds, lon_points, lat_points, time_points, 'phy_daily')
+    df = pd.concat([df, get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
+                                             lat_points, lon_points)], axis=1)
 
-    ds = get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
-    df[WIND_VAR_LIST] = interpolate_data(ds, lon_points, lat_points, time_points, 'wind')
+    df = pd.concat([df, get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
+                                        lon_points)], axis=1)
 
-    ds = get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
-    df[WAVE_VAR_LIST] = interpolate_data(ds, lon_points, lat_points, time_points, 'wave')
+    df = pd.concat([df, get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
+                                        lon_points)], axis=1)
 
     df.to_csv(out_path)
 
