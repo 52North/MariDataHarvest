@@ -3,7 +3,7 @@
 MariDataHarvest is a tool for scrapping and harvesting Automatic Identification System (AIS) data provided by [marinecadastre](https://marinecadastre.gov/AIS/)
 then appending it with the weather and environment conditions provided by [CMEMS](https://nrt.cmems-du.eu) and [RDA](rda.ucar.edu) at each geographical and UTC timestamp point.
 In the following is a description of the datasets used:
-[<img alt="Datasets Description" align="middle" src="./img/datasets_description.PNG"/>](https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit?usp=sharing) 
+[<img alt="Datasets Description" align="middle" src="./img/datasets_description.PNG"/>](https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit?usp=sharing)
 
 This tool is developed with in the [MariData](https://www.maridata.org) project.
 
@@ -56,7 +56,6 @@ python main.py --year=2019 --minutes=30 --dir=C:\..
 
 
 ### Docker
-- [ ] add --dir to docker arguments
 
 You can use the Dockerfile to build an docker image and run the script in its own isolated enviroment. It is recommend to provide a volume to persist the data between each run. You can specify the arguments `year`, `minutes`, and `dir` as environment variables when creating/starting the container as outlined in the following. The labels used are following the [Image And Container Label Specification](https://wiki.52north.org/Documentation/ImageAndContainerLabelSpecification) of 52°North.
 
