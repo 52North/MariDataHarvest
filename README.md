@@ -107,6 +107,8 @@ You can use the Dockerfile to build an docker image and run the script in its ow
    MINUTES=30
    DATA_DIR=/data
    STEP=0
+   DEPTH_FIRST=--depth-first
+   CLEAR=--clear
    ```
 
 
