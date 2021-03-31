@@ -53,7 +53,7 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--depth-first',
                         help='Clears the raw output directory in order to free memory.',
                         action='store_true')
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
 
     # initialize a Thread to check connection
     connectionChecker = CheckConnection(check_interval=8)
