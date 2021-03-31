@@ -1,7 +1,7 @@
 # MariDataHarvest
 
 MariDataHarvest is a tool for scrapping and harvesting Automatic Identification System (AIS) data provided by [marinecadastre](https://marinecadastre.gov/AIS/)
-then appending it with the weather and environment conditions provided by [CMEMS](https://nrt.cmems-du.eu) and [RDA](rda.ucar.edu) at each geographical and UTC timestamp point.
+then appending it with the weather and environment conditions provided by [CMEMS](https://nrt.cmems-du.eu) and [RDA](https://rda.ucar.edu/index.html) at each geographical and UTC timestamp point.
 In the following is a description of the datasets used:
 [<img alt="Datasets Description" align="middle" src="./img/datasets_description.PNG"/>](https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit?usp=sharing)
 
@@ -54,6 +54,9 @@ python main.py --year=2019 --minutes=30 --dir=C:\..
 
   If `step` equals `0` (default value), the script runs all steps starting from step 1.
 
+- `clear` (optional): clears files of `year` ONLY after step 2 is done.
+
+- `depth_first` (optional): Run all steps for each file, which automatically deactivates `step` argument.
 
 ### Docker
 

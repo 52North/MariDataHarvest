@@ -19,7 +19,7 @@ from check_connection import CheckConnection
 from config import config
 
 # utils to convert dates
-str_to_date = lambda x: datetime.strptime(x.replace('+00:00', ''), '%Y-%m-%d %H:%M:%S')
+str_to_date = lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
 date_to_str = lambda x: x.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 logger = logging.getLogger(__name__)
@@ -145,19 +145,6 @@ def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                                                                                                          , date_to_str(
                   t_hi), z_lo, z_hi)
     data = try_get_data(url)
-    # ignore ['utotal', 'vtide', 'utide', 'vtotal'] information due to very slow dataset
-    # time.sleep(1)
-    #
-    # url = base_url + '&product=' + products[1] + '&product=global-analysis-forecast-phy-001-024-hourly-t-u-v-ssh' + \
-    #       '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&z_lo={6}&z_hi={7}&mode=console'.format(x_lo, x_hi,
-    #                                                                                                      y_lo,
-    #                                                                                                      y_hi,
-    #                                                                                                      date_to_str(
-    #                                                                                                          t_lo)
-    #                                                                                                      , date_to_str(
-    #               t_hi), z_lo, z_hi)
-    #
-    # data1 = try_get_data(url)
     return data
 
 
@@ -357,44 +344,58 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
 
 
 def append_to_csv(in_path, out_path):
-    # get extracted AIS data and remove index column
-    df = pd.read_csv(in_path, parse_dates=['BaseDateTime'], date_parser=str_to_date)
-    df.drop(['Unnamed: 0'], axis=1, errors='ignore', inplace=True)
+    logger.debug('append_environment_data in file %s' % in_path)
+    chunkSize = 100000
+    header = True
+    try:
+        for df_chunk in pd.read_csv(in_path, parse_dates=['BaseDateTime'], date_parser=str_to_date,
+                                    chunksize=chunkSize):
+            # remove index column
+            df_chunk.drop(['Unnamed: 0'], axis=1, errors='ignore', inplace=True)
 
-    # retrieve the data for each file once
-    lat_hi = df.LAT.max()
-    lon_hi = df.LON.max()
+            # retrieve the data for each file once
+            lat_hi = df_chunk.LAT.max()
+            lon_hi = df_chunk.LON.max()
 
-    lat_lo = df.LAT.min()
-    lon_lo = df.LON.min()
+            lat_lo = df_chunk.LAT.min()
+            lon_lo = df_chunk.LON.min()
 
-    date_lo = df.BaseDateTime.min()
-    date_hi = df.BaseDateTime.max()
-    time_points = xr.DataArray(list(df['BaseDateTime'].values))
-    lat_points = xr.DataArray(list(df['LAT'].values))
-    lon_points = xr.DataArray(list(df['LON'].values))
+            date_lo = df_chunk.BaseDateTime.min()
+            date_hi = df_chunk.BaseDateTime.max()
+            time_points = xr.DataArray(list(df_chunk['BaseDateTime'].values))
+            lat_points = xr.DataArray(list(df_chunk['LAT'].values))
+            lon_points = xr.DataArray(list(df_chunk['LON'].values))
 
-    df = pd.concat([df, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
-                                lat_points, lon_points)], axis=1)
+            df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
+                                                    lat_points, lon_points)], axis=1)
 
-    df = pd.concat([df, get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
-                                             lat_points, lon_points)], axis=1)
+            df_chunk = pd.concat(
+                [df_chunk, get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
+                                                lat_points, lon_points)], axis=1)
 
-    df = pd.concat([df, get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
-                                        lon_points)], axis=1)
+            df_chunk = pd.concat(
+                [df_chunk, get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
+                                           lon_points)], axis=1)
 
-    df = pd.concat([df, get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
-                                        lon_points)], axis=1)
+            df_chunk = pd.concat(
+                [df_chunk, get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
+                                           lon_points)], axis=1)
 
-    df.to_csv(out_path)
+            df_chunk.to_csv(out_path, chunksize=chunkSize, mode='a', header=header)
+            header = False
+    except Exception as e:
+        # discard the file in case of an error to resume later properly
+        if out_path:
+            out_path.unlink(missing_ok=True)
+        raise e
 
 
-def append_environment_data(year, min_time_interval, work_dir):
-    src_csv_path = Path(work_dir, str(year) + '_filtered_%s' % min_time_interval)
-    output_csv_path = Path(work_dir, str(year) + '_merged_%s' % min_time_interval)
-    Path(output_csv_path).mkdir(parents=True, exist_ok=True)
-    csv_list = check_dir(src_csv_path)
+def append_environment_data_to_year(filtered_dir, merged_dir):
+    csv_list = check_dir(filtered_dir)
     for file in csv_list:
-        if Path(output_csv_path, file).exists(): continue
-        logger.debug('append_environment_data in file %s' % str(Path(src_csv_path, file)))
-        append_to_csv(Path(src_csv_path, file), Path(output_csv_path, file))
+        if Path(merged_dir, file).exists(): continue
+        append_to_csv(Path(filtered_dir, file), Path(merged_dir, file))
+
+
+def append_environment_data_to_file(file_name, filtered_dir, merged_dir):
+    append_to_csv(Path(filtered_dir, file_name), Path(merged_dir, file_name))
