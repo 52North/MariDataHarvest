@@ -156,7 +156,7 @@ rsync --recursive --verbose --times --rsh ssh \
 | protobuf        | 3.15.6    | 3-Clause BSD License                                |
 | pyproj          | 3.0.1     | MIT License                                         |
 | python-dateutil | 2.8.1     | BSD License, Apache Software License                |
-| python-dotenv   | 0.15.0    | BSD License                                         |
+| python-dotenv   | 0.16.0    | BSD License                                         |
 | pytz            | 2021.1    | MIT License                                         |
 | requests        | 2.25.1    | Apache Software License                             |
 | scipy           | 1.6.2     | BSD License                                         |
