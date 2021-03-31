@@ -50,7 +50,7 @@ if __name__ == '__main__':
     parser.add_argument('--clear',
                         help='Clears the raw output directory in order to free memory.',
                         action='store_true')
-    parser.add_argument('--depth_first',
+    parser.add_argument('--depth-first',
                         help='Clears the raw output directory in order to free memory.',
                         action='store_true')
     args = parser.parse_args()
