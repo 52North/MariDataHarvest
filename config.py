@@ -13,6 +13,8 @@ if not os.path.exists(secrets_file) or not os.access(secrets_file, os.R_OK):
     sys.exit(16)
 
 config = {
-    **dotenv_values(secrets_file),  # load sensitive variables
-    **os.environ,  # override loaded values with environment variables
+    # load sensitive variables
+    **dotenv_values(secrets_file),
+    # override loaded values with environment variables
+    **os.environ,
 }
