@@ -8,7 +8,6 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 import requests
-import wget
 from bs4 import BeautifulSoup
 
 from check_connection import CheckConnection
@@ -25,16 +24,11 @@ def check_dir(dir_name):
     return sorted(os.listdir(dir_name), key=str.lower)
 
 
-def download_AIS(year, work_dir):
-    # create a directory named after the given year if not exist
-    p = Path(work_dir, str(year))
-    p.mkdir(parents=True, exist_ok=True)
-
-    # check already installed files in the
-    resume_download = check_dir(p)
-    CheckConnection.set_url('coast.noaa.gov')
+def get_files_list(path, year, resume_download):
     # url link to data
     url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{0}/".format(year)
+    # check already installed files in the
+    CheckConnection.set_url('coast.noaa.gov')
 
     # request the html file
     html_text = requests.get(url).text
@@ -51,68 +45,124 @@ def download_AIS(year, work_dir):
             if name + '.csv' in resume_download or name + '.gdb' in resume_download:
                 continue
             files.append(a['href'])
+    return files
 
+
+def chunkify_gdb(gdb_file, file_path, chunkSize):
+    end = chunkSize
+    start = 0
+    header = True
+    while True:
+        gdf_chunk = gpd.read_file(gdb_file, rows=slice(start, end))
+        if len(gdf_chunk) == 0: break
+        gdf_chunk['LON'] = gdf_chunk.geometry.apply(lambda point: point.x)
+        gdf_chunk['LAT'] = gdf_chunk.geometry.apply(lambda point: point.y)
+        gdf_chunk.drop(columns=['geometry'], inplace=True)
+        gdf_chunk.to_csv(file_path, mode='a', header=header)
+        start = end
+        end += chunkSize
+        header = False
+
+
+def download_file(zipped_file, download_dir, year):
+    # url link to data
+    url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{0}/".format(year)
+    CheckConnection.is_online()
+    logger.info('downloading AIS file: %s' % zipped_file)
+
+    # download zip file using wget with url and file name
+    with requests.get(os.path.join(url, zipped_file), stream=True) as req:
+        req.raise_for_status()
+        zipped_file = zipped_file.split('/')[-1] if len(zipped_file.split('/')) > 1 else zipped_file
+        with open(zipped_file, "wb") as handle:
+            for chunk in req.iter_content(chunk_size=8192):
+                handle.write(chunk)
+            handle.close()
+    # extract each zip file into output directory then delete it
+    with zipfile.ZipFile(zipped_file, 'r') as zip_ref:
+        for f in zip_ref.infolist():
+            if f.filename.endswith('.csv'):
+                f.filename = os.path.basename(f.filename)
+                file_name = f.filename
+                zip_ref.extract(f, download_dir)
+            if str(Path(f.filename).parent).endswith('.gdb'):
+                zip_ref.extractall(download_dir)
+                name = str(Path(f.filename).parent)
+                gdb_file = Path(download_dir, name)
+                file_name = name.split('.')[0] + '.csv'
+                file_path = Path(download_dir, file_name)
+                try:
+                    chunkify_gdb(gdb_file, file_path, chunkSize=100000)
+                except Exception as e:
+                    # discard the file in case of an error to resume later properly
+                    if file_path:
+                        file_path.unlink(missing_ok=True)
+                    raise e
+                shutil.rmtree(gdb_file)
+                break
+    os.remove(zipped_file)
+    return file_name
+
+
+def download_year_AIS(year, download_dir):
+    # create a directory named after the given year if not exist
+    resume_download = []
+    if download_dir.exists():
+        resume_download = check_dir(download_dir)
+    files = get_files_list(download_dir, year, resume_download)
     #  download
     for file in files:
-        CheckConnection.is_online()
-        logger.info('downloading AIS file: %s' % file)
-        # download zip file using wget with url and file name
-        wget.download(url=os.path.join(url, file), bar=None)
-        file = file.split('/')[-1] if len(file.split('/')) > 1 else file
-        # extract each zip file into output directory then delete it
-        with zipfile.ZipFile(file, 'r') as zip_ref:
-            for f in zip_ref.infolist():
-                if f.filename.endswith('.csv'):
-                    f.filename = os.path.basename(f.filename)
-                    zip_ref.extract(f, p)
-                if f.filename.endswith('.gdb/'):
-                    zip_ref.extractall(p)
-                    gdb_file = Path(p, f.filename[:-1])
-                    gdf = gpd.read_file(gdb_file)
-                    name = f.filename.split('.')[0]
-                    gdf['LON'] = gdf.geometry.apply(lambda point: point.x)
-                    gdf['LAT'] = gdf.geometry.apply(lambda point: point.y)
-                    gdf.drop(columns=['geometry'], inplace=True)
-                    gdf.to_csv(Path(p, name + '.csv'))
-                    shutil.rmtree(gdb_file)
-                    break
-        os.remove(file)
+        download_file(file, download_dir, year)
 
 
 def rm_sec(date):
-    return date.replace(second=0)
+    return date.replace(second=0, tzinfo=None)
 
 
-def subsample_AIS_to_CSV(year, work_dir, min_time_interval=30):
-    # create a directory named after the given year if not exist
-    output = '{0}_filtered_{1}'.format(year, min_time_interval)
-    path = Path(work_dir, output)
-    Path(work_dir, output).mkdir(parents=True, exist_ok=True)
+def subsample_file(file_name, download_dir, filtered_dir, min_time_interval):
+    chunkSize = 100000
+    logging.info("Subsampling  %s " % str(file_name))
+    header = True
+    file_path = ''
+    try:
+        for df_chunk in pd.read_csv(Path(download_dir, file_name), chunksize=chunkSize):
+            df_chunk = df_chunk.drop(['MMSI', 'VesselName', 'CallSign', 'Cargo', 'TranscieverClass',
+                                      'ReceiverType', 'ReceiverID'], axis=1, errors='ignore')
+            df_chunk = df_chunk.dropna()
+            df_chunk['SOG'] = pd.to_numeric(df_chunk['SOG'])
+            if 'VesselType' in df_chunk.columns:
+                df_chunk = df_chunk.query(
+                    '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0 or (SOG > 7 &  Status == "undefind")) & (VesselType == 1016 or 89 >= VesselType >= 70) & SOG > 3')
+            elif 'Status' in df_chunk.columns:
+                df_chunk = df_chunk.query(
+                    '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0) & SOG > 3')
+
+            df_chunk = df_chunk.drop(['Status'], axis=1, errors='ignore')
+
+            # parse and set seconds to zero
+            df_chunk['BaseDateTime'] = pd.to_datetime(
+                df_chunk.BaseDateTime, format='%Y-%m-%dT%H:%M:%S', exact=True, errors='raise').apply(rm_sec)
+            df_chunk.index = df_chunk.BaseDateTime
+            df_chunk = df_chunk.resample("%dT" % int(min_time_interval)).last()
+            df_chunk.reset_index(drop=True, inplace=True)
+            df_chunk = df_chunk.dropna()
+            file_path = Path(filtered_dir, str(file_name))
+            df_chunk.to_csv(file_path, chunksize=chunkSize, mode='a', header=header)
+            header = False
+    except Exception as e:
+        # discard the file in case of an error to resume later properly
+        if file_path:
+            file_path.unlink(missing_ok=True)
+        raise e
+    return file_path
+
+
+def subsample_year_AIS_to_CSV(year, download_dir, filtered_dir, min_time_interval=30):
     logger.info('Subsampling year {0} to {1} minutes.'.format(
         year, min_time_interval))
     # check already processed files in the
-    resume = check_dir(Path(work_dir, output))
+    resume = check_dir(filtered_dir)
 
-    files = [f for f in sorted(os.listdir(str(
-        Path(work_dir, year))), key=str.lower) if f.endswith('.csv') and f not in resume]
+    files = [f for f in sorted(os.listdir(str(download_dir)), key=str.lower) if f.endswith('.csv') and f not in resume]
     for file in files:
-        logging.info("Subsampling  %s " % str(file))
-        df = pd.read_csv(Path(Path(work_dir, year), file))
-        df = df.drop(['MMSI', 'VesselName', 'CallSign', 'Cargo', 'TranscieverClass',
-                     'ReceiverType', 'ReceiverID'], axis=1, errors='ignore')
-        df = df.dropna()
-        if 'VesselType' in df.columns:
-            df = df.query(
-                '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0) & (VesselType == 1016 or 89 >= VesselType >= 70) & SOG > 3')
-        else:
-            df = df.query(
-                '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0) & SOG > 3')
-        df = df.drop(['Status'], axis=1, errors='ignore')
-        # parse and set seconds to zero
-        df['BaseDateTime'] = pd.to_datetime(
-            df.BaseDateTime, format='%Y-%m-%dT%H:%M:%S').apply(rm_sec)
-        df.index = df.BaseDateTime
-        df = df.resample("%dT" % int(min_time_interval)).last()
-        df.reset_index(drop=True, inplace=True)
-        df = df.dropna()
-        df.to_csv(Path(path, str(file)))
+        subsample_file(file, download_dir, filtered_dir, min_time_interval)
