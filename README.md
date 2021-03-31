@@ -107,6 +107,8 @@ You can use the Dockerfile to build an docker image and run the script in its ow
    MINUTES=30
    DATA_DIR=/data
    STEP=0
+   DEPTH_FIRST=--depth-first
+   CLEAR=--clear
    ```
 
 
@@ -156,7 +158,7 @@ rsync --recursive --verbose --times --rsh ssh \
 | protobuf        | 3.15.6    | 3-Clause BSD License                                |
 | pyproj          | 3.0.1     | MIT License                                         |
 | python-dateutil | 2.8.1     | BSD License, Apache Software License                |
-| python-dotenv   | 0.15.0    | BSD License                                         |
+| python-dotenv   | 0.16.0    | BSD License                                         |
 | pytz            | 2021.1    | MIT License                                         |
 | requests        | 2.25.1    | Apache Software License                             |
 | scipy           | 1.6.2     | BSD License                                         |
@@ -167,13 +169,15 @@ rsync --recursive --verbose --times --rsh ssh \
 | wget            | 3.2       | Public Domain                                       |
 | xarray          | 0.15.1    | Apache Software License                             |
 
-Generate this list via the following command:
+<details>
+<summary>generate license list</summary>
 
 ```sh
 docker run --rm --interactive --tty 52north/mari-data_harvester:1.0.0 /bin/bash \
    -c "pip install --no-warn-script-location --no-cache-dir pip-licenses > /dev/null && .local/bin/pip-licenses -f markdown"
 ```
 
+</details>
 
 
 ## Funding

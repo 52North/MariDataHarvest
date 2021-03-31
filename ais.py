@@ -1,8 +1,10 @@
+from datetime import datetime
 import warnings
 import logging
 import os
 import shutil
 import zipfile
+import typing
 from pathlib import Path
 
 import geopandas as gpd
@@ -20,11 +22,14 @@ logger = logging.getLogger(__name__)
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
-def check_dir(dir_name):
+def check_dir(dir_name: str) -> typing.List[str]:
+    """
+        List all contents of `dir_name` and returns is sorted using `str.lower` for `sorted`.
+    """
     return sorted(os.listdir(dir_name), key=str.lower)
 
 
-def get_files_list(path, year, resume_download):
+def get_files_list(path: str, year: int, resume_download: bool) -> typing.List[str]:
     # url link to data
     url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{0}/".format(year)
     # check already installed files in the
@@ -48,7 +53,7 @@ def get_files_list(path, year, resume_download):
     return files
 
 
-def chunkify_gdb(gdb_file, file_path, chunkSize):
+def chunkify_gdb(gdb_file: str, file_path: str, chunkSize: int) -> None:
     end = chunkSize
     start = 0
     header = True
@@ -64,7 +69,7 @@ def chunkify_gdb(gdb_file, file_path, chunkSize):
         header = False
 
 
-def download_file(zipped_file, download_dir, year):
+def download_file(zipped_file: str, download_dir: str, year: int) -> str:
     # url link to data
     url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{0}/".format(year)
     CheckConnection.is_online()
@@ -104,7 +109,7 @@ def download_file(zipped_file, download_dir, year):
     return file_name
 
 
-def download_year_AIS(year, download_dir):
+def download_year_AIS(year: int, download_dir: str) -> None:
     # create a directory named after the given year if not exist
     resume_download = []
     if download_dir.exists():
@@ -115,11 +120,11 @@ def download_year_AIS(year, download_dir):
         download_file(file, download_dir, year)
 
 
-def rm_sec(date):
+def rm_sec(date: datetime) -> datetime:
     return date.replace(second=0, tzinfo=None)
 
 
-def subsample_file(file_name, download_dir, filtered_dir, min_time_interval):
+def subsample_file(file_name, download_dir, filtered_dir, min_time_interval) -> str:
     chunkSize = 100000
     logging.info("Subsampling  %s " % str(file_name))
     header = True
@@ -157,7 +162,7 @@ def subsample_file(file_name, download_dir, filtered_dir, min_time_interval):
     return file_path
 
 
-def subsample_year_AIS_to_CSV(year, download_dir, filtered_dir, min_time_interval=30):
+def subsample_year_AIS_to_CSV(year: int, download_dir: str, filtered_dir: str, min_time_interval: int = 30) -> None:
     logger.info('Subsampling year {0} to {1} minutes.'.format(
         year, min_time_interval))
     # check already processed files in the

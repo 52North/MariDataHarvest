@@ -5,10 +5,11 @@ import http.client as httplib
 
 logger = logging.getLogger(__name__)
 class CheckConnection(Thread):
-    online = True
+    online = False
     domain_url = ''
+    check_interval = 30
 
-    def __init__(self, check_interval):
+    def __init__(self, check_interval: int) -> None:
         super().__init__()
         self.check_interval = check_interval
 
@@ -29,14 +30,14 @@ class CheckConnection(Thread):
                 finally:
                     conn.close()
                 time.sleep(self.check_interval)
-                
+
     @staticmethod
-    def is_online():
+    def is_online() -> None:
         if CheckConnection.online:
             pass
         else:
             raise ValueError('No Internet Connection')
 
     @staticmethod
-    def set_url(domain):
+    def set_url(domain: str) -> None:
         CheckConnection.domain_url = domain

@@ -40,6 +40,8 @@ ENV MINUTES=30
 ENV DATA_DIR=/maridata/data
 ENV STEP=0
 ENV PYTHONUNBUFFERED=1
+ENV DEPTH_FIRST=--depth-first
+ENV CLEAR=--clear
 ARG USER=maridata
 ARG HOME=/${USER}
 ARG GROUP=${USER}
@@ -69,7 +71,7 @@ RUN addgroup --system --gid ${ID} ${GROUP} && \
 
 USER ${USER}
 
-CMD python ./main.py --year="$YEAR" --minutes="$MINUTES" --dir="$DATA_DIR" --step="$STEP"
+CMD python ./main.py --year="$YEAR" --minutes="$MINUTES" --dir="$DATA_DIR" --step="$STEP" "$CLEAR" "$DEPTH_FIRST"
 
 ARG GIT_COMMIT
 LABEL org.opencontainers.image.revision "${GIT_COMMIT}"

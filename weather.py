@@ -343,7 +343,7 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
         DAILY_PHY_VAR_LIST].reset_index(drop=True, inplace=True)
 
 
-def append_to_csv(in_path, out_path):
+def append_to_csv(in_path: str, out_path: str) -> None:
     logger.debug('append_environment_data in file %s' % in_path)
     chunkSize = 100000
     header = True
@@ -390,7 +390,7 @@ def append_to_csv(in_path, out_path):
         raise e
 
 
-def append_environment_data_to_year(filtered_dir, merged_dir):
+def append_environment_data_to_year(filtered_dir: str, merged_dir: str) -> None:
     csv_list = check_dir(filtered_dir)
     for file in csv_list:
         if Path(merged_dir, file).exists(): continue
