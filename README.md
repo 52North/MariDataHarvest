@@ -169,13 +169,15 @@ rsync --recursive --verbose --times --rsh ssh \
 | wget            | 3.2       | Public Domain                                       |
 | xarray          | 0.15.1    | Apache Software License                             |
 
-Generate this list via the following command:
+<details>
+<summary>generate license list</summary>
 
 ```sh
 docker run --rm --interactive --tty 52north/mari-data_harvester:1.0.0 /bin/bash \
    -c "pip install --no-warn-script-location --no-cache-dir pip-licenses > /dev/null && .local/bin/pip-licenses -f markdown"
 ```
 
+</details>
 
 
 ## Funding
