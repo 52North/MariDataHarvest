@@ -38,19 +38,19 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='For a given a year and minutes interval of subsampling to start harvesting AIS-Data.',
         epilog='The following exit codes are configured:\n16 -> service secrets configuration file not found.')
-    parser.add_argument('--year', help='A given year to start a task.',
+    parser.add_argument('-y', '--year', help='A given year to start a task.',
                         required=True, type=int, choices=range(2009, int(time.strftime("%Y"))))
-    parser.add_argument('--minutes', help='A given minutes interval to downscale the data.',
+    parser.add_argument('-m', '--minutes', help='A given minutes interval to downscale the data.',
                         required=True, type=int, choices=range(1, 1440))
-    parser.add_argument('--step', help='Select the specific step to perform.',
+    parser.add_argument('-s', '--step', help='Select the specific step to perform.',
                         required=False, type=int, choices=range(0, 4), default=0)
-    parser.add_argument('--dir',
+    parser.add_argument('-d', '--dir',
                         help='The output directory to collect csv files. By default the root directory is used.',
                         default='', type=str, required=False)
-    parser.add_argument('--clear',
+    parser.add_argument('-c', '--clear',
                         help='Clears the raw output directory in order to free memory.',
                         action='store_true')
-    parser.add_argument('--depth-first',
+    parser.add_argument('-f', '--depth-first',
                         help='Clears the raw output directory in order to free memory.',
                         action='store_true')
     args = parser.parse_args()
