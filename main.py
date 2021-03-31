@@ -75,11 +75,11 @@ if __name__ == '__main__':
     if args.depth_first:
         logger.info('Task is started using Depth-first mode')
 
-        for file in get_files_list(download_dir, str(args.year), check_dir(filtered_dir)):
+        for file in get_files_list(args.year, check_dir(filtered_dir)):
             while True:
                 try:
                     logger.info('STEP 1/3 downloading AIS data: %s' % file)
-                    file_name = download_file(file, download_dir, str(args.year))
+                    file_name = download_file(file, download_dir, args.year)
                     break
                 except Exception as e:
                     logger.error(traceback.format_exc())
@@ -109,7 +109,7 @@ if __name__ == '__main__':
 
             while True:
                 try:
-                    logger.info('STEP 3/3 appending weather data: %s' % file)
+                    logger.info('STEP 3/3 appending weather data: %s' % file_name)
                     append_environment_data_to_file(file_name, filtered_dir, merged_dir)
                     break
                 except Exception as e:

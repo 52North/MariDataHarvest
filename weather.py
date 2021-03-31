@@ -343,46 +343,47 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
         DAILY_PHY_VAR_LIST].reset_index(drop=True, inplace=True)
 
 
-def append_to_csv(in_path: str, out_path: str) -> None:
+def append_to_csv(in_path: Path, out_path: Path) -> None:
     logger.debug('append_environment_data in file %s' % in_path)
     chunkSize = 100000
     header = True
     try:
         for df_chunk in pd.read_csv(in_path, parse_dates=['BaseDateTime'], date_parser=str_to_date,
                                     chunksize=chunkSize):
-            # remove index column
-            df_chunk.drop(['Unnamed: 0'], axis=1, errors='ignore', inplace=True)
+            if len(df_chunk) > 1:
+                # remove index column
+                df_chunk.drop(['Unnamed: 0'], axis=1, errors='ignore', inplace=True)
 
-            # retrieve the data for each file once
-            lat_hi = df_chunk.LAT.max()
-            lon_hi = df_chunk.LON.max()
+                # retrieve the data for each file once
+                lat_hi = df_chunk.LAT.max()
+                lon_hi = df_chunk.LON.max()
 
-            lat_lo = df_chunk.LAT.min()
-            lon_lo = df_chunk.LON.min()
+                lat_lo = df_chunk.LAT.min()
+                lon_lo = df_chunk.LON.min()
 
-            date_lo = df_chunk.BaseDateTime.min()
-            date_hi = df_chunk.BaseDateTime.max()
-            time_points = xr.DataArray(list(df_chunk['BaseDateTime'].values))
-            lat_points = xr.DataArray(list(df_chunk['LAT'].values))
-            lon_points = xr.DataArray(list(df_chunk['LON'].values))
+                date_lo = df_chunk.BaseDateTime.min()
+                date_hi = df_chunk.BaseDateTime.max()
+                time_points = xr.DataArray(list(df_chunk['BaseDateTime'].values))
+                lat_points = xr.DataArray(list(df_chunk['LAT'].values))
+                lon_points = xr.DataArray(list(df_chunk['LON'].values))
 
-            df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
+                df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
+                                                        lat_points, lon_points)], axis=1)
+
+                df_chunk = pd.concat(
+                    [df_chunk, get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                     lat_points, lon_points)], axis=1)
 
-            df_chunk = pd.concat(
-                [df_chunk, get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
-                                                lat_points, lon_points)], axis=1)
+                df_chunk = pd.concat(
+                    [df_chunk, get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
+                                               lon_points)], axis=1)
 
-            df_chunk = pd.concat(
-                [df_chunk, get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
-                                           lon_points)], axis=1)
+                df_chunk = pd.concat(
+                    [df_chunk, get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
+                                               lon_points)], axis=1)
 
-            df_chunk = pd.concat(
-                [df_chunk, get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
-                                           lon_points)], axis=1)
-
-            df_chunk.to_csv(out_path, chunksize=chunkSize, mode='a', header=header)
-            header = False
+                df_chunk.to_csv(out_path, chunksize=chunkSize, mode='a', header=header)
+                header = False
     except Exception as e:
         # discard the file in case of an error to resume later properly
         if out_path:
@@ -390,7 +391,7 @@ def append_to_csv(in_path: str, out_path: str) -> None:
         raise e
 
 
-def append_environment_data_to_year(filtered_dir: str, merged_dir: str) -> None:
+def append_environment_data_to_year(filtered_dir: Path, merged_dir: Path) -> None:
     csv_list = check_dir(filtered_dir)
     for file in csv_list:
         if Path(merged_dir, file).exists(): continue

@@ -22,14 +22,14 @@ logger = logging.getLogger(__name__)
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
-def check_dir(dir_name: str) -> typing.List[str]:
+def check_dir(dir_name: Path) -> typing.List[str]:
     """
         List all contents of `dir_name` and returns is sorted using `str.lower` for `sorted`.
     """
     return sorted(os.listdir(dir_name), key=str.lower)
 
 
-def get_files_list(path: str, year: int, resume_download: bool) -> typing.List[str]:
+def get_files_list(year: int, resume_download: typing.List[str]) -> typing.List[str]:
     # url link to data
     url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{0}/".format(year)
     # check already installed files in the
@@ -53,7 +53,7 @@ def get_files_list(path: str, year: int, resume_download: bool) -> typing.List[s
     return files
 
 
-def chunkify_gdb(gdb_file: str, file_path: str, chunkSize: int) -> None:
+def chunkify_gdb(gdb_file: Path, file_path: Path, chunkSize: int) -> None:
     end = chunkSize
     start = 0
     header = True
@@ -69,7 +69,7 @@ def chunkify_gdb(gdb_file: str, file_path: str, chunkSize: int) -> None:
         header = False
 
 
-def download_file(zipped_file: str, download_dir: str, year: int) -> str:
+def download_file(zipped_file: str, download_dir: Path, year: int) -> str:
     # url link to data
     url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{0}/".format(year)
     CheckConnection.is_online()
@@ -109,12 +109,12 @@ def download_file(zipped_file: str, download_dir: str, year: int) -> str:
     return file_name
 
 
-def download_year_AIS(year: int, download_dir: str) -> None:
+def download_year_AIS(year: int, download_dir: Path) -> None:
     # create a directory named after the given year if not exist
     resume_download = []
     if download_dir.exists():
         resume_download = check_dir(download_dir)
-    files = get_files_list(download_dir, year, resume_download)
+    files = get_files_list(year, resume_download)
     #  download
     for file in files:
         download_file(file, download_dir, year)
@@ -128,7 +128,7 @@ def subsample_file(file_name, download_dir, filtered_dir, min_time_interval) -> 
     chunkSize = 100000
     logging.info("Subsampling  %s " % str(file_name))
     header = True
-    file_path = ''
+
     try:
         for df_chunk in pd.read_csv(Path(download_dir, file_name), chunksize=chunkSize):
             df_chunk = df_chunk.drop(['MMSI', 'VesselName', 'CallSign', 'Cargo', 'TranscieverClass',
@@ -137,7 +137,7 @@ def subsample_file(file_name, download_dir, filtered_dir, min_time_interval) -> 
             df_chunk['SOG'] = pd.to_numeric(df_chunk['SOG'])
             if 'VesselType' in df_chunk.columns:
                 df_chunk = df_chunk.query(
-                    '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0 or (SOG > 7 &  Status == "undefind")) & (VesselType == 1016 or 89 >= VesselType >= 70) & SOG > 3')
+                    '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0 or (SOG > 7 &  Status == "undefind")) & (VesselType == 1003 or VesselType == 1004 or VesselType == 1016 or 89 >= VesselType >= 70) & SOG > 3')
             elif 'Status' in df_chunk.columns:
                 df_chunk = df_chunk.query(
                     '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0) & SOG > 3')
@@ -159,10 +159,9 @@ def subsample_file(file_name, download_dir, filtered_dir, min_time_interval) -> 
         if file_path:
             file_path.unlink(missing_ok=True)
         raise e
-    return file_path
 
 
-def subsample_year_AIS_to_CSV(year: int, download_dir: str, filtered_dir: str, min_time_interval: int = 30) -> None:
+def subsample_year_AIS_to_CSV(year: int, download_dir: Path, filtered_dir: Path, min_time_interval: int = 30) -> None:
     logger.info('Subsampling year {0} to {1} minutes.'.format(
         year, min_time_interval))
     # check already processed files in the
