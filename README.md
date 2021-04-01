@@ -41,7 +41,7 @@ Start harvesting with the following command:
 python main.py --year=2019 --minutes=30 --dir=C:\..
 ```
 
-- `year`: the year to download AIS-data.
+- `year`: the year(s) to download AIS-data. Expected input a year 'YYYY' , a range of years 'YYYY-YYYY' or multiple years 'YYYY,YYYY,YYYY'.
 
 - `minutes`: is the subsampling interval in minutes.
 
