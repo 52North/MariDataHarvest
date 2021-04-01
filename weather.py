@@ -158,7 +158,7 @@ def try_get_data(url):
         CheckConnection.is_online()
         return xr.open_dataset(read_bytes)
     except Exception as e:
-        print(e)
+        logger.error(traceback.format_exc())
         raise ValueError('Error:', BeautifulSoup(read_bytes, 'html.parser').find('p', {"class": "error"}), 'Request: ',
                          url, response)
 
