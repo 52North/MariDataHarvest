@@ -57,7 +57,7 @@ python main.py --year=2019 --minutes=30 --dir=C:\..
 
 - `clear` (optional): clears files of `year` ONLY after step 2 is done.
 
-- `depth_first` (optional): Run all steps for each file, which automatically deactivates `step` argument.
+- `depth_first` (optional): runs all steps for each file, which automatically deactivates `step` argument.
 
 ### Docker
 
@@ -167,7 +167,6 @@ rsync --recursive --verbose --times --rsh ssh \
 | six             | 1.15.0    | MIT License                                         |
 | soupsieve       | 2.2.1     | MIT License                                         |
 | urllib3         | 1.26.4    | MIT License                                         |
-| wget            | 3.2       | Public Domain                                       |
 | xarray          | 0.15.1    | Apache Software License                             |
 
 <details>
