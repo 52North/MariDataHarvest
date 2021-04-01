@@ -152,13 +152,15 @@ def try_get_data(url):
     try:
         CheckConnection.is_online()
         url_auth = authenticate_CAS_for_URL(url, config['UN_CMEMS'], config['PW_CMEMS'])
+        response = open_url(url_auth)
         CheckConnection.is_online()
-        bytes_data = open_url(url_auth).read()
+        read_bytes = response.read()
         CheckConnection.is_online()
-        return xr.open_dataset(bytes_data)
+        return xr.open_dataset(read_bytes)
     except Exception as e:
-        raise ValueError('Error:', BeautifulSoup(bytes_data, 'html.parser').find('p', {"class": "error"}), 'Request: ',
-                         url)
+        print(e)
+        raise ValueError('Error:', BeautifulSoup(read_bytes, 'html.parser').find('p', {"class": "error"}), 'Request: ',
+                         url, response)
 
 
 def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
