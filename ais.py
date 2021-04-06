@@ -14,6 +14,7 @@ from bs4 import BeautifulSoup
 
 from check_connection import CheckConnection
 from config import config
+from utils import FileFailedException, Failed_Files
 
 pd.options.mode.chained_assignment = None
 
@@ -22,14 +23,14 @@ logger = logging.getLogger(__name__)
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
-def check_dir(dir_name: str) -> typing.List[str]:
+def check_dir(dir_name: Path) -> typing.List[str]:
     """
         List all contents of `dir_name` and returns is sorted using `str.lower` for `sorted`.
     """
     return sorted(os.listdir(dir_name), key=str.lower)
 
 
-def get_files_list(path: str, year: int, resume_download: bool) -> typing.List[str]:
+def get_files_list(year: int, resume_download: typing.List[str]) -> typing.List[str]:
     # url link to data
     url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{0}/".format(year)
     # check already installed files in the
@@ -47,13 +48,14 @@ def get_files_list(path: str, year: int, resume_download: bool) -> typing.List[s
         if a.text and a.text.endswith('zip'):
             name = a['href'].split('.')[0]
             name = name.split('/')[-1] if len(name.split('/')) > 1 else name
-            if name + '.csv' in resume_download or name + '.gdb' in resume_download:
+            Failed_Files_list = list(Failed_Files.keys())
+            if name + '.csv' in resume_download + Failed_Files_list or name + '.gdb' in resume_download + Failed_Files_list or name + '.zip' in Failed_Files_list:
                 continue
             files.append(a['href'])
     return files
 
 
-def chunkify_gdb(gdb_file: str, file_path: str, chunkSize: int) -> None:
+def chunkify_gdb(gdb_file: Path, file_path: Path, chunkSize: int) -> None:
     end = chunkSize
     start = 0
     header = True
@@ -69,55 +71,59 @@ def chunkify_gdb(gdb_file: str, file_path: str, chunkSize: int) -> None:
         header = False
 
 
-def download_file(zipped_file: str, download_dir: str, year: int) -> str:
-    # url link to data
-    url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{0}/".format(year)
-    CheckConnection.is_online()
-    logger.info('downloading AIS file: %s' % zipped_file)
+def download_file(zipped_file_name: str, download_dir: Path, year: int) -> str:
+    try:
+        # url link to data
+        url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{0}/".format(year)
+        CheckConnection.is_online()
+        logger.info('downloading AIS file: %s' % zipped_file_name)
 
-    # download zip file using wget with url and file name
-    with requests.get(os.path.join(url, zipped_file), stream=True) as req:
-        req.raise_for_status()
-        zipped_file = zipped_file.split('/')[-1] if len(zipped_file.split('/')) > 1 else zipped_file
-        with open(zipped_file, "wb") as handle:
-            for chunk in req.iter_content(chunk_size=8192):
-                handle.write(chunk)
-            handle.close()
-    # extract each zip file into output directory then delete it
-    with zipfile.ZipFile(zipped_file, 'r') as zip_ref:
-        for f in zip_ref.infolist():
-            if f.filename.endswith('.csv'):
-                f.filename = os.path.basename(f.filename)
-                file_name = f.filename
-                zip_ref.extract(f, download_dir)
-            if str(Path(f.filename).parent).endswith('.gdb'):
-                zip_ref.extractall(download_dir)
-                name = str(Path(f.filename).parent)
-                gdb_file = Path(download_dir, name)
-                file_name = name.split('.')[0] + '.csv'
-                file_path = Path(download_dir, file_name)
-                try:
-                    chunkify_gdb(gdb_file, file_path, chunkSize=100000)
-                except Exception as e:
-                    # discard the file in case of an error to resume later properly
-                    if file_path:
-                        file_path.unlink(missing_ok=True)
-                    raise e
-                shutil.rmtree(gdb_file)
-                break
-    os.remove(zipped_file)
-    return file_name
+        # download zip file using wget with url and file name
+        with requests.get(os.path.join(url, zipped_file_name), stream=True) as req:
+            req.raise_for_status()
+            zipped_file_name = zipped_file_name.split('/')[-1] if len(
+                zipped_file_name.split('/')) > 1 else zipped_file_name
+            with open(zipped_file_name, "wb") as handle:
+                for chunk in req.iter_content(chunk_size=8192):
+                    handle.write(chunk)
+                handle.close()
+        # extract each zip file into output directory then delete it
+        with zipfile.ZipFile(zipped_file_name, 'r') as zip_ref:
+            for f in zip_ref.infolist():
+                if f.filename.endswith('.csv'):
+                    f.filename = os.path.basename(f.filename)
+                    file_name = f.filename
+                    zip_ref.extract(f, download_dir)
+                if str(Path(f.filename).parent).endswith('.gdb'):
+                    zip_ref.extractall(download_dir)
+                    name = str(Path(f.filename).parent)
+                    gdb_file = Path(download_dir, name)
+                    file_name = name.split('.')[0] + '.csv'
+                    file_path = Path(download_dir, file_name)
+                    try:
+                        chunkify_gdb(gdb_file, file_path, chunkSize=100000)
+                    except Exception as e:
+                        # discard the file in case of an error to resume later properly
+                        if file_path:
+                            file_path.unlink(missing_ok=True)
+                        raise e
+                    shutil.rmtree(gdb_file)
+                    break
+        os.remove(zipped_file_name)
+        return file_name
+    except Exception as e:
+        raise FileFailedException(file_name=zipped_file_name)
 
 
-def download_year_AIS(year: int, download_dir: str) -> None:
+def download_year_AIS(year: int, download_dir: Path) -> None:
     # create a directory named after the given year if not exist
     resume_download = []
     if download_dir.exists():
         resume_download = check_dir(download_dir)
-    files = get_files_list(download_dir, year, resume_download)
+    files = get_files_list(year, resume_download)
     #  download
-    for file in files:
-        download_file(file, download_dir, year)
+    for zip_file_name in files:
+        download_file(zip_file_name, download_dir, year)
 
 
 def rm_sec(date: datetime) -> datetime:
@@ -128,7 +134,7 @@ def subsample_file(file_name, download_dir, filtered_dir, min_time_interval) -> 
     chunkSize = 100000
     logging.info("Subsampling  %s " % str(file_name))
     header = True
-    file_path = ''
+
     try:
         for df_chunk in pd.read_csv(Path(download_dir, file_name), chunksize=chunkSize):
             df_chunk = df_chunk.drop(['MMSI', 'VesselName', 'CallSign', 'Cargo', 'TranscieverClass',
@@ -137,7 +143,7 @@ def subsample_file(file_name, download_dir, filtered_dir, min_time_interval) -> 
             df_chunk['SOG'] = pd.to_numeric(df_chunk['SOG'])
             if 'VesselType' in df_chunk.columns:
                 df_chunk = df_chunk.query(
-                    '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0 or (SOG > 7 &  Status == "undefind")) & (VesselType == 1016 or 89 >= VesselType >= 70) & SOG > 3')
+                    '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0 or (SOG > 7 &  Status == "undefind")) & (VesselType == 1003 or VesselType == 1004 or VesselType == 1016 or 89 >= VesselType >= 70) & SOG > 3')
             elif 'Status' in df_chunk.columns:
                 df_chunk = df_chunk.query(
                     '(Status == "under way using engine" or Status == "under way sailing" or  Status == 8 or  Status == 0) & SOG > 3')
@@ -158,15 +164,14 @@ def subsample_file(file_name, download_dir, filtered_dir, min_time_interval) -> 
         # discard the file in case of an error to resume later properly
         if file_path:
             file_path.unlink(missing_ok=True)
-        raise e
-    return file_path
+        raise FileFailedException(file_name=str(file_name))
 
 
-def subsample_year_AIS_to_CSV(year: int, download_dir: str, filtered_dir: str, min_time_interval: int = 30) -> None:
+def subsample_year_AIS_to_CSV(year: int, download_dir: Path, filtered_dir: Path, min_time_interval: int = 30) -> None:
     logger.info('Subsampling year {0} to {1} minutes.'.format(
         year, min_time_interval))
     # check already processed files in the
-    resume = check_dir(filtered_dir)
+    resume = check_dir(filtered_dir) + list(Failed_Files.keys())
 
     files = [f for f in sorted(os.listdir(str(download_dir)), key=str.lower) if f.endswith('.csv') and f not in resume]
     for file in files:

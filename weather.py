@@ -19,6 +19,8 @@ from check_connection import CheckConnection
 from config import config
 
 # utils to convert dates
+from utils import FileFailedException, Failed_Files
+
 str_to_date = lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
 date_to_str = lambda x: x.strftime('%Y-%m-%dT%H:%M:%SZ')
 
@@ -152,13 +154,15 @@ def try_get_data(url):
     try:
         CheckConnection.is_online()
         url_auth = authenticate_CAS_for_URL(url, config['UN_CMEMS'], config['PW_CMEMS'])
+        response = open_url(url_auth)
         CheckConnection.is_online()
-        bytes_data = open_url(url_auth).read()
+        read_bytes = response.read()
         CheckConnection.is_online()
-        return xr.open_dataset(bytes_data)
+        return xr.open_dataset(read_bytes)
     except Exception as e:
-        raise ValueError('Error:', BeautifulSoup(bytes_data, 'html.parser').find('p', {"class": "error"}), 'Request: ',
-                         url)
+        logger.error(traceback.format_exc())
+        raise ValueError('Error:', BeautifulSoup(read_bytes, 'html.parser').find('p', {"class": "error"}), 'Request: ',
+                         url, response)
 
 
 def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
@@ -216,17 +220,20 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_p
     http_util.session_manager.set_session_options(auth=(config['UN_RDA'], config['PW_RDA']))
     start_cat = TDSCatalog(
         "%s/%s/%s%.2d%.2d/catalog.xml" % (base_url, start_date.year, start_date.year, start_date.month, start_date.day))
-    ds_subset = start_cat.datasets[
-        'gfs.0p25.%s%.2d%.2d18.f006.grib2' % (start_date.year, start_date.month, start_date.day)].subset()
+    name = 'gfs.0p25.%s%.2d%.2d18.f006.grib2' % (start_date.year, start_date.month, start_date.day)
+    ds_subset = start_cat.datasets[name].subset()
     query = ds_subset.query().lonlat_box(north=lat_hi, south=lat_lo, east=lon_hi, west=lon_lo).variables(
         *GFS_25_VAR_LIST)
     CheckConnection.is_online()
-    data = ds_subset.get_data(query)
-    x_arr = xr.open_dataset(NetCDF4DataStore(data))
-    if 'time1' in list(x_arr.coords):
-        x_arr = x_arr.rename({'time1': 'time'})
-    x_arr_list.append(x_arr)
-
+    try:
+        data = ds_subset.get_data(query)
+        x_arr = xr.open_dataset(NetCDF4DataStore(data))
+        if 'time1' in list(x_arr.coords):
+            x_arr = x_arr.rename({'time1': 'time'})
+        x_arr_list.append(x_arr)
+    except Exception as e:
+        print(e)
+        logger.warning('dataset %s is not complete' % name)
     for day in range((date_hi - date_lo).days + 1):
         end_date = datetime(date_lo.year, date_lo.month, date_lo.day) + timedelta(days=day)
         end_cat = TDSCatalog(
@@ -240,11 +247,15 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_p
                     query = ds_subset.query().lonlat_box(north=lat_hi, south=lat_lo, east=lon_hi,
                                                          west=lon_lo).variables(*GFS_25_VAR_LIST)
                     CheckConnection.is_online()
-                    data = ds_subset.get_data(query)
-                    x_arr = xr.open_dataset(NetCDF4DataStore(data))
-                    if 'time1' in list(x_arr.coords):
-                        x_arr = x_arr.rename({'time1': 'time'})
-                    x_arr_list.append(x_arr)
+                    try:
+                        data = ds_subset.get_data(query)
+                        x_arr = xr.open_dataset(NetCDF4DataStore(data))
+                        if 'time1' in list(x_arr.coords):
+                            x_arr = x_arr.rename({'time1': 'time'})
+                        x_arr_list.append(x_arr)
+                    except Exception as e:
+                        print(e)
+                        logger.warning('dataset %s is not complete' % name)
                 else:
                     logger.warning('dataset %s is not found' % name)
     dataset = xr.combine_by_coords(x_arr_list).squeeze()
@@ -343,57 +354,59 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
         DAILY_PHY_VAR_LIST].reset_index(drop=True, inplace=True)
 
 
-def append_to_csv(in_path: str, out_path: str) -> None:
+def append_to_csv(in_path: Path, out_path: Path) -> None:
     logger.debug('append_environment_data in file %s' % in_path)
     chunkSize = 100000
     header = True
     try:
         for df_chunk in pd.read_csv(in_path, parse_dates=['BaseDateTime'], date_parser=str_to_date,
                                     chunksize=chunkSize):
-            # remove index column
-            df_chunk.drop(['Unnamed: 0'], axis=1, errors='ignore', inplace=True)
+            if len(df_chunk) > 1:
+                # remove index column
+                df_chunk.drop(['Unnamed: 0'], axis=1, errors='ignore', inplace=True)
 
-            # retrieve the data for each file once
-            lat_hi = df_chunk.LAT.max()
-            lon_hi = df_chunk.LON.max()
+                # retrieve the data for each file once
+                lat_hi = df_chunk.LAT.max()
+                lon_hi = df_chunk.LON.max()
 
-            lat_lo = df_chunk.LAT.min()
-            lon_lo = df_chunk.LON.min()
+                lat_lo = df_chunk.LAT.min()
+                lon_lo = df_chunk.LON.min()
 
-            date_lo = df_chunk.BaseDateTime.min()
-            date_hi = df_chunk.BaseDateTime.max()
-            time_points = xr.DataArray(list(df_chunk['BaseDateTime'].values))
-            lat_points = xr.DataArray(list(df_chunk['LAT'].values))
-            lon_points = xr.DataArray(list(df_chunk['LON'].values))
+                date_lo = df_chunk.BaseDateTime.min()
+                date_hi = df_chunk.BaseDateTime.max()
+                time_points = xr.DataArray(list(df_chunk['BaseDateTime'].values))
+                lat_points = xr.DataArray(list(df_chunk['LAT'].values))
+                lon_points = xr.DataArray(list(df_chunk['LON'].values))
 
-            df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
+                df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
+                                                        lat_points, lon_points)], axis=1)
+
+                df_chunk = pd.concat(
+                    [df_chunk, get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                     lat_points, lon_points)], axis=1)
 
-            df_chunk = pd.concat(
-                [df_chunk, get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
-                                                lat_points, lon_points)], axis=1)
+                df_chunk = pd.concat(
+                    [df_chunk,
+                     get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
+                                     lon_points)], axis=1)
 
-            df_chunk = pd.concat(
-                [df_chunk, get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
-                                           lon_points)], axis=1)
+                df_chunk = pd.concat(
+                    [df_chunk,
+                     get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
+                                     lon_points)], axis=1)
 
-            df_chunk = pd.concat(
-                [df_chunk, get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
-                                           lon_points)], axis=1)
-
-            df_chunk.to_csv(out_path, chunksize=chunkSize, mode='a', header=header)
-            header = False
+                df_chunk.to_csv(out_path, chunksize=chunkSize, mode='a', header=header)
+                header = False
     except Exception as e:
         # discard the file in case of an error to resume later properly
-        if out_path:
-            out_path.unlink(missing_ok=True)
-        raise e
+        out_path.unlink(missing_ok=True)
+        raise FileFailedException(file_name=out_path.name)
 
 
-def append_environment_data_to_year(filtered_dir: str, merged_dir: str) -> None:
+def append_environment_data_to_year(filtered_dir: Path, merged_dir: Path) -> None:
     csv_list = check_dir(filtered_dir)
     for file in csv_list:
-        if Path(merged_dir, file).exists(): continue
+        if Path(merged_dir, file).exists() or file in Failed_Files.keys(): continue
         append_to_csv(Path(filtered_dir, file), Path(merged_dir, file))
 
 

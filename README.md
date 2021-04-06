@@ -4,6 +4,7 @@ MariDataHarvest is a tool for scrapping and harvesting Automatic Identification 
 then appending it with the weather and environment conditions provided by [CMEMS](https://nrt.cmems-du.eu) and [RDA](https://rda.ucar.edu/index.html) at each geographical and UTC timestamp point.
 In the following is a description of the datasets used:
 [<img alt="Datasets Description" align="middle" src="./img/datasets_description.PNG"/>](https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit?usp=sharing)
+[<img alt="Variables Description" align="middle" src="./img/variables_description.PNG"/>](https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit?usp=sharing)
 
 This tool is developed with in the [MariData](https://www.maridata.org) project.
 
@@ -40,7 +41,7 @@ Start harvesting with the following command:
 python main.py --year=2019 --minutes=30 --dir=C:\..
 ```
 
-- `year`: the year to download AIS-data.
+- `year`: the year(s) to download AIS-data. Expected input a year 'YYYY' , a range of years 'YYYY-YYYY' or multiple years 'YYYY,YYYY,YYYY'.
 
 - `minutes`: is the subsampling interval in minutes.
 
@@ -56,7 +57,7 @@ python main.py --year=2019 --minutes=30 --dir=C:\..
 
 - `clear` (optional): clears files of `year` ONLY after step 2 is done.
 
-- `depth_first` (optional): Run all steps for each file, which automatically deactivates `step` argument.
+- `depth_first` (optional): runs all steps for each file, which automatically deactivates `step` argument.
 
 ### Docker
 
@@ -166,7 +167,6 @@ rsync --recursive --verbose --times --rsh ssh \
 | six             | 1.15.0    | MIT License                                         |
 | soupsieve       | 2.2.1     | MIT License                                         |
 | urllib3         | 1.26.4    | MIT License                                         |
-| wget            | 3.2       | Public Domain                                       |
 | xarray          | 0.15.1    | Apache Software License                             |
 
 <details>
