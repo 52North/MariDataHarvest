@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+    web:
+        build: ./web/
+        ports:
+            - 443:443
+            - 80:80
+        healthcheck:
+            test: service nginx status || exit 1
+            interval: 10s
+            timeout: 10s
+            retries: 3
+        volumes:
+            - "/etc/ssl/certs/dhparam.pem:/etc/ssl/certs/dhparam.pem:ro"
+            - "/etc/letsencrypt/live/harvester.maridata.dev.52north.org/fullchain.pem:/etc/letsencrypt/live/harvester.maridata.dev.52north.org/fullchain.pem:ro"
+            - "/etc/letsencrypt/live/harvester.maridata.dev.52north.org/privkey.pem:/etc/letsencrypt/live/harvester.maridata.dev.52north.org/privkey.pem:ro"
+            - "maridata-harvester_data:/www/data/:ro"
+
+volumes:
+    maridata-harvester_data:
