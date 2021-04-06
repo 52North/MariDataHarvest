@@ -80,7 +80,7 @@ if __name__ == '__main__':
         epilog='The following exit codes are configured:\n16 -> service secrets configuration file not found.')
     parser.add_argument('-y', '--year',
                         help="A given year to start a task. Expected input 'YYYY' , 'YYYY-YYYY' or 'YYYY,YYYY,YYYY'",
-                        required=True, type=str)
+                        required=True, type=years_arg_parser)
     parser.add_argument('-m', '--minutes', help='A given minutes interval to downscale the data.',
                         required=True, type=int, choices=range(1, 1440))
     parser.add_argument('-s', '--step', help='Select the specific step to perform.',
@@ -95,7 +95,6 @@ if __name__ == '__main__':
                         help='Clears the raw output directory in order to free memory.',
                         action='store_true')
     args, unknown = parser.parse_known_args()
-    args.year = years_arg_parser(args.year)
     # initialize a Thread to check connection
     connectionChecker = CheckConnection(check_interval=8)
     connectionChecker.daemon = True
