@@ -33,54 +33,54 @@ else:
 
 logger = logging.getLogger(__name__)
 
-if __name__ == '__main__':
-    def years_arg_parser(input: str) -> list[int]:
-        print('HAL' * 50)
-        years = input.split('-')
-        choices = list(range(2009, 2021))
-        if len(years) == 2:
-            start = years[0]
-            end = years[1]
-            try:
-                if int(start) in choices and int(end) in choices:
-                    if start < end:
-                        return list(range(int(start), int(end)))
-                    elif start == end:
-                        return [start]
+
+def years_arg_parser(input: str) -> list[int]:
+    years = input.split('-')
+    choices = list(range(2009, 2021))
+    if len(years) == 2:
+        start = years[0]
+        end = years[1]
+        try:
+            if int(start) in choices and int(end) in choices:
+                if start < end:
+                    return list(range(int(start), int(end)))
+                elif start == end:
+                    return [start]
+            raise ValueError
+        except Exception:
+            raise argparse.ArgumentTypeError(
+                "'" + input + "' is not Valid. Expected input 'YYYY' , 'YYYY-YYYY' or 'YYYY,YYYY,YYYY'.")
+
+    years = input.split(',')
+    if len(years) > 1:
+        try:
+            parsed_years = [int(y) for y in years if int(y) in choices]
+            if len(parsed_years) < len(years):
                 raise ValueError
-            except Exception:
-                raise argparse.ArgumentTypeError(
-                    "'" + input + "' is not Valid. Expected input 'YYYY' , 'YYYY-YYYY' or 'YYYY,YYYY,YYYY'.")
+            return parsed_years
+        except ValueError as e:
+            raise argparse.ArgumentTypeError(
+                "'" + input + "' is not Valid. Expected input 'YYYY' , 'YYYY-YYYY' or 'YYYY,YYYY,YYYY'.")
 
-        years = input.split(',')
-        if len(years) > 1:
-            try:
-                parsed_years = [int(y) for y in years if int(y) in choices]
-                if len(parsed_years) < len(years):
-                    raise ValueError
-                return parsed_years
-            except ValueError as e:
-                raise argparse.ArgumentTypeError(
-                    "'" + input + "' is not Valid. Expected input 'YYYY' , 'YYYY-YYYY' or 'YYYY,YYYY,YYYY'.")
-
-        if len(years) == 1:
-            try:
-                parsed_y = int(input)
-                if not parsed_y in choices:
-                    raise ValueError
-                return [parsed_y]
-            except ValueError as e:
-                raise argparse.ArgumentTypeError(
-                    "'" + input + "' is not Valid. Expected input 'YYYY' , 'YYYY-YYYY' or 'YYYY,YYYY,YYYY'.")
+    if len(years) == 1:
+        try:
+            parsed_y = int(input)
+            if not parsed_y in choices:
+                raise ValueError
+            return [parsed_y]
+        except ValueError as e:
+            raise argparse.ArgumentTypeError(
+                "'" + input + "' is not Valid. Expected input 'YYYY' , 'YYYY-YYYY' or 'YYYY,YYYY,YYYY'.")
 
 
+if __name__ == '__main__':
     # arguments parameters
     parser = argparse.ArgumentParser(
         description='For a given a year and minutes interval of subsampling to start harvesting AIS-Data.',
         epilog='The following exit codes are configured:\n16 -> service secrets configuration file not found.')
     parser.add_argument('-y', '--year',
                         help="A given year to start a task. Expected input 'YYYY' , 'YYYY-YYYY' or 'YYYY,YYYY,YYYY'",
-                        required=True, type=years_arg_parser)
+                        required=True, type=str)
     parser.add_argument('-m', '--minutes', help='A given minutes interval to downscale the data.',
                         required=True, type=int, choices=range(1, 1440))
     parser.add_argument('-s', '--step', help='Select the specific step to perform.',
@@ -95,7 +95,7 @@ if __name__ == '__main__':
                         help='Clears the raw output directory in order to free memory.',
                         action='store_true')
     args, unknown = parser.parse_known_args()
-
+    args.year = years_arg_parser(args.year)
     # initialize a Thread to check connection
     connectionChecker = CheckConnection(check_interval=8)
     connectionChecker.daemon = True
@@ -131,7 +131,7 @@ if __name__ == '__main__':
                         if interval > 40:
                             Failed_Files[e.file_name] = traceback.format_exc()
                             logger.warning('Skipping steps 1, 2 and 3 for file %s after attempting %d times' % (
-                                file, interval // 10))
+                            file, interval // 10))
                             interval = 10
                             break
                         logger.error('Re-run in {0} sec'.format(interval))
@@ -218,7 +218,7 @@ if __name__ == '__main__':
                         if interval > 40:
                             Failed_Files[e.file_name] = traceback.format_exc()
                             logger.warning('Skipping file step 2 for file %s after attempting %d times' % (
-                                e.file_name, interval // 10))
+                            e.file_name, interval // 10))
                             interval = 10
                         logger.error('Re-run in {0} sec'.format(interval))
                         time.sleep(interval)
