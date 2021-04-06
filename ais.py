@@ -30,7 +30,7 @@ def check_dir(dir_name: Path) -> typing.List[str]:
     return sorted(os.listdir(dir_name), key=str.lower)
 
 
-def get_files_list(year: int, resume_download: typing.List[str]) -> typing.List[str]:
+def get_files_list(year: int, exclude_to_resume: typing.List[str]) -> typing.List[str]:
     # url link to data
     url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{0}/".format(year)
     # check already installed files in the
@@ -49,7 +49,7 @@ def get_files_list(year: int, resume_download: typing.List[str]) -> typing.List[
             name = a['href'].split('.')[0]
             name = name.split('/')[-1] if len(name.split('/')) > 1 else name
             Failed_Files_list = list(Failed_Files.keys())
-            if name + '.csv' in resume_download + Failed_Files_list or name + '.gdb' in resume_download + Failed_Files_list or name + '.zip' in Failed_Files_list:
+            if name + '.csv' in exclude_to_resume + Failed_Files_list or name + '.gdb' in exclude_to_resume + Failed_Files_list or name + '.zip' in Failed_Files_list:
                 continue
             files.append(a['href'])
     return files
@@ -120,7 +120,7 @@ def download_year_AIS(year: int, download_dir: Path) -> None:
     resume_download = []
     if download_dir.exists():
         resume_download = check_dir(download_dir)
-    files = get_files_list(year, resume_download)
+    files = get_files_list(year, exclude_to_resume=resume_download)
     #  download
     for zip_file_name in files:
         download_file(zip_file_name, download_dir, year)

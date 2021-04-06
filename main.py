@@ -116,9 +116,11 @@ if __name__ == '__main__':
         filtered_dir.mkdir(parents=True, exist_ok=True)
         file_name = ''
         interval = 10
+        merged_dir_list = check_dir(merged_dir)
+        filtered_dir_list = check_dir(filtered_dir)
         if args.depth_first:
             logger.info('Task is started using Depth-first mode')
-            for file in get_files_list(year, check_dir(merged_dir)):
+            for file in get_files_list(year, exclude_to_resume=merged_dir_list):
                 while True:
                     try:
                         logger.info('STEP 1/3 downloading AIS data: %s' % file)
@@ -130,7 +132,7 @@ if __name__ == '__main__':
                         if interval > 40:
                             Failed_Files[e.file_name] = traceback.format_exc()
                             logger.warning('Skipping steps 1, 2 and 3 for file %s after attempting %d times' % (
-                            file, interval // 10))
+                                file, interval // 10))
                             interval = 10
                             break
                         logger.error('Re-run in {0} sec'.format(interval))
@@ -140,6 +142,10 @@ if __name__ == '__main__':
                 while True:
                     try:
                         if not file_name: break
+                        if file_name in filtered_dir_list:
+                            logger.info(
+                                'STEP 2/3 File: %s has been already subsampled from a previous run.' % file_name)
+                            break
                         logger.info('STEP 2/3 subsampling CSV data: %s' % file_name)
                         subsample_file(file_name, download_dir, filtered_dir, args.minutes)
                         break
@@ -168,6 +174,13 @@ if __name__ == '__main__':
                         if not file_name: break
                         logger.info('STEP 3/3 appending weather data: %s' % file_name)
                         append_environment_data_to_file(file_name, filtered_dir, merged_dir)
+                        if args.clear:
+                            logger.info('Remove filtered file %s' % file_name)
+                            if Path(filtered_dir, file_name).exists() and Path(merged_dir, file_name).exists():
+                                os.remove(str(Path(filtered_dir, file_name)))
+                            else:
+                                logger.error("Error: %s or %s file not found" % (
+                                str(Path(download_dir, file_name)), str(Path(merged_dir, file_name))))
                         break
                     except Exception as e:
                         logger.error(traceback.format_exc())
@@ -181,6 +194,7 @@ if __name__ == '__main__':
                         logger.error('Re-run in {0} sec'.format(interval))
                         time.sleep(interval)
                         interval += 10
+
         else:
             if args.step != 0:
                 logger.info('Single step selected')
@@ -217,7 +231,7 @@ if __name__ == '__main__':
                         if interval > 40:
                             Failed_Files[e.file_name] = traceback.format_exc()
                             logger.warning('Skipping file step 2 for file %s after attempting %d times' % (
-                            e.file_name, interval // 10))
+                                e.file_name, interval // 10))
                             interval = 10
                         logger.error('Re-run in {0} sec'.format(interval))
                         time.sleep(interval)
