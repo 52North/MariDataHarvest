@@ -33,47 +33,47 @@ else:
 
 logger = logging.getLogger(__name__)
 
-
-def years_arg_parser(input: str) -> [int]:
-    years = input.split('-')
-    choices = list(range(2009, 2021))
-    if len(years) == 2:
-        start = years[0]
-        end = years[1]
-        try:
-            if int(start) in choices and int(end) in choices:
-                if start < end:
-                    return list(range(int(start), int(end)))
-                elif start == end:
-                    return [start]
-            raise ValueError
-        except Exception:
-            raise argparse.ArgumentTypeError(
-                "'" + input + "' is not Valid. Expected input 'YYYY' , 'YYYY-YYYY' or 'YYYY,YYYY,YYYY'.")
-
-    years = input.split(',')
-    if len(years) > 1:
-        try:
-            parsed_years = [int(y) for y in years if int(y) in choices]
-            if len(parsed_years) < len(years):
-                raise ValueError
-            return parsed_years
-        except ValueError as e:
-            raise argparse.ArgumentTypeError(
-                "'" + input + "' is not Valid. Expected input 'YYYY' , 'YYYY-YYYY' or 'YYYY,YYYY,YYYY'.")
-
-    if len(years) == 1:
-        try:
-            parsed_y = int(input)
-            if not parsed_y in choices:
-                raise ValueError
-            return [parsed_y]
-        except ValueError as e:
-            raise argparse.ArgumentTypeError(
-                "'" + input + "' is not Valid. Expected input 'YYYY' , 'YYYY-YYYY' or 'YYYY,YYYY,YYYY'.")
-
-
 if __name__ == '__main__':
+    def years_arg_parser(input: str) -> list[int]:
+        print('HAL' * 50)
+        years = input.split('-')
+        choices = list(range(2009, 2021))
+        if len(years) == 2:
+            start = years[0]
+            end = years[1]
+            try:
+                if int(start) in choices and int(end) in choices:
+                    if start < end:
+                        return list(range(int(start), int(end)))
+                    elif start == end:
+                        return [start]
+                raise ValueError
+            except Exception:
+                raise argparse.ArgumentTypeError(
+                    "'" + input + "' is not Valid. Expected input 'YYYY' , 'YYYY-YYYY' or 'YYYY,YYYY,YYYY'.")
+
+        years = input.split(',')
+        if len(years) > 1:
+            try:
+                parsed_years = [int(y) for y in years if int(y) in choices]
+                if len(parsed_years) < len(years):
+                    raise ValueError
+                return parsed_years
+            except ValueError as e:
+                raise argparse.ArgumentTypeError(
+                    "'" + input + "' is not Valid. Expected input 'YYYY' , 'YYYY-YYYY' or 'YYYY,YYYY,YYYY'.")
+
+        if len(years) == 1:
+            try:
+                parsed_y = int(input)
+                if not parsed_y in choices:
+                    raise ValueError
+                return [parsed_y]
+            except ValueError as e:
+                raise argparse.ArgumentTypeError(
+                    "'" + input + "' is not Valid. Expected input 'YYYY' , 'YYYY-YYYY' or 'YYYY,YYYY,YYYY'.")
+
+
     # arguments parameters
     parser = argparse.ArgumentParser(
         description='For a given a year and minutes interval of subsampling to start harvesting AIS-Data.',
@@ -130,7 +130,8 @@ if __name__ == '__main__':
                         logger.error('Error when downloading AIS data')
                         if interval > 40:
                             Failed_Files[e.file_name] = traceback.format_exc()
-                            logger.warning('Skipping steps 1, 2 and 3 for file %s after attempting %d times' % (file, interval // 10))
+                            logger.warning('Skipping steps 1, 2 and 3 for file %s after attempting %d times' % (
+                                file, interval // 10))
                             interval = 10
                             break
                         logger.error('Re-run in {0} sec'.format(interval))
@@ -148,7 +149,8 @@ if __name__ == '__main__':
                         logger.error('Error when subsampling CSV data')
                         if interval > 40:
                             Failed_Files[e.file_name] = traceback.format_exc()
-                            logger.warning('Skipping steps 2, 3 for file %s after attempting %d times' % (file, interval // 10))
+                            logger.warning(
+                                'Skipping steps 2, 3 for file %s after attempting %d times' % (file, interval // 10))
                             interval = 10
                             break
                         logger.error('Re-run in {0} sec'.format(interval))
@@ -173,7 +175,8 @@ if __name__ == '__main__':
                         logger.error('Error when appending environment data')
                         if interval > 40:
                             Failed_Files[e.file_name] = traceback.format_exc()
-                            logger.warning('Skipping step 3 for file %s after attempting %d times' % (file, interval // 10))
+                            logger.warning(
+                                'Skipping step 3 for file %s after attempting %d times' % (file, interval // 10))
                             interval = 10
                             break
                         logger.error('Re-run in {0} sec'.format(interval))
@@ -194,7 +197,8 @@ if __name__ == '__main__':
                         logger.error('Error when downloading AIS data')
                         if interval > 40:
                             Failed_Files[e.file_name] = traceback.format_exc()
-                            logger.warning('Skipping step 1 for file %s after attempting %d times' % (e.file_name, interval // 10))
+                            logger.warning(
+                                'Skipping step 1 for file %s after attempting %d times' % (e.file_name, interval // 10))
                             interval = 10
                         logger.error('Re-run in {0} sec'.format(interval))
                         time.sleep(interval)
@@ -213,7 +217,8 @@ if __name__ == '__main__':
                         logger.error('Error when subsampling CSV data')
                         if interval > 40:
                             Failed_Files[e.file_name] = traceback.format_exc()
-                            logger.warning('Skipping file step 2 for file %s after attempting %d times' % (e.file_name, interval // 10))
+                            logger.warning('Skipping file step 2 for file %s after attempting %d times' % (
+                                e.file_name, interval // 10))
                             interval = 10
                         logger.error('Re-run in {0} sec'.format(interval))
                         time.sleep(interval)
@@ -236,8 +241,9 @@ if __name__ == '__main__':
                         logger.error('Error when appending environment data')
                         if interval > 40:
                             Failed_Files[e.file_name] = traceback.format_exc()
-                            logger.warning('Skipping step 3 for file %s after attempting %d times' % (e.file_name, interval // 10))
+                            logger.warning(
+                                'Skipping step 3 for file %s after attempting %d times' % (e.file_name, interval // 10))
                             interval = 10
                         logger.error('Re-run in {0} sec'.format(interval))
-                        # time.sleep(interval)
+                        time.sleep(interval)
                         interval += 10
