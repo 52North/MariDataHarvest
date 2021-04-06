@@ -19,6 +19,8 @@ from check_connection import CheckConnection
 from config import config
 
 # utils to convert dates
+from utils import FileFailedException, Failed_Files
+
 str_to_date = lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
 date_to_str = lambda x: x.strftime('%Y-%m-%dT%H:%M:%SZ')
 
@@ -389,13 +391,13 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
     except Exception as e:
         # discard the file in case of an error to resume later properly
         out_path.unlink(missing_ok=True)
-        raise e
+        raise FileFailedException(file_name=out_path.name)
 
 
 def append_environment_data_to_year(filtered_dir: Path, merged_dir: Path) -> None:
     csv_list = check_dir(filtered_dir)
     for file in csv_list:
-        if Path(merged_dir, file).exists(): continue
+        if Path(merged_dir, file).exists() or file in Failed_Files.keys(): continue
         append_to_csv(Path(filtered_dir, file), Path(merged_dir, file))
 
 
