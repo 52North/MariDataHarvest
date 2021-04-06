@@ -220,17 +220,20 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_p
     http_util.session_manager.set_session_options(auth=(config['UN_RDA'], config['PW_RDA']))
     start_cat = TDSCatalog(
         "%s/%s/%s%.2d%.2d/catalog.xml" % (base_url, start_date.year, start_date.year, start_date.month, start_date.day))
-    ds_subset = start_cat.datasets[
-        'gfs.0p25.%s%.2d%.2d18.f006.grib2' % (start_date.year, start_date.month, start_date.day)].subset()
+    name = 'gfs.0p25.%s%.2d%.2d18.f006.grib2' % (start_date.year, start_date.month, start_date.day)
+    ds_subset = start_cat.datasets[name].subset()
     query = ds_subset.query().lonlat_box(north=lat_hi, south=lat_lo, east=lon_hi, west=lon_lo).variables(
         *GFS_25_VAR_LIST)
     CheckConnection.is_online()
-    data = ds_subset.get_data(query)
-    x_arr = xr.open_dataset(NetCDF4DataStore(data))
-    if 'time1' in list(x_arr.coords):
-        x_arr = x_arr.rename({'time1': 'time'})
-    x_arr_list.append(x_arr)
-
+    try:
+        data = ds_subset.get_data(query)
+        x_arr = xr.open_dataset(NetCDF4DataStore(data))
+        if 'time1' in list(x_arr.coords):
+            x_arr = x_arr.rename({'time1': 'time'})
+        x_arr_list.append(x_arr)
+    except Exception as e:
+        print(e)
+        logger.warning('dataset %s is not complete' % name)
     for day in range((date_hi - date_lo).days + 1):
         end_date = datetime(date_lo.year, date_lo.month, date_lo.day) + timedelta(days=day)
         end_cat = TDSCatalog(
@@ -244,11 +247,15 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_p
                     query = ds_subset.query().lonlat_box(north=lat_hi, south=lat_lo, east=lon_hi,
                                                          west=lon_lo).variables(*GFS_25_VAR_LIST)
                     CheckConnection.is_online()
-                    data = ds_subset.get_data(query)
-                    x_arr = xr.open_dataset(NetCDF4DataStore(data))
-                    if 'time1' in list(x_arr.coords):
-                        x_arr = x_arr.rename({'time1': 'time'})
-                    x_arr_list.append(x_arr)
+                    try:
+                        data = ds_subset.get_data(query)
+                        x_arr = xr.open_dataset(NetCDF4DataStore(data))
+                        if 'time1' in list(x_arr.coords):
+                            x_arr = x_arr.rename({'time1': 'time'})
+                        x_arr_list.append(x_arr)
+                    except Exception as e:
+                        print(e)
+                        logger.warning('dataset %s is not complete' % name)
                 else:
                     logger.warning('dataset %s is not found' % name)
     dataset = xr.combine_by_coords(x_arr_list).squeeze()
@@ -379,12 +386,14 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
                                                     lat_points, lon_points)], axis=1)
 
                 df_chunk = pd.concat(
-                    [df_chunk, get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
-                                               lon_points)], axis=1)
+                    [df_chunk,
+                     get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
+                                     lon_points)], axis=1)
 
                 df_chunk = pd.concat(
-                    [df_chunk, get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
-                                               lon_points)], axis=1)
+                    [df_chunk,
+                     get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
+                                     lon_points)], axis=1)
 
                 df_chunk.to_csv(out_path, chunksize=chunkSize, mode='a', header=header)
                 header = False
