@@ -1,24 +1,59 @@
-################################################################################
-#                                                                              #
-#   Copyright (C) 2021-2021 52°North Initiative for Geospatial Open Source     #
-#   Software GmbH                                                              #
-#                                                                              #
-#   TO BE DEFINED LICENSE                                                      #
-#                                                                              #
-################################################################################
+#   Copyright (C) 2021-2021 52°North Initiative for Geospatial Open Source
+#   Software GmbH
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 as published
+# by the Free Software Foundation.
+#
+# If the program is linked with libraries which are licensed under one of
+# the following licenses, the combination of the program with the linked
+# library is not considered a "derivative work" of the program:
+#
+#     - Apache License, version 2.0
+#     - Apache Software License, version 1.0
+#     - GNU Lesser General Public License, version 3
+#     - Mozilla Public License, versions 1.0, 1.1 and 2.0
+#     - Common Development and Distribution License (CDDL), version 1.0
+#
+# Therefore the distribution of the program linked with libraries licensed
+# under the aforementioned licenses, is permitted by the copyright holders
+# if the distribution is compliant with both the GNU General Public
+# License version 2 and the aforementioned licenses.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+# Public License for more details.
+#
+# build with
+#
+#      --build-arg GIT_COMMIT=$(git rev-parse -q --verify HEAD)
+#      --build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+#
+# See https://wiki.52north.org/Documentation/ImageAndContainerLabelSpecification
+# regarding the used labels
+#
 FROM nginx:mainline
 
 LABEL maintainer="Eike Hinderk Jürrens <e.h.juerrens@52north.org>" \
-      org.label-schema.schema-version="1.0" \
-      org.label-schema.name="TBD" \
-      org.label-schema.description="TBD" \
-      org.label-schema.license="TBD" \
-      org.label-schema.url="https://52north.orgTBD/" \
-      org.label-schema.vendor="52°North GmbH" \
-      org.label-schema.vcs-url="https://github.com/52north/TBD.git" \
-      org.label-schema.version="x.y.z"
+      org.opencontainers.image.authors="Jürrens, Eike Hinderk <e.h.juerrens@52north.org>" \
+      org.opencontainers.image.url="https://github.com/52North/MariDataHarvest.git" \
+      org.opencontainers.image.vendor="52°North GmbH" \
+      org.opencontainers.image.licenses="GPL-3.0-or-later" \
+      org.opencontainers.image.title="52°North MariData Harvester Web Data Access" \
+      org.opencontainers.image.description="nginx based web access to generated data"
 
 COPY default.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 443
 EXPOSE 80
+
+ARG GIT_COMMIT
+LABEL org.opencontainers.image.revision "${GIT_COMMIT}"
+
+ARG BUILD_DATE
+LABEL org.opencontainers.image.created "${BUILD_DATE}"
+
+ARG VERSION=1.0.0
+LABEL org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.ref.name="52north/mari-data_harvester-web-${VERSION}"
