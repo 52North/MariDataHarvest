@@ -127,6 +127,18 @@ rsync --recursive --verbose --times --rsh ssh \
    mari-data-harvester.example.org:/home/user/maridata-harvester
 ```
 
+### Web Access to the Data
+
+We are using an nginx container to provide web access to the generated data. It requires an external service to maintain the ssl certificates. The according data volume is mounted read-only and externally provided, hence docker-compose does not create it with a project prefix.
+
+Just execute the following command in root folder of the repository to start the service:
+
+```sh
+docker-compose up -d --build && docker-compose logs --follow
+```
+
+The data is available directly at the server root via https. All requests to http are redirected to https by default.
+
 ## Contact
 - [Zaabalawi, Sufian ](https://github.com/SufianZa)
 - [Jürrens, Eike Hinderk](https://github.com/EHJ-52n)
