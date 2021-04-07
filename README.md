@@ -156,10 +156,10 @@ rsync --recursive --verbose --times --rsh ssh \
 | netCDF4         | 1.5.6     | MIT License                                         |
 | numpy           | 1.20.1    | BSD License                                         |
 | pandas          | 1.2.3     | BSD                                                 |
-| protobuf        | 3.15.6    | 3-Clause BSD License                                |
+| protobuf        | 3.15.7    | 3-Clause BSD License                                |
 | pyproj          | 3.0.1     | MIT License                                         |
 | python-dateutil | 2.8.1     | BSD License, Apache Software License                |
-| python-dotenv   | 0.16.0    | BSD License                                         |
+| python-dotenv   | 0.17.0    | BSD License                                         |
 | pytz            | 2021.1    | MIT License                                         |
 | requests        | 2.25.1    | Apache Software License                             |
 | scipy           | 1.6.2     | BSD License                                         |
@@ -167,6 +167,7 @@ rsync --recursive --verbose --times --rsh ssh \
 | six             | 1.15.0    | MIT License                                         |
 | soupsieve       | 2.2.1     | MIT License                                         |
 | urllib3         | 1.26.4    | MIT License                                         |
+| wget            | 3.2       | Public Domain                                       |
 | xarray          | 0.15.1    | Apache Software License                             |
 
 <details>
