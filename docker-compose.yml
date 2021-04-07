@@ -19,3 +19,4 @@ services:
 
 volumes:
     maridata-harvester_data:
+        external: true
