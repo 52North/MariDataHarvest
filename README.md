@@ -43,25 +43,27 @@ python main.py --year=2019 --minutes=30 --dir=C:\..
 
 - `year`: the year(s) to download AIS-data. Expected input a year 'YYYY' , a range of years 'YYYY-YYYY' or multiple years 'YYYY,YYYY,YYYY'.
 
-- `minutes`: is the subsampling interval in minutes.
+- `minutes`: is the sub-sampling interval in minutes.
 
 - `dir`: the absolute path where to keep data. If empty, the directory is same as the project directory.
 
-- `step` (optional): starts the script at a specific step:
+- **optional** arguments:
 
-  1. Download,
-  2. Subsample,
-  3. Appending weather data.
+  - `step`: starts the script at a specific step:
 
-  If `step` equals `0` (default value), the script runs all steps starting from step 1.
+    1. Download,
+    2. Subsample,
+    3. Appending weather data.
 
-- `clear` (optional): clears files of `year` ONLY after step 2 is done.
+    If `step` equals `0` (default value), the script runs all steps starting from step 1.
 
-- `depth_first` (optional): runs all steps for each file, which automatically deactivates `step` argument.
+  - `clear`: clears files of `year` ONLY after step 2 is done.
+
+  - `depth_first`: runs all steps for each file, which automatically deactivates `step` argument.
 
 ### Docker
 
-You can use the Dockerfile to build an docker image and run the script in its own isolated enviroment. It is recommend to provide a volume to persist the data between each run. You can specify the arguments `year`, `minutes`, and `dir` as environment variables when creating/starting the container as outlined in the following. The labels used are following the [Image And Container Label Specification](https://wiki.52north.org/Documentation/ImageAndContainerLabelSpecification) of 52°North.
+You can use the Dockerfile to build an docker image and run the script in its own isolated environment. It is recommend to provide a volume to persist the data between each run. You can specify all arguments including the optional ones as environment variables when creating/starting the container as outlined in the following. The labels used are following the [Image And Container Label Specification](https://wiki.52north.org/Documentation/ImageAndContainerLabelSpecification) of 52°North.
 
 1. Build:
 
@@ -115,7 +117,7 @@ You can use the Dockerfile to build an docker image and run the script in its ow
 
 ## Deployment
 
-Use the following command to send the code to any server for building the image and run it:
+Use the following command to send the code to any server for building the image (or clone this repository using `git clone...`) and run it:
 
 ```sh
 rsync --recursive --verbose --times --rsh ssh \
