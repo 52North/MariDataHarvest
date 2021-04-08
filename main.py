@@ -10,7 +10,7 @@ import yaml
 
 from ais import download_year_AIS, subsample_year_AIS_to_CSV, download_file, get_files_list, subsample_file, check_dir
 from check_connection import CheckConnection
-from utils import Failed_Files
+from utils import Failed_Files, SaveToFailedList, init_Failed_list, FileFailedException
 from weather import append_environment_data_to_year, append_environment_data_to_file
 
 logging_config_file = 'logging.yaml'
@@ -99,12 +99,12 @@ if __name__ == '__main__':
     connectionChecker = CheckConnection(check_interval=8)
     connectionChecker.daemon = True
     connectionChecker.start()
+    arg_string = 'Starting a task for year(s) %s with subsampling of %d minutes' % (
+        ','.join(list(map(str, args.year))).join(['[', ']']), int(args.minutes))
 
     logger.info(
-        'Starting a task for year(s) %s with subsampling of %d minutes. The output files will be saved to %s' % (
-            ','.join(list(map(str, args.year))).join(['[', ']']), int(args.minutes),
-            args.dir if args.dir != '' else 'project directory'))
-
+        arg_string + 'The output files will be saved to %s' % (args.dir if args.dir != '' else 'project directory'))
+    init_Failed_list(arg_string, args.dir)
     for year in args.year:
         logger.info('Processing year %s' % str(year))
         # initialize directories
@@ -126,13 +126,14 @@ if __name__ == '__main__':
                         logger.info('STEP 1/3 downloading AIS data: %s' % file)
                         file_name = download_file(file, download_dir, year)
                         break
-                    except Exception as e:
+                    except FileFailedException as e:
                         logger.error(traceback.format_exc())
                         logger.error('Error when downloading AIS data')
                         if interval > 40:
-                            Failed_Files[e.file_name] = traceback.format_exc()
+                            Failed_Files.append(e.file_name)
                             logger.warning('Skipping steps 1, 2 and 3 for file %s after attempting %d times' % (
                                 file, interval // 10))
+                            SaveToFailedList(e.file_name, e.exceptionType, args.dir)
                             interval = 10
                             break
                         logger.error('Re-run in {0} sec'.format(interval))
@@ -149,13 +150,14 @@ if __name__ == '__main__':
                         logger.info('STEP 2/3 subsampling CSV data: %s' % file_name)
                         subsample_file(file_name, download_dir, filtered_dir, args.minutes)
                         break
-                    except Exception as e:
+                    except FileFailedException as e:
                         logger.error(traceback.format_exc())
                         logger.error('Error when subsampling CSV data')
                         if interval > 40:
-                            Failed_Files[e.file_name] = traceback.format_exc()
+                            Failed_Files.append(e.file_name)
                             logger.warning(
                                 'Skipping steps 2, 3 for file %s after attempting %d times' % (file, interval // 10))
+                            SaveToFailedList(e.file_name, e.exceptionType, args.dir)
                             interval = 10
                             break
                         logger.error('Re-run in {0} sec'.format(interval))
@@ -180,15 +182,16 @@ if __name__ == '__main__':
                                 os.remove(str(Path(filtered_dir, file_name)))
                             else:
                                 logger.error("Error: %s or %s file not found" % (
-                                str(Path(download_dir, file_name)), str(Path(merged_dir, file_name))))
+                                    str(Path(download_dir, file_name)), str(Path(merged_dir, file_name))))
                         break
-                    except Exception as e:
+                    except FileFailedException as e:
                         logger.error(traceback.format_exc())
                         logger.error('Error when appending environment data')
                         if interval > 40:
-                            Failed_Files[e.file_name] = traceback.format_exc()
+                            Failed_Files.append(e.file_name)
                             logger.warning(
                                 'Skipping step 3 for file %s after attempting %d times' % (file, interval // 10))
+                            SaveToFailedList(e.file_name, e.exceptionType, args.dir)
                             interval = 10
                             break
                         logger.error('Re-run in {0} sec'.format(interval))
@@ -205,13 +208,14 @@ if __name__ == '__main__':
                         # download AIS data
                         download_year_AIS(year, download_dir)
                         break
-                    except Exception as e:
+                    except FileFailedException as e:
                         logger.error(traceback.format_exc())
                         logger.error('Error when downloading AIS data')
                         if interval > 40:
-                            Failed_Files[e.file_name] = traceback.format_exc()
+                            Failed_Files.append(e.file_name)
                             logger.warning(
                                 'Skipping step 1 for file %s after attempting %d times' % (e.file_name, interval // 10))
+                            SaveToFailedList(e.file_name, e.exceptionType, args.dir)
                             interval = 10
                         logger.error('Re-run in {0} sec'.format(interval))
                         time.sleep(interval)
@@ -225,13 +229,14 @@ if __name__ == '__main__':
                         logger.info('STEP 2/3 subsampling CSV data')
                         subsample_year_AIS_to_CSV(str(year), download_dir, filtered_dir, args.minutes)
                         break
-                    except Exception as e:
+                    except FileFailedException as e:
                         logger.error(traceback.format_exc())
                         logger.error('Error when subsampling CSV data')
                         if interval > 40:
-                            Failed_Files[e.file_name] = traceback.format_exc()
+                            Failed_Files.append(e.file_name)
                             logger.warning('Skipping file step 2 for file %s after attempting %d times' % (
                                 e.file_name, interval // 10))
+                            SaveToFailedList(e.file_name, e.exceptionType, args.dir)
                             interval = 10
                         logger.error('Re-run in {0} sec'.format(interval))
                         time.sleep(interval)
@@ -249,13 +254,14 @@ if __name__ == '__main__':
                         logger.info('STEP 3/3 appending weather data')
                         append_environment_data_to_year(filtered_dir, merged_dir)
                         break
-                    except Exception as e:
+                    except FileFailedException as e:
                         logger.error(traceback.format_exc())
                         logger.error('Error when appending environment data')
                         if interval > 40:
                             Failed_Files[e.file_name] = traceback.format_exc()
                             logger.warning(
                                 'Skipping step 3 for file %s after attempting %d times' % (e.file_name, interval // 10))
+                            SaveToFailedList(e.file_name, e.exceptionType, args.dir)
                             interval = 10
                         logger.error('Re-run in {0} sec'.format(interval))
                         time.sleep(interval)

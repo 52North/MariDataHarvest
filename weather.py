@@ -233,7 +233,6 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_p
             x_arr = x_arr.rename({'time1': 'time'})
         x_arr_list.append(x_arr)
     except Exception as e:
-        print(e)
         logger.warning('dataset %s is not complete' % name)
     for day in range((date_hi - date_lo).days + 1):
         end_date = datetime(date_lo.year, date_lo.month, date_lo.day) + timedelta(days=day)
@@ -404,7 +403,7 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
     except Exception as e:
         # discard the file in case of an error to resume later properly
         out_path.unlink(missing_ok=True)
-        raise FileFailedException(file_name=out_path.name)
+        raise FileFailedException(out_path.name, e)
 
 
 def append_environment_data_to_year(filtered_dir: Path, merged_dir: Path) -> None:

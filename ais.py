@@ -48,8 +48,7 @@ def get_files_list(year: int, exclude_to_resume: typing.List[str]) -> typing.Lis
         if a.text and a.text.endswith('zip'):
             name = a['href'].split('.')[0]
             name = name.split('/')[-1] if len(name.split('/')) > 1 else name
-            Failed_Files_list = list(Failed_Files.keys())
-            if name + '.csv' in exclude_to_resume + Failed_Files_list or name + '.gdb' in exclude_to_resume + Failed_Files_list or name + '.zip' in Failed_Files_list:
+            if name + '.csv' in exclude_to_resume + Failed_Files or name + '.gdb' in exclude_to_resume + Failed_Files or name + '.zip' in Failed_Files:
                 continue
             files.append(a['href'])
     return files
@@ -112,7 +111,7 @@ def download_file(zipped_file_name: str, download_dir: Path, year: int) -> str:
         os.remove(zipped_file_name)
         return file_name
     except Exception as e:
-        raise FileFailedException(file_name=zipped_file_name)
+        raise FileFailedException(zipped_file_name, e)
 
 
 def download_year_AIS(year: int, download_dir: Path) -> None:
@@ -164,14 +163,14 @@ def subsample_file(file_name, download_dir, filtered_dir, min_time_interval) -> 
         # discard the file in case of an error to resume later properly
         if file_path:
             file_path.unlink(missing_ok=True)
-        raise FileFailedException(file_name=str(file_name))
+        raise FileFailedException(str(file_name), e)
 
 
 def subsample_year_AIS_to_CSV(year: int, download_dir: Path, filtered_dir: Path, min_time_interval: int = 30) -> None:
     logger.info('Subsampling year {0} to {1} minutes.'.format(
         year, min_time_interval))
     # check already processed files in the
-    resume = check_dir(filtered_dir) + list(Failed_Files.keys())
+    resume = check_dir(filtered_dir) + Failed_Files
 
     files = [f for f in sorted(os.listdir(str(download_dir)), key=str.lower) if f.endswith('.csv') and f not in resume]
     for file in files:
