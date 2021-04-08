@@ -94,7 +94,7 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
 
     dataset = try_get_data(url)
     return dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
-        WAVE_VAR_LIST]
+        WAVE_VAR_LIST].reset_index(drop=True, inplace=True)
 
 
 def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
@@ -161,8 +161,8 @@ def try_get_data(url):
         return xr.open_dataset(read_bytes)
     except Exception as e:
         logger.error(traceback.format_exc())
-        raise ValueError('Error:', BeautifulSoup(read_bytes, 'html.parser').find('p', {"class": "error"}), 'Request: ',
-                         url, response)
+        raise ValueError('Error:', e, 'Request: ', url)
+
 
 
 def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
@@ -202,7 +202,8 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
         date_to_str(
             t_hi))
     dataset = try_get_data(url)
-    return dataset.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[WIND_VAR_LIST]
+    return dataset.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[WIND_VAR_LIST].reset_index(
+        drop=True, inplace=True)
 
 
 def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
@@ -263,7 +264,7 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_p
     b = xr.DataArray([1] * len(lon_points))
     res = dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points, bounds_dim=b).to_dataframe()[
         GFS_25_VAR_LIST]
-    return res
+    return res.reset_index(drop=True)
 
 
 def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
@@ -310,7 +311,7 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, la
     lon_points = ((lon_points + 180) % 360) + 180
     res = dataset.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[GFS_50_VAR_LIST]
     res[['Wind_speed_gust_surface', 'Dewpoint_temperature_height_above_ground']] = [[np.nan, np.nan]] * len(res)
-    return res
+    return res.reset_index(drop=True)
 
 
 def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
@@ -374,10 +375,13 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
 
                 date_lo = df_chunk.BaseDateTime.min()
                 date_hi = df_chunk.BaseDateTime.max()
+
+                # query parameters
                 time_points = xr.DataArray(list(df_chunk['BaseDateTime'].values))
                 lat_points = xr.DataArray(list(df_chunk['LAT'].values))
                 lon_points = xr.DataArray(list(df_chunk['LON'].values))
 
+                df_chunk.reset_index(drop=True, inplace=True)
                 df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                         lat_points, lon_points)], axis=1)
 
