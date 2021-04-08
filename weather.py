@@ -298,6 +298,8 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, la
                         logger.error(e)
                         logger.error('Filename %s - Failed connecting to GFS Server - number of attempts: %d' % (
                             name, attempts))
+                        if attempts > 15:
+                            raise e
                         time.sleep(2)
 
     dataset = xr.combine_by_coords(x_arr_list).squeeze()
