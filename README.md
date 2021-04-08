@@ -1,23 +1,52 @@
 # MariDataHarvest
 
+<div style="float:right; border: 1px solid #cecece; padding: 5px;">
+<!-- TOC -->
+
+- [MariDataHarvest](#maridataharvest)
+    - [Requirements](#requirements)
+    - [Usage](#usage)
+    - [Docker](#docker)
+        - [CODE-DE](#code-de)
+    - [Deployment](#deployment)
+        - [Web Access to the Data](#web-access-to-the-data)
+    - [Contact](#contact)
+    - [License](#license)
+    - [Funding](#funding)
+
+<!-- /TOC -->
+</div>
+
 MariDataHarvest is a tool for scrapping and harvesting Automatic Identification System (AIS) data provided by [marinecadastre](https://marinecadastre.gov/AIS/)
 then appending it with the weather and environment conditions provided by [CMEMS](https://nrt.cmems-du.eu) and [RDA](https://rda.ucar.edu/index.html) at each geographical and UTC timestamp point.
 In the following is a description of the datasets used:
-[<img alt="Datasets Description" align="middle" src="./img/datasets_description.PNG"/>](https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit?usp=sharing)
-[<img alt="Variables Description" align="middle" src="./img/variables_description.PNG"/>](https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit?usp=sharing)
+
+* <details>
+  <summary>Datasets Description</summary>
+
+  [<img alt="Datasets Description" align="middle" src="./img/datasets_description.PNG"/>](https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit?usp=sharing)
+
+  </details>
+
+* <details>
+  <summary>Variables Description</summary>
+
+  [<img alt="Variables Description" align="middle" src="./img/variables_description.PNG"/>](https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit?usp=sharing)
+
+  </details>
 
 This tool is developed with in the [MariData](https://www.maridata.org) project.
 
 
-## Required modules/libraries
+## Requirements
 
-For a detailed list, see section License below.
-
-Install via pip:
+MariDataHarvest requires __python 3__ and __pip__ to run. You can install all python requirements with the following command:
 
 ```sh
 pip install -r requirements.txt
 ```
+
+For a detailed list, see section License below.
 
 
 ## Usage
@@ -61,9 +90,9 @@ python main.py --year=2019 --minutes=30 --dir=C:\..
 
   - `depth_first`: runs all steps for each file, which automatically deactivates `step` argument.
 
-### Docker
+## Docker
 
-You can use the Dockerfile to build an docker image and run the script in its own isolated environment. It is recommend to provide a volume to persist the data between each run. You can specify all arguments including the optional ones as environment variables when creating/starting the container as outlined in the following. The labels used are following the [Image And Container Label Specification](https://wiki.52north.org/Documentation/ImageAndContainerLabelSpecification) of 52°North.
+You can use the [Dockerfile](./Dockerfile) to build a docker image and run the script in its own isolated environment. It is recommend to provide a volume to persist the data between each run. You can specify all arguments including the optional ones as environment variables when creating/starting the container as outlined in the following. The labels used are following the [Image And Container Label Specification](https://wiki.52north.org/Documentation/ImageAndContainerLabelSpecification) of 52°North.
 
 1. Build:
 
@@ -113,6 +142,17 @@ You can use the Dockerfile to build an docker image and run the script in its ow
    DEPTH_FIRST=--depth-first
    CLEAR=--clear
    ```
+
+
+### CODE-DE
+
+You can use "local" CMEMS data when running on a [CODE-DE VM](https://code-de.org/en/portfolio/33?q=infrastructure). After requesting access to the data via the [support form](https://code-de.org/en/helpdesk), you can follow the instructions to [access the CREODIAS repository](https://code-de.org/en/help/topic/manual/X4bBsxEAADWjnZas). As a result, the CMEMS data will be available on your VM under `/eodata/CMEMS`.
+
+This directory needs to be mounted into the container, hence the following volume specification must be added to the `docker run` call:
+
+```sh
+--volume /eodata/CMEMS:/eodata/CMEMS:ro
+```
 
 
 ## Deployment
