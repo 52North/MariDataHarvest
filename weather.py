@@ -14,15 +14,11 @@ from siphon import http_util
 from siphon.catalog import TDSCatalog
 from xarray.backends import NetCDF4DataStore
 
-from ais import check_dir
 from check_connection import CheckConnection
 from config import config
 
-# utils to convert dates
-from utils import FileFailedException, Failed_Files
-
-str_to_date = lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
-date_to_str = lambda x: x.strftime('%Y-%m-%dT%H:%M:%SZ')
+import utils
+from utils import FileFailedException, Failed_Files, check_dir
 
 logger = logging.getLogger(__name__)
 
@@ -87,9 +83,9 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
     url = base_url + '&service=' + service + '&product=' + product + '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&mode=console'.format(
         x_lo, x_hi, y_lo,
         y_hi,
-        date_to_str(
+        utils.date_to_str(
             t_lo),
-        date_to_str(
+        utils.date_to_str(
             t_hi))
 
     dataset = try_get_data(url)
@@ -142,9 +138,9 @@ def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
           '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&z_lo={6}&z_hi={7}&mode=console'.format(x_lo, x_hi,
                                                                                                          y_lo,
                                                                                                          y_hi,
-                                                                                                         date_to_str(
+                                                                                                         utils.date_to_str(
                                                                                                              t_lo)
-                                                                                                         , date_to_str(
+                                                                                                         , utils.date_to_str(
                   t_hi), z_lo, z_hi)
     data = try_get_data(url)
     return data
@@ -197,9 +193,9 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
     url = base_url + '&service=' + service + '&product=' + product + '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&mode=console'.format(
         x_lo, x_hi, y_lo,
         y_hi,
-        date_to_str(
+        utils.date_to_str(
             t_lo),
-        date_to_str(
+        utils.date_to_str(
             t_hi))
     dataset = try_get_data(url)
     return dataset.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[WIND_VAR_LIST].reset_index(
@@ -345,9 +341,9 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
           '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&z_lo={6}&z_hi={7}&mode=console'.format(x_lo, x_hi,
                                                                                                          y_lo,
                                                                                                          y_hi,
-                                                                                                         date_to_str(
+                                                                                                         utils.date_to_str(
                                                                                                              t_lo)
-                                                                                                         , date_to_str(
+                                                                                                         , utils.date_to_str(
                   t_hi), z_lo, z_hi)
     dataset = try_get_data(url)
     return dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
@@ -359,7 +355,7 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
     chunkSize = 100000
     header = True
     try:
-        for df_chunk in pd.read_csv(in_path, parse_dates=['BaseDateTime'], date_parser=str_to_date,
+        for df_chunk in pd.read_csv(in_path, parse_dates=['BaseDateTime'], date_parser=utils.str_to_date,
                                     chunksize=chunkSize):
             if len(df_chunk) > 1:
                 # remove index column

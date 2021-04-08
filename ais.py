@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 
 from check_connection import CheckConnection
 from config import config
-from utils import FileFailedException, Failed_Files
+from utils import FileFailedException, Failed_Files, check_dir
 
 pd.options.mode.chained_assignment = None
 
@@ -22,12 +22,6 @@ logger = logging.getLogger(__name__)
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-
-def check_dir(dir_name: Path) -> typing.List[str]:
-    """
-        List all contents of `dir_name` and returns is sorted using `str.lower` for `sorted`.
-    """
-    return sorted(os.listdir(dir_name), key=str.lower)
 
 
 def get_files_list(year: int, exclude_to_resume: typing.List[str]) -> typing.List[str]:

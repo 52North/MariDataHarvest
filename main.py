@@ -8,9 +8,9 @@ import traceback
 from pathlib import Path
 import yaml
 
-from ais import download_year_AIS, subsample_year_AIS_to_CSV, download_file, get_files_list, subsample_file, check_dir
+from ais import download_year_AIS, subsample_year_AIS_to_CSV, download_file, get_files_list, subsample_file
 from check_connection import CheckConnection
-from utils import Failed_Files, SaveToFailedList, init_Failed_list, FileFailedException
+from utils import Failed_Files, SaveToFailedList, init_Failed_list, FileFailedException, check_dir
 from weather import append_environment_data_to_year, append_environment_data_to_file
 
 logging_config_file = 'logging.yaml'

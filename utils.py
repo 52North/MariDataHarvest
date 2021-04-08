@@ -1,7 +1,13 @@
 import datetime
 from pathlib import Path
+import typing
+import os
 
 import pandas as pd
+
+# string dates converters
+str_to_date = lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
+date_to_str = lambda x: x.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
 # Custom exception to retrieve file names with exception handling
@@ -25,3 +31,10 @@ def init_Failed_list(arg_string, work_dir):
     pd.DataFrame([[datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), arg_string, '']],
                  columns=['Timestamp', 'file_name', 'reason']).to_csv(
         Path(work_dir, 'FailedFilesList.csv'), index=False)
+
+
+def check_dir(dir_name: Path) -> typing.List[str]:
+    """
+        List all contents of `dir_name` and returns is sorted using `str.lower` for `sorted`.
+    """
+    return sorted(os.listdir(dir_name), key=str.lower)
