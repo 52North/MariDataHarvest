@@ -65,10 +65,10 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
         service = 'GLOBAL_REANALYSIS_WAV_001_032-TDS'
         product = 'global-reanalysis-wav-001-032'
 
-    y_lo = float(lat_lo)
-    y_hi = float(lat_hi)
-    x_lo = float(lon_lo)
-    x_hi = float(lon_hi)
+    y_lo = float(lat_lo) - 0.1
+    y_hi = float(lat_hi) + 0.1
+    x_lo = float(lon_lo) - 0.1
+    x_hi = float(lon_hi) + 0.1
 
     # time lower
     time_in_min = (date_lo.hour * 60) + date_lo.minute
@@ -185,10 +185,10 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
     rest = time_in_min % dataset_temporal_resolution
     t_hi = date_hi + timedelta(minutes=dataset_temporal_resolution - rest)
 
-    y_lo = float(lat_lo)
-    y_hi = float(lat_hi)
-    x_lo = float(lon_lo)
-    x_hi = float(lon_hi)
+    y_lo = float(lat_lo) - 0.25
+    y_hi = float(lat_hi) + 0.25
+    x_lo = float(lon_lo) - 0.25
+    x_hi = float(lon_hi) + 0.25
 
     url = base_url + '&service=' + service + '&product=' + product + '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&mode=console'.format(
         x_lo, x_hi, y_lo,
@@ -219,7 +219,7 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_p
         "%s/%s/%s%.2d%.2d/catalog.xml" % (base_url, start_date.year, start_date.year, start_date.month, start_date.day))
     name = 'gfs.0p25.%s%.2d%.2d18.f006.grib2' % (start_date.year, start_date.month, start_date.day)
     ds_subset = start_cat.datasets[name].subset()
-    query = ds_subset.query().lonlat_box(north=lat_hi, south=lat_lo, east=lon_hi, west=lon_lo).variables(
+    query = ds_subset.query().lonlat_box(north=lat_hi+0.25, south=lat_lo-0.25, east=lon_hi+0.25, west=lon_lo-0.25).variables(
         *GFS_25_VAR_LIST)
     CheckConnection.is_online()
     try:
@@ -240,8 +240,7 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_p
                     end_date.year, end_date.month, end_date.day, cycle, hours)
                 if name in list(end_cat.datasets):
                     ds_subset = end_cat.datasets[name].subset()
-                    query = ds_subset.query().lonlat_box(north=lat_hi, south=lat_lo, east=lon_hi,
-                                                         west=lon_lo).variables(*GFS_25_VAR_LIST)
+                    query = ds_subset.query().lonlat_box(north=lat_hi+0.25, south=lat_lo-0.25, east=lon_hi+0.25, west=lon_lo-0.25).variables(*GFS_25_VAR_LIST)
                     CheckConnection.is_online()
                     try:
                         data = ds_subset.get_data(query)
@@ -283,8 +282,7 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, la
                         name = 'gfsanl_4_%s%.2d%.2d_%.2d00_00%s.grb2' % (dt.year, dt.month, dt.day, cycle, hour)
                         if name in list(catalog.datasets):
                             ds_subset = catalog.datasets[name].subset()
-                            query = ds_subset.query().lonlat_box(north=lat_hi, south=lat_lo, east=lon_hi,
-                                                                 west=lon_lo).variables(*GFS_50_VAR_LIST)
+                            query = ds_subset.query().lonlat_box(north=lat_hi+0.5, south=lat_lo-0.5, east=lon_hi+0.5, west=lon_lo-0.5).variables(*GFS_50_VAR_LIST)
                             CheckConnection.is_online()
                             data = ds_subset.get_data(query)
                             x_arr = xr.open_dataset(NetCDF4DataStore(data))
@@ -328,10 +326,10 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
     t_hi = datetime(date_hi.year, date_hi.month, date_hi.day, 12) + timedelta(days=1)
 
     # coordinates
-    y_lo = float(lat_lo)
-    y_hi = float(lat_hi)
-    x_lo = float(lon_lo)
-    x_hi = float(lon_hi)
+    y_lo = float(lat_lo)-0.1
+    y_hi = float(lat_hi)+0.1
+    x_lo = float(lon_lo)-0.1
+    x_hi = float(lon_hi)+0.1
 
     # depth
     z_hi = 0.50
