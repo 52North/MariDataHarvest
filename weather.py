@@ -398,7 +398,7 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
                      get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
                                      lon_points)], axis=1)
 
-                df_chunk.to_csv(out_path, chunksize=chunkSize, mode='a', header=header)
+                df_chunk.to_csv(out_path, chunksize=chunkSize, mode='a', header=header, index=False)
                 header = False
     except Exception as e:
         # discard the file in case of an error to resume later properly

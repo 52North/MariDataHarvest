@@ -17,7 +17,7 @@ def SaveToFailedList(file_name, reason, work_dir):
         Path(work_dir, 'FailedFilesList.csv'), mode='a', index=False, header=False)
 
 
-# a dictionary that contains all failed files with the corresponding reason
+# a list that contains all failed files with the corresponding reason
 Failed_Files = []
 
 
