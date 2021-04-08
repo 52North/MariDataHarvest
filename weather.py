@@ -90,7 +90,7 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
 
     dataset = try_get_data(url)
     return dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
-        WAVE_VAR_LIST].reset_index(drop=True, inplace=True)
+        WAVE_VAR_LIST].reset_index(drop=True)
 
 
 def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
@@ -259,7 +259,7 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_p
     b = xr.DataArray([1] * len(lon_points))
     res = dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points, bounds_dim=b).to_dataframe()[
         GFS_25_VAR_LIST]
-    return res.reset_index(drop=True)
+    return res
 
 
 def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
@@ -347,7 +347,7 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
                   t_hi), z_lo, z_hi)
     dataset = try_get_data(url)
     return dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
-        DAILY_PHY_VAR_LIST].reset_index(drop=True, inplace=True)
+        DAILY_PHY_VAR_LIST].reset_index(drop=True)
 
 
 def append_to_csv(in_path: Path, out_path: Path) -> None:
@@ -377,6 +377,7 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
                 lon_points = xr.DataArray(list(df_chunk['LON'].values))
 
                 df_chunk.reset_index(drop=True, inplace=True)
+
                 df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                         lat_points, lon_points)], axis=1)
 

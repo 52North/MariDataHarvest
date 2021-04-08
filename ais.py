@@ -58,7 +58,7 @@ def chunkify_gdb(gdb_file: Path, file_path: Path, chunkSize: int) -> None:
         gdf_chunk['LON'] = gdf_chunk.geometry.apply(lambda point: point.x)
         gdf_chunk['LAT'] = gdf_chunk.geometry.apply(lambda point: point.y)
         gdf_chunk.drop(columns=['geometry'], inplace=True)
-        gdf_chunk.to_csv(file_path, mode='a', header=header)
+        gdf_chunk.to_csv(file_path, mode='a', header=header, index=False)
         start = end
         end += chunkSize
         header = False
@@ -130,7 +130,7 @@ def subsample_file(file_name, download_dir, filtered_dir, min_time_interval) -> 
 
     try:
         for df_chunk in pd.read_csv(Path(download_dir, file_name), chunksize=chunkSize):
-            df_chunk = df_chunk.drop(['MMSI', 'VesselName', 'CallSign', 'Cargo', 'TranscieverClass',
+            df_chunk = df_chunk.drop(['Unnamed: 0', 'MMSI', 'VesselName', 'CallSign', 'Cargo', 'TranscieverClass',
                                       'ReceiverType', 'ReceiverID'], axis=1, errors='ignore')
             df_chunk = df_chunk.dropna()
             df_chunk['SOG'] = pd.to_numeric(df_chunk['SOG'])
@@ -151,7 +151,7 @@ def subsample_file(file_name, download_dir, filtered_dir, min_time_interval) -> 
             df_chunk.reset_index(drop=True, inplace=True)
             df_chunk = df_chunk.dropna()
             file_path = Path(filtered_dir, str(file_name))
-            df_chunk.to_csv(file_path, chunksize=chunkSize, mode='a', header=header)
+            df_chunk.to_csv(file_path, chunksize=chunkSize, mode='a', header=header , index=False)
             header = False
     except Exception as e:
         # discard the file in case of an error to resume later properly
