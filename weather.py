@@ -59,16 +59,13 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_ANALYSIS_FORECAST_WAV_001_027-TDS'
         product = 'global-analysis-forecast-wav-001-027'
+        VM_FOLDER = '/eodata/CMEMS/NRT/GLO/WAV/GLOBAL_ANALYSIS_FORECAST_WAV_001_027/'
     elif date_lo >= datetime(1993, 1, 1, 6):
         CheckConnection.set_url('my.cmems-du.eu')
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_REANALYSIS_WAV_001_032-TDS'
         product = 'global-reanalysis-wav-001-032'
-
-    y_lo = float(lat_lo) - 0.1
-    y_hi = float(lat_hi) + 0.1
-    x_lo = float(lon_lo) - 0.1
-    x_hi = float(lon_hi) + 0.1
+        VM_FOLDER = '/eodata/CMEMS/REP/GLO/WAV/GLOBAL_REANALYSIS_WAV_001_032'
 
     # time lower
     time_in_min = (date_lo.hour * 60) + date_lo.minute
@@ -79,6 +76,25 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
     time_in_min = (date_hi.hour * 60) + date_hi.minute
     rest = time_in_min % dataset_temporal_resolution
     t_hi = date_hi + timedelta(minutes=dataset_temporal_resolution - rest)
+
+    if Path(VM_FOLDER).exists():
+        logger.debug('Accessing local data %s' % VM_FOLDER)
+        datasets_paths = []
+        for day in range((t_hi - t_lo).days + 1):
+            dt = t_lo + timedelta(day)
+            path = Path(VM_FOLDER, '%s' % dt.year, '%.2d' % dt.month, '%.2d' % dt.day, '*.nc')
+            dataset = list(glob(str(path)))
+            if len(dataset) > 0:
+                datasets_paths.extend(sorted(dataset)[0])
+        ds_nc = xr.open_mfdataset(datasets_paths)
+        xr_arry = ds_nc.interp(longitude=lon_points, latitude=lat_points, time=time_points).compute()
+        return xr_arry.to_dataframe()[WAVE_VAR_LIST].reset_index(drop=True)
+
+
+    y_lo = float(lat_lo) - 0.1
+    y_hi = float(lat_hi) + 0.1
+    x_lo = float(lon_lo) - 0.1
+    x_hi = float(lon_hi) + 0.1
 
     url = base_url + '&service=' + service + '&product=' + product + '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&mode=console'.format(
         x_lo, x_hi, y_lo,
@@ -140,8 +156,10 @@ def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                                                                                                          y_hi,
                                                                                                          utils.date_to_str(
                                                                                                              t_lo)
-                                                                                                         , utils.date_to_str(
-                  t_hi), z_lo, z_hi)
+                                                                                                         ,
+                                                                                                         utils.date_to_str(
+                                                                                                             t_hi),
+                                                                                                         z_lo, z_hi)
     data = try_get_data(url)
     return data
 
@@ -170,11 +188,14 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'WIND_GLO_WIND_L4_NRT_OBSERVATIONS_012_004-TDS'
         product = 'CERSAT-GLO-BLENDED_WIND_L4-V6-OBS_FULL_TIME_SERIE'
+        VM_FOLDER = '/eodata/CMEMS/NRT/GLO/WIN/WIND_GLO_WIND_L4_NRT_OBSERVATIONS_012_004'
+
     elif date_lo >= datetime(1992, 1, 1, 6):
         CheckConnection.set_url('my.cmems-du.eu')
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'WIND_GLO_WIND_L4_REP_OBSERVATIONS_012_006-TDS'
         product = 'CERSAT-GLO-BLENDED_WIND_L4_REP-V6-OBS_FULL_TIME_SERIE'
+        VM_FOLDER = '/eodata/CMEMS/REP/GLO/WIN/WIND_GLO_WIND_L4_REP_OBSERVATIONS_012_006'
 
     time_in_min = (date_lo.hour * 60) + date_lo.minute
     rest = time_in_min % dataset_temporal_resolution
@@ -183,6 +204,18 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
     time_in_min = (date_hi.hour * 60) + date_hi.minute
     rest = time_in_min % dataset_temporal_resolution
     t_hi = date_hi + timedelta(minutes=dataset_temporal_resolution - rest)
+
+    if Path(VM_FOLDER).exists():
+        logger.debug('Accessing local data %s' % VM_FOLDER)
+        datasets_paths = []
+        for day in range((t_hi - t_lo).days + 1):
+            dt = t_lo + timedelta(day)
+            path = Path(VM_FOLDER, '%s' % dt.year, '%.2d' % dt.month, '%.2d' % dt.day, '*.nc')
+            dataset = list(glob(str(path)))
+            datasets_paths.extend(dataset)
+        ds_nc = xr.open_mfdataset(datasets_paths)
+        xr_arry = ds_nc.interp(lon=lon_points, lat=lat_points, time=time_points).compute()
+        return xr_arry.to_dataframe()[WIND_VAR_LIST].reset_index(drop=True)
 
     y_lo = float(lat_lo) - 0.25
     y_hi = float(lat_hi) + 0.25
@@ -332,9 +365,6 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
         NRT_FLAG = False
     t_lo = datetime(date_lo.year, date_lo.month, date_lo.day, 12) - timedelta(days=1)
     t_hi = datetime(date_hi.year, date_hi.month, date_hi.day, 12) + timedelta(days=1)
-    print('VM_FOLDER')
-    print(VM_FOLDER)
-    print(Path(VM_FOLDER).exists())
 
     if Path(VM_FOLDER).exists():
         logger.debug('Accessing local data %s' % VM_FOLDER)
@@ -342,16 +372,15 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
         for day in range((t_hi - t_lo).days + 1):
             dt = t_lo + timedelta(day)
             path = Path(VM_FOLDER, '%s' % dt.year, '%.2d' % dt.month, '%.2d' % dt.day,
-                        'mercatorpsy4v3r1_gl12_mean_%s%.2d%.2d_*.nc' % (dt.year, dt.month, dt.day)if NRT_FLAG
+                        'mercatorpsy4v3r1_gl12_mean_%s%.2d%.2d_*.nc' % (dt.year, dt.month, dt.day) if NRT_FLAG
                         else 'mercatorglorys12v1_gl12_mean_%s%.2d%.2d_*.nc' % (dt.year, dt.month, dt.day))
             dataset = list(glob(str(path)))
-            if len(dataset[0]) > 1:
+            if len(dataset) > 0:
                 datasets_paths.append(dataset[0])
 
         ds_nc = xr.open_mfdataset(datasets_paths)
         xr_arry = ds_nc.interp(longitude=lon_points, latitude=lat_points, time=time_points).compute()
         return xr_arry.to_dataframe()[DAILY_PHY_VAR_LIST].reset_index(drop=True)
-
 
     # coordinates
     y_lo = float(lat_lo) - 0.1
@@ -410,8 +439,6 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
                     [df_chunk, get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                     lat_points, lon_points)], axis=1)
 
-                df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
-                                                        lat_points, lon_points)], axis=1)
 
 
                 df_chunk = pd.concat(
@@ -423,6 +450,9 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
                     [df_chunk,
                      get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
                                      lon_points)], axis=1)
+                
+                df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
+                                                        lat_points, lon_points)], axis=1)
 
                 df_chunk.to_csv(out_path, chunksize=chunkSize, mode='a', header=header, index=False)
                 header = False
