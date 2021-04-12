@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import xarray as xr
-from bs4 import BeautifulSoup
+from glob import glob
 from motu_utils.utils_cas import authenticate_CAS_for_URL
 from motu_utils.utils_http import open_url
 from siphon import http_util
@@ -160,7 +160,6 @@ def try_get_data(url):
         raise ValueError('Error:', e, 'Request: ', url)
 
 
-
 def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
     logger.debug('obtaining WIND_GLO_WIND_L4_NRT_OBSERVATIONS dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
@@ -219,7 +218,8 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_p
         "%s/%s/%s%.2d%.2d/catalog.xml" % (base_url, start_date.year, start_date.year, start_date.month, start_date.day))
     name = 'gfs.0p25.%s%.2d%.2d18.f006.grib2' % (start_date.year, start_date.month, start_date.day)
     ds_subset = start_cat.datasets[name].subset()
-    query = ds_subset.query().lonlat_box(north=lat_hi+0.25, south=lat_lo-0.25, east=lon_hi+0.25, west=lon_lo-0.25).variables(
+    query = ds_subset.query().lonlat_box(north=lat_hi + 0.25, south=lat_lo - 0.25, east=lon_hi + 0.25,
+                                         west=lon_lo - 0.25).variables(
         *GFS_25_VAR_LIST)
     CheckConnection.is_online()
     try:
@@ -240,7 +240,8 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_p
                     end_date.year, end_date.month, end_date.day, cycle, hours)
                 if name in list(end_cat.datasets):
                     ds_subset = end_cat.datasets[name].subset()
-                    query = ds_subset.query().lonlat_box(north=lat_hi+0.25, south=lat_lo-0.25, east=lon_hi+0.25, west=lon_lo-0.25).variables(*GFS_25_VAR_LIST)
+                    query = ds_subset.query().lonlat_box(north=lat_hi + 0.25, south=lat_lo - 0.25, east=lon_hi + 0.25,
+                                                         west=lon_lo - 0.25).variables(*GFS_25_VAR_LIST)
                     CheckConnection.is_online()
                     try:
                         data = ds_subset.get_data(query)
@@ -282,7 +283,9 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, la
                         name = 'gfsanl_4_%s%.2d%.2d_%.2d00_00%s.grb2' % (dt.year, dt.month, dt.day, cycle, hour)
                         if name in list(catalog.datasets):
                             ds_subset = catalog.datasets[name].subset()
-                            query = ds_subset.query().lonlat_box(north=lat_hi+0.5, south=lat_lo-0.5, east=lon_hi+0.5, west=lon_lo-0.5).variables(*GFS_50_VAR_LIST)
+                            query = ds_subset.query().lonlat_box(north=lat_hi + 0.5, south=lat_lo - 0.5,
+                                                                 east=lon_hi + 0.5, west=lon_lo - 0.5).variables(
+                                *GFS_50_VAR_LIST)
                             CheckConnection.is_online()
                             data = ds_subset.get_data(query)
                             x_arr = xr.open_dataset(NetCDF4DataStore(data))
@@ -318,20 +321,36 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
         product = 'global-analysis-forecast-phy-001-024'
+        VM_FOLDER = 'NRT/GLO/PHY/GLOBAL_ANALYSIS_FORECAST_PHY_001_024'
     elif date_lo >= datetime(1993, 1, 2):
         CheckConnection.set_url('my.cmems-du.eu')
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_REANALYSIS_PHY_001_030-TDS'
         product = 'global-reanalysis-phy-001-030-daily'
-
+        VM_FOLDER = 'REP/GLO/PHY/GLOBAL_REANALYSIS_PHY_001_030'
     t_lo = datetime(date_lo.year, date_lo.month, date_lo.day, 12) - timedelta(days=1)
     t_hi = datetime(date_hi.year, date_hi.month, date_hi.day, 12) + timedelta(days=1)
 
+    if Path(VM_FOLDER).exists():
+        logger.debug('Accessing local data %s' % VM_FOLDER)
+        datasets_paths = []
+        for day in range((t_hi - t_lo).days + 1):
+            dt = t_lo + timedelta(day)
+            path = Path(VM_FOLDER, '%s' % dt.year, '%.2d' % dt.month, '%.2d' % dt.day, 'mercatorpsy4v3r1_gl12_mean*.nc')
+            dataset = list(glob(str(path)))
+            if len(dataset[0]) > 1:
+                datasets_paths.append(dataset[0])
+
+        ds_nc = xr.open_mfdataset(datasets_paths)
+        xr_arry = ds_nc.interp(longitude=lon_points, latitude=lat_points, time=time_points).compute()
+        return xr_arry.to_dataframe()[DAILY_PHY_VAR_LIST].reset_index(drop=True)
+
+
     # coordinates
-    y_lo = float(lat_lo)-0.1
-    y_hi = float(lat_hi)+0.1
-    x_lo = float(lon_lo)-0.1
-    x_hi = float(lon_hi)+0.1
+    y_lo = float(lat_lo) - 0.1
+    y_hi = float(lat_hi) + 0.1
+    x_lo = float(lon_lo) - 0.1
+    x_hi = float(lon_hi) + 0.1
 
     # depth
     z_hi = 0.50
@@ -343,8 +362,10 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
                                                                                                          y_hi,
                                                                                                          utils.date_to_str(
                                                                                                              t_lo)
-                                                                                                         , utils.date_to_str(
-                  t_hi), z_lo, z_hi)
+                                                                                                         ,
+                                                                                                         utils.date_to_str(
+                                                                                                             t_hi),
+                                                                                                         z_lo, z_hi)
     dataset = try_get_data(url)
     return dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
         DAILY_PHY_VAR_LIST].reset_index(drop=True)
