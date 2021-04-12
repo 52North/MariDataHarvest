@@ -322,12 +322,14 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
         service = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
         product = 'global-analysis-forecast-phy-001-024'
         VM_FOLDER = '/eodata/CMEMS/NRT/GLO/PHY/GLOBAL_ANALYSIS_FORECAST_PHY_001_024'
+        NRT_FLAG = True
     elif date_lo >= datetime(1993, 1, 2):
         CheckConnection.set_url('my.cmems-du.eu')
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_REANALYSIS_PHY_001_030-TDS'
         product = 'global-reanalysis-phy-001-030-daily'
         VM_FOLDER = '/eodata/CMEMS/REP/GLO/PHY/GLOBAL_REANALYSIS_PHY_001_030'
+        NRT_FLAG = False
     t_lo = datetime(date_lo.year, date_lo.month, date_lo.day, 12) - timedelta(days=1)
     t_hi = datetime(date_hi.year, date_hi.month, date_hi.day, 12) + timedelta(days=1)
 
@@ -336,7 +338,9 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
         datasets_paths = []
         for day in range((t_hi - t_lo).days + 1):
             dt = t_lo + timedelta(day)
-            path = Path(VM_FOLDER, '%s' % dt.year, '%.2d' % dt.month, '%.2d' % dt.day, 'mercatorpsy4v3r1_gl12_mean*.nc')
+            path = Path(VM_FOLDER, '%s' % dt.year, '%.2d' % dt.month, '%.2d' % dt.day,
+                        'mercatorpsy4v3r1_gl12_mean_%s%.2d%.2d_R*.nc' % (dt.year, dt.month, dt.day)if NRT_FLAG
+                        else 'mercatorglorys12v1_gl12_mean_%s%.2d%.2d_R*.nc' % (dt.year, dt.month, dt.day))
             dataset = list(glob(str(path)))
             if len(dataset[0]) > 1:
                 datasets_paths.append(dataset[0])
@@ -402,7 +406,7 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
                 df_chunk = pd.concat(
                     [df_chunk, get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                     lat_points, lon_points)], axis=1)
-                
+
                 df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                         lat_points, lon_points)], axis=1)
 
