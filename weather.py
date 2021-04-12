@@ -332,6 +332,9 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
         NRT_FLAG = False
     t_lo = datetime(date_lo.year, date_lo.month, date_lo.day, 12) - timedelta(days=1)
     t_hi = datetime(date_hi.year, date_hi.month, date_hi.day, 12) + timedelta(days=1)
+    print('VM_FOLDER')
+    print(VM_FOLDER)
+    print(Path(VM_FOLDER).exists())
 
     if Path(VM_FOLDER).exists():
         logger.debug('Accessing local data %s' % VM_FOLDER)
@@ -339,8 +342,8 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
         for day in range((t_hi - t_lo).days + 1):
             dt = t_lo + timedelta(day)
             path = Path(VM_FOLDER, '%s' % dt.year, '%.2d' % dt.month, '%.2d' % dt.day,
-                        'mercatorpsy4v3r1_gl12_mean_%s%.2d%.2d_R*.nc' % (dt.year, dt.month, dt.day)if NRT_FLAG
-                        else 'mercatorglorys12v1_gl12_mean_%s%.2d%.2d_R*.nc' % (dt.year, dt.month, dt.day))
+                        'mercatorpsy4v3r1_gl12_mean_%s%.2d%.2d_*.nc' % (dt.year, dt.month, dt.day)if NRT_FLAG
+                        else 'mercatorglorys12v1_gl12_mean_%s%.2d%.2d_*.nc' % (dt.year, dt.month, dt.day))
             dataset = list(glob(str(path)))
             if len(dataset[0]) > 1:
                 datasets_paths.append(dataset[0])

@@ -176,13 +176,6 @@ if __name__ == '__main__':
                         if not file_name: break
                         logger.info('STEP 3/3 appending weather data: %s' % file_name)
                         append_environment_data_to_file(file_name, filtered_dir, merged_dir)
-                        if args.clear:
-                            logger.info('Remove filtered file %s' % file_name)
-                            if Path(filtered_dir, file_name).exists() and Path(merged_dir, file_name).exists():
-                                os.remove(str(Path(filtered_dir, file_name)))
-                            else:
-                                logger.error("Error: %s or %s file not found" % (
-                                    str(Path(download_dir, file_name)), str(Path(merged_dir, file_name))))
                         break
                     except FileFailedException as e:
                         logger.error(traceback.format_exc())
