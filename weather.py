@@ -439,8 +439,6 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
                     [df_chunk, get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                     lat_points, lon_points)], axis=1)
 
-
-
                 df_chunk = pd.concat(
                     [df_chunk,
                      get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
@@ -450,7 +448,7 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
                     [df_chunk,
                      get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
                                      lon_points)], axis=1)
-                
+
                 df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                         lat_points, lon_points)], axis=1)
 
