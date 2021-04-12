@@ -321,13 +321,13 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
         product = 'global-analysis-forecast-phy-001-024'
-        VM_FOLDER = 'NRT/GLO/PHY/GLOBAL_ANALYSIS_FORECAST_PHY_001_024'
+        VM_FOLDER = '/eodata/CMEMS/NRT/GLO/PHY/GLOBAL_ANALYSIS_FORECAST_PHY_001_024'
     elif date_lo >= datetime(1993, 1, 2):
         CheckConnection.set_url('my.cmems-du.eu')
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_REANALYSIS_PHY_001_030-TDS'
         product = 'global-reanalysis-phy-001-030-daily'
-        VM_FOLDER = 'REP/GLO/PHY/GLOBAL_REANALYSIS_PHY_001_030'
+        VM_FOLDER = '/eodata/CMEMS/REP/GLO/PHY/GLOBAL_REANALYSIS_PHY_001_030'
     t_lo = datetime(date_lo.year, date_lo.month, date_lo.day, 12) - timedelta(days=1)
     t_hi = datetime(date_hi.year, date_hi.month, date_hi.day, 12) + timedelta(days=1)
 
@@ -399,12 +399,13 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
 
                 df_chunk.reset_index(drop=True, inplace=True)
 
-                df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
-                                                        lat_points, lon_points)], axis=1)
-
                 df_chunk = pd.concat(
                     [df_chunk, get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                     lat_points, lon_points)], axis=1)
+                
+                df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
+                                                        lat_points, lon_points)], axis=1)
+
 
                 df_chunk = pd.concat(
                     [df_chunk,
