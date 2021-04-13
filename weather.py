@@ -76,6 +76,10 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
     time_in_min = (date_hi.hour * 60) + date_hi.minute
     rest = time_in_min % dataset_temporal_resolution
     t_hi = date_hi + timedelta(minutes=dataset_temporal_resolution - rest)
+    y_lo = float(lat_lo) - 0.1
+    y_hi = float(lat_hi) + 0.1
+    x_lo = float(lon_lo) - 0.1
+    x_hi = float(lon_hi) + 0.1
 
     if Path(VM_FOLDER).exists():
         logger.debug('Accessing local data %s' % VM_FOLDER)
@@ -87,14 +91,12 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
             if len(dataset) > 0:
                 datasets_paths.extend(sorted(dataset)[0])
         ds_nc = xr.open_mfdataset(datasets_paths)
-        xr_arry = ds_nc.interp(longitude=lon_points, latitude=lat_points, time=time_points).compute()
-        return xr_arry.to_dataframe()[WAVE_VAR_LIST].reset_index(drop=True)
+        xr_arry = ds_nc.sel(longitude=[y_lo, y_hi], latitude=[x_lo, x_hi], time=[t_lo, t_hi]).compute()
+        return xr_arry.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
+        WAVE_VAR_LIST].reset_index(drop=True)
 
 
-    y_lo = float(lat_lo) - 0.1
-    y_hi = float(lat_hi) + 0.1
-    x_lo = float(lon_lo) - 0.1
-    x_hi = float(lon_hi) + 0.1
+
 
     url = base_url + '&service=' + service + '&product=' + product + '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&mode=console'.format(
         x_lo, x_hi, y_lo,
@@ -434,7 +436,10 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
                 lon_points = xr.DataArray(list(df_chunk['LON'].values))
 
                 df_chunk.reset_index(drop=True, inplace=True)
-
+                df_chunk = pd.concat(
+                    [df_chunk,
+                     get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
+                                     lon_points)], axis=1)
                 df_chunk = pd.concat(
                     [df_chunk, get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                     lat_points, lon_points)], axis=1)
