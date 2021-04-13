@@ -76,6 +76,7 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
     time_in_min = (date_hi.hour * 60) + date_hi.minute
     rest = time_in_min % dataset_temporal_resolution
     t_hi = date_hi + timedelta(minutes=dataset_temporal_resolution - rest)
+
     y_lo = float(lat_lo) - 0.1
     y_hi = float(lat_hi) + 0.1
     x_lo = float(lon_lo) - 0.1
@@ -92,7 +93,7 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
                 datasets_paths.append(sorted(dataset)[0])
         ds_nc = xr.open_mfdataset(datasets_paths)
         dataset = ds_nc.sel(longitude=slice(x_lo, x_hi), latitude=slice(y_lo, y_hi),
-                            time=slice(t_lo, t_hi)).compute()
+                            time=slice(t_lo, t_hi), method='nearest').compute()
     else:
         url = base_url + '&service=' + service + '&product=' + product + '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&mode=console'.format(
             x_lo, x_hi, y_lo,
@@ -220,7 +221,7 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
             datasets_paths.extend(dataset)
         ds_nc = xr.open_mfdataset(datasets_paths)
         dataset = ds_nc.sel(lon=slice(x_lo, x_hi), lat=slice(y_lo, y_hi),
-                            time=slice(t_lo, t_hi)).compute()
+                            time=slice(t_lo, t_hi), method='nearest').compute()
     else:
         url = base_url + '&service=' + service + '&product=' + product + '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&mode=console'.format(
             x_lo, x_hi, y_lo,
@@ -392,7 +393,7 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
 
         ds_nc = xr.open_mfdataset(datasets_paths)
         dataset = ds_nc.sel(longitude=slice(x_lo, x_hi), latitude=slice(y_lo, y_hi),
-                            time=slice(t_lo, t_hi), depth=slice(z_lo, z_hi)).compute()
+                            time=slice(t_lo, t_hi), depth=slice(z_lo, z_hi), method='nearest').compute()
     else:
         url = base_url + '&service=' + service + '&product=' + product + \
               '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&z_lo={6}&z_hi={7}&mode=console'.format(x_lo, x_hi,
