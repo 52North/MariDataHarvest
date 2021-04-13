@@ -59,7 +59,7 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_ANALYSIS_FORECAST_WAV_001_027-TDS'
         product = 'global-analysis-forecast-wav-001-027'
-        VM_FOLDER = '/eodata/CMEMS/NRT/GLO/WAV/GLOBAL_ANALYSIS_FORECAST_WAV_001_027/'
+        VM_FOLDER = '/eodata/CMEMS/NRT/GLO/WAV/GLOBAL_ANALYSIS_FORECAST_WAV_001_027'
     elif date_lo >= datetime(1993, 1, 1, 6):
         CheckConnection.set_url('my.cmems-du.eu')
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
@@ -89,7 +89,7 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
             path = Path(VM_FOLDER, '%s' % dt.year, '%.2d' % dt.month, '%.2d' % dt.day, '*.nc')
             dataset = list(glob(str(path)))
             if len(dataset) > 0:
-                datasets_paths.extend(sorted(dataset)[0])
+                datasets_paths.append(sorted(dataset)[0])
         ds_nc = xr.open_mfdataset(datasets_paths)
         xr_arry = ds_nc.sel(longitude=[y_lo, y_hi], latitude=[x_lo, x_hi], time=[t_lo, t_hi]).compute()
         return xr_arry.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
