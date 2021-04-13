@@ -91,7 +91,9 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
             if len(dataset) > 0:
                 datasets_paths.append(sorted(dataset)[0])
         ds_nc = xr.open_mfdataset(datasets_paths)
-        xr_arry = ds_nc.sel(longitude=[y_lo, y_hi], latitude=[x_lo, x_hi], time=[t_lo, t_hi]).compute()
+        # ds_nc.sel(longitude=lon_points, latitude=lat_points, time=time_points).compute()
+        xr_arry = ds_nc.sel(longitude=slice(x_lo, x_hi), latitude=slice(y_lo, y_hi),
+                  time=slice(t_lo, t_hi)).compute()
         return xr_arry.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
         WAVE_VAR_LIST].reset_index(drop=True)
 

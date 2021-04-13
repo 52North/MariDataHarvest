@@ -120,7 +120,7 @@ if __name__ == '__main__':
         filtered_dir_list = check_dir(filtered_dir)
         if args.depth_first:
             logger.info('Task is started using Depth-first mode')
-            for file in get_files_list(year, exclude_to_resume=merged_dir_list):
+            for file in get_files_list(year, exclude_to_resume=merged_dir_list+filtered_dir_list):
                 while True:
                     try:
                         logger.info('STEP 1/3 downloading AIS data: %s' % file)
