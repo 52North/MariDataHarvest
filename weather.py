@@ -219,7 +219,7 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
             dataset = list(glob(str(path)))
             datasets_paths.extend(dataset)
         ds_nc = xr.open_mfdataset(datasets_paths)
-        dataset = ds_nc.sel(longitude=slice(x_lo, x_hi), latitude=slice(y_lo, y_hi),
+        dataset = ds_nc.sel(lon=slice(x_lo, x_hi), lat=slice(y_lo, y_hi),
                             time=slice(t_lo, t_hi)).compute()
     else:
         url = base_url + '&service=' + service + '&product=' + product + '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&mode=console'.format(
@@ -231,7 +231,7 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
                 t_hi))
         dataset = try_get_data(url)
     return dataset.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[WIND_VAR_LIST].reset_index(
-        drop=True, inplace=True)
+        drop=True)
 
 
 def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
