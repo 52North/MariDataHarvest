@@ -91,24 +91,18 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
             if len(dataset) > 0:
                 datasets_paths.append(sorted(dataset)[0])
         ds_nc = xr.open_mfdataset(datasets_paths)
-        # ds_nc.sel(longitude=lon_points, latitude=lat_points, time=time_points).compute()
-        xr_arry = ds_nc.sel(longitude=slice(x_lo, x_hi), latitude=slice(y_lo, y_hi),
-                  time=slice(t_lo, t_hi)).compute()
-        return xr_arry.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
-        WAVE_VAR_LIST].reset_index(drop=True)
+        dataset = ds_nc.sel(longitude=slice(x_lo, x_hi), latitude=slice(y_lo, y_hi),
+                            time=slice(t_lo, t_hi)).compute()
+    else:
+        url = base_url + '&service=' + service + '&product=' + product + '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&mode=console'.format(
+            x_lo, x_hi, y_lo,
+            y_hi,
+            utils.date_to_str(
+                t_lo),
+            utils.date_to_str(
+                t_hi))
 
-
-
-
-    url = base_url + '&service=' + service + '&product=' + product + '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&mode=console'.format(
-        x_lo, x_hi, y_lo,
-        y_hi,
-        utils.date_to_str(
-            t_lo),
-        utils.date_to_str(
-            t_hi))
-
-    dataset = try_get_data(url)
+        dataset = try_get_data(url)
     return dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
         WAVE_VAR_LIST].reset_index(drop=True)
 
@@ -201,6 +195,7 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
         product = 'CERSAT-GLO-BLENDED_WIND_L4_REP-V6-OBS_FULL_TIME_SERIE'
         VM_FOLDER = '/eodata/CMEMS/REP/GLO/WIN/WIND_GLO_WIND_L4_REP_OBSERVATIONS_012_006'
 
+    # time range
     time_in_min = (date_lo.hour * 60) + date_lo.minute
     rest = time_in_min % dataset_temporal_resolution
     t_lo = date_lo - timedelta(minutes=rest)  # extract the lower bound
@@ -208,6 +203,12 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
     time_in_min = (date_hi.hour * 60) + date_hi.minute
     rest = time_in_min % dataset_temporal_resolution
     t_hi = date_hi + timedelta(minutes=dataset_temporal_resolution - rest)
+
+    # coordinates bbox
+    y_lo = float(lat_lo) - 0.25
+    y_hi = float(lat_hi) + 0.25
+    x_lo = float(lon_lo) - 0.25
+    x_hi = float(lon_hi) + 0.25
 
     if Path(VM_FOLDER).exists():
         logger.debug('Accessing local data %s' % VM_FOLDER)
@@ -218,22 +219,17 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
             dataset = list(glob(str(path)))
             datasets_paths.extend(dataset)
         ds_nc = xr.open_mfdataset(datasets_paths)
-        xr_arry = ds_nc.interp(lon=lon_points, lat=lat_points, time=time_points).compute()
-        return xr_arry.to_dataframe()[WIND_VAR_LIST].reset_index(drop=True)
-
-    y_lo = float(lat_lo) - 0.25
-    y_hi = float(lat_hi) + 0.25
-    x_lo = float(lon_lo) - 0.25
-    x_hi = float(lon_hi) + 0.25
-
-    url = base_url + '&service=' + service + '&product=' + product + '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&mode=console'.format(
-        x_lo, x_hi, y_lo,
-        y_hi,
-        utils.date_to_str(
-            t_lo),
-        utils.date_to_str(
-            t_hi))
-    dataset = try_get_data(url)
+        dataset = ds_nc.sel(longitude=slice(x_lo, x_hi), latitude=slice(y_lo, y_hi),
+                            time=slice(t_lo, t_hi)).compute()
+    else:
+        url = base_url + '&service=' + service + '&product=' + product + '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&mode=console'.format(
+            x_lo, x_hi, y_lo,
+            y_hi,
+            utils.date_to_str(
+                t_lo),
+            utils.date_to_str(
+                t_hi))
+        dataset = try_get_data(url)
     return dataset.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[WIND_VAR_LIST].reset_index(
         drop=True, inplace=True)
 
@@ -367,8 +363,20 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
         product = 'global-reanalysis-phy-001-030-daily'
         VM_FOLDER = '/eodata/CMEMS/REP/GLO/PHY/GLOBAL_REANALYSIS_PHY_001_030'
         NRT_FLAG = False
+
+    # time range
     t_lo = datetime(date_lo.year, date_lo.month, date_lo.day, 12) - timedelta(days=1)
     t_hi = datetime(date_hi.year, date_hi.month, date_hi.day, 12) + timedelta(days=1)
+
+    # coordinates bbox
+    y_lo = float(lat_lo) - 0.1
+    y_hi = float(lat_hi) + 0.1
+    x_lo = float(lon_lo) - 0.1
+    x_hi = float(lon_hi) + 0.1
+
+    # depth
+    z_hi = 0.50
+    z_lo = 0.49
 
     if Path(VM_FOLDER).exists():
         logger.debug('Accessing local data %s' % VM_FOLDER)
@@ -383,30 +391,20 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
                 datasets_paths.append(dataset[0])
 
         ds_nc = xr.open_mfdataset(datasets_paths)
-        xr_arry = ds_nc.interp(longitude=lon_points, latitude=lat_points, time=time_points).compute()
-        return xr_arry.to_dataframe()[DAILY_PHY_VAR_LIST].reset_index(drop=True)
-
-    # coordinates
-    y_lo = float(lat_lo) - 0.1
-    y_hi = float(lat_hi) + 0.1
-    x_lo = float(lon_lo) - 0.1
-    x_hi = float(lon_hi) + 0.1
-
-    # depth
-    z_hi = 0.50
-    z_lo = 0.49
-
-    url = base_url + '&service=' + service + '&product=' + product + \
-          '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&z_lo={6}&z_hi={7}&mode=console'.format(x_lo, x_hi,
-                                                                                                         y_lo,
-                                                                                                         y_hi,
-                                                                                                         utils.date_to_str(
-                                                                                                             t_lo)
-                                                                                                         ,
-                                                                                                         utils.date_to_str(
-                                                                                                             t_hi),
-                                                                                                         z_lo, z_hi)
-    dataset = try_get_data(url)
+        dataset = ds_nc.sel(longitude=slice(x_lo, x_hi), latitude=slice(y_lo, y_hi),
+                            time=slice(t_lo, t_hi), depth=slice(z_lo, z_hi)).compute()
+    else:
+        url = base_url + '&service=' + service + '&product=' + product + \
+              '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&z_lo={6}&z_hi={7}&mode=console'.format(x_lo, x_hi,
+                                                                                                             y_lo,
+                                                                                                             y_hi,
+                                                                                                             utils.date_to_str(
+                                                                                                                 t_lo)
+                                                                                                             ,
+                                                                                                             utils.date_to_str(
+                                                                                                                 t_hi),
+                                                                                                             z_lo, z_hi)
+        dataset = try_get_data(url)
     return dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
         DAILY_PHY_VAR_LIST].reset_index(drop=True)
 
@@ -438,10 +436,10 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
                 lon_points = xr.DataArray(list(df_chunk['LON'].values))
 
                 df_chunk.reset_index(drop=True, inplace=True)
-                df_chunk = pd.concat(
-                    [df_chunk,
-                     get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
-                                     lon_points)], axis=1)
+
+                df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
+                                                        lat_points, lon_points)], axis=1)
+
                 df_chunk = pd.concat(
                     [df_chunk, get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                     lat_points, lon_points)], axis=1)
@@ -455,9 +453,6 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
                     [df_chunk,
                      get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
                                      lon_points)], axis=1)
-
-                df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
-                                                        lat_points, lon_points)], axis=1)
 
                 df_chunk.to_csv(out_path, chunksize=chunkSize, mode='a', header=header, index=False)
                 header = False
