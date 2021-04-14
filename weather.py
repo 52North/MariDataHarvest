@@ -339,7 +339,7 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, la
                             raise e
                         time.sleep(2)
 
-    dataset = xr.combine_by_coords(x_arr_list).squeeze()
+    dataset = xr.combine_by_coords(x_arr_list, coords=['time'], combine_attrs='override', compat='override').squeeze()
     lon_points = ((lon_points + 180) % 360) + 180
     res = dataset.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[GFS_50_VAR_LIST]
     res[['Wind_speed_gust_surface', 'Dewpoint_temperature_height_above_ground']] = [[np.nan, np.nan]] * len(res)
