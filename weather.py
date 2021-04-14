@@ -463,11 +463,6 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
 
                 df_chunk.reset_index(drop=True, inplace=True)
 
-                df_chunk = pd.concat(
-                    [df_chunk,
-                     get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
-                                     lon_points)], axis=1)
-
                 df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                         lat_points, lon_points)], axis=1)
 
@@ -480,7 +475,10 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
                      get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
                                      lon_points)], axis=1)
 
-
+                df_chunk = pd.concat(
+                    [df_chunk,
+                     get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
+                                     lon_points)], axis=1)
 
                 df_chunk.to_csv(out_path, chunksize=chunkSize, mode='a', header=header, index=False)
                 header = False
