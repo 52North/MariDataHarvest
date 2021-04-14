@@ -77,10 +77,10 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
     rest = time_in_min % dataset_temporal_resolution
     t_hi = date_hi + timedelta(minutes=dataset_temporal_resolution - rest)
 
-    y_lo = float(lat_lo) - 0.1
-    y_hi = float(lat_hi) + 0.1
-    x_lo = float(lon_lo) - 0.1
-    x_hi = float(lon_hi) + 0.1
+    y_lo = float(lat_lo) - 0.2
+    y_hi = float(lat_hi) + 0.2
+    x_lo = float(lon_lo) - 0.2
+    x_hi = float(lon_hi) + 0.2
 
     if Path(VM_FOLDER).exists():
         logger.debug('Accessing local data %s' % VM_FOLDER)
