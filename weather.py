@@ -77,10 +77,10 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
     rest = time_in_min % dataset_temporal_resolution
     t_hi = date_hi + timedelta(minutes=dataset_temporal_resolution - rest)
 
-    y_lo = float(lat_lo) - 0.2
-    y_hi = float(lat_hi) + 0.2
-    x_lo = float(lon_lo) - 0.2
-    x_hi = float(lon_hi) + 0.2
+    y_lo = float(lat_lo) - 0.1
+    y_hi = float(lat_hi) + 0.1
+    x_lo = float(lon_lo) - 0.1
+    x_hi = float(lon_hi) + 0.1
 
     if Path(VM_FOLDER).exists():
         logger.debug('Accessing local data %s' % VM_FOLDER)
@@ -288,7 +288,7 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_p
                         logger.warning('dataset %s is not complete' % name)
                 else:
                     logger.warning('dataset %s is not found' % name)
-    dataset = xr.combine_by_coords(x_arr_list).squeeze()
+    dataset = xr.combine_by_coords(x_arr_list, coords=['time'], combine_attrs='override', compat='override').squeeze()
     lon_points = ((lon_points + 180) % 360) + 180
     b = xr.DataArray([1] * len(lon_points))
     res = dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points, bounds_dim=b).to_dataframe()[
@@ -370,10 +370,10 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
     t_hi = datetime(date_hi.year, date_hi.month, date_hi.day, 12) + timedelta(days=1)
 
     # coordinates bbox
-    y_lo = float(lat_lo) - 0.2
-    y_hi = float(lat_hi) + 0.2
-    x_lo = float(lon_lo) - 0.2
-    x_hi = float(lon_hi) + 0.2
+    y_lo = float(lat_lo) - 0.1
+    y_hi = float(lat_hi) + 0.1
+    x_lo = float(lon_lo) - 0.1
+    x_hi = float(lon_hi) + 0.1
 
     # depth
     z_hi = 0.50
@@ -466,7 +466,7 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
 def append_environment_data_to_year(filtered_dir: Path, merged_dir: Path) -> None:
     csv_list = check_dir(filtered_dir)
     for file in csv_list:
-        if Path(merged_dir, file).exists() or file in Failed_Files.keys(): continue
+        if Path(merged_dir, file).exists() or file in Failed_Files: continue
         append_to_csv(Path(filtered_dir, file), Path(merged_dir, file))
 
 

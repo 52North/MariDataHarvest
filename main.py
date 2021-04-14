@@ -252,7 +252,7 @@ if __name__ == '__main__':
                         logger.error(traceback.format_exc())
                         logger.error('Error when appending environment data')
                         if interval > 40:
-                            Failed_Files[e.file_name] = traceback.format_exc()
+                            Failed_Files.append(e.file_name)
                             logger.warning(
                                 'Skipping step 3 for file %s after attempting %d times' % (e.file_name, interval // 10))
                             SaveToFailedList(e.file_name, e.exceptionType, args.dir)
