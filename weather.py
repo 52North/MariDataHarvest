@@ -45,7 +45,7 @@ GFS_50_VAR_LIST = variables = ['Temperature_surface', 'u-component_of_wind_maxim
                                'Relative_humidity_height_above_ground']
 
 
-def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points, global_path):
+def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
     """
         retrieve all wave variables for a specific timestamp, latitude, longitude concidering
         the temporal resolution of the dataset to calculate interpolated values
@@ -60,13 +60,14 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
         service = 'GLOBAL_ANALYSIS_FORECAST_WAV_001_027-TDS'
         product = 'global-analysis-forecast-wav-001-027'
         VM_FOLDER = '/eodata/CMEMS/NRT/GLO/WAV/GLOBAL_ANALYSIS_FORECAST_WAV_001_027'
+        offset = 0.1
     elif date_lo >= datetime(1993, 1, 1, 6):
         CheckConnection.set_url('my.cmems-du.eu')
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_REANALYSIS_WAV_001_032-TDS'
         product = 'global-reanalysis-wav-001-032'
         VM_FOLDER = '/eodata/CMEMS/REP/GLO/WAV/GLOBAL_REANALYSIS_WAV_001_032'
-
+        offset = 0.2
     # time lower
     time_in_min = (date_lo.hour * 60) + date_lo.minute
     rest = time_in_min % dataset_temporal_resolution
@@ -77,10 +78,10 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
     rest = time_in_min % dataset_temporal_resolution
     t_hi = date_hi + timedelta(minutes=dataset_temporal_resolution - rest)
 
-    y_lo = float(lat_lo) - 0.1
-    y_hi = float(lat_hi) + 0.1
-    x_lo = float(lon_lo) - 0.1
-    x_hi = float(lon_hi) + 0.1
+    y_lo = float(lat_lo) - offset
+    y_hi = float(lat_hi) + offset
+    x_lo = float(lon_lo) - offset
+    x_hi = float(lon_hi) + offset
 
     if Path(VM_FOLDER).exists():
         logger.debug('Accessing local data %s' % VM_FOLDER)
@@ -92,10 +93,16 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
             if len(dataset) > 0:
                 datasets_paths.append(sorted(dataset)[0])
         ds_nc = xr.open_mfdataset(datasets_paths)
+        if ds_nc.coords['latitude'].values[0] == ds_nc.coords['latitude'].max():
+            tmp = y_lo
+            y_lo = y_hi
+            y_hi = tmp
+        if ds_nc.coords['longitude'].values[0] == ds_nc.coords['longitude'].max():
+            tmp = x_lo
+            x_lo = x_hi
+            x_hi = tmp
         dataset = ds_nc.sel(longitude=slice(x_lo, x_hi), latitude=slice(y_lo, y_hi),
                             time=slice(t_lo, t_hi)).compute()
-
-        dataset.to_netcdf(Path(global_path, 'test_file_keyerror.nc'))
     else:
         url = base_url + '&service=' + service + '&product=' + product + '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&mode=console'.format(
             x_lo, x_hi, y_lo,
@@ -222,6 +229,14 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
             dataset = list(glob(str(path)))
             datasets_paths.extend(dataset)
         ds_nc = xr.open_mfdataset(datasets_paths)
+        if ds_nc.coords['lat'].values[0] == ds_nc.coords['lat'].max():
+            tmp = y_lo
+            y_lo = y_hi
+            y_hi = tmp
+        if ds_nc.coords['lon'].values[0] == ds_nc.coords['lon'].max():
+            tmp = x_lo
+            x_lo = x_hi
+            x_hi = tmp
         dataset = ds_nc.sel(lon=slice(x_lo, x_hi), lat=slice(y_lo, y_hi),
                             time=slice(t_lo, t_hi)).compute()
     else:
@@ -394,6 +409,14 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
                 datasets_paths.append(dataset[0])
 
         ds_nc = xr.open_mfdataset(datasets_paths)
+        if ds_nc.coords['latitude'].values[0] == ds_nc.coords['latitude'].max():
+            tmp = y_lo
+            y_lo = y_hi
+            y_hi = tmp
+        if ds_nc.coords['longitude'].values[0] == ds_nc.coords['longitude'].max():
+            tmp = x_lo
+            x_lo = x_hi
+            x_hi = tmp
         dataset = ds_nc.sel(longitude=slice(x_lo, x_hi), latitude=slice(y_lo, y_hi),
                             time=slice(t_lo, t_hi), depth=slice(z_lo, z_hi)).compute()
     else:
@@ -412,7 +435,7 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
         DAILY_PHY_VAR_LIST].reset_index(drop=True)
 
 
-def append_to_csv(in_path: Path, out_path: Path, global_path=Path('')) -> None:
+def append_to_csv(in_path: Path, out_path: Path) -> None:
     logger.debug('append_environment_data in file %s' % in_path)
     chunkSize = 100000
     header = True
@@ -443,7 +466,7 @@ def append_to_csv(in_path: Path, out_path: Path, global_path=Path('')) -> None:
                 df_chunk = pd.concat(
                     [df_chunk,
                      get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
-                                     lon_points, global_path)], axis=1)
+                                     lon_points)], axis=1)
 
                 df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                         lat_points, lon_points)], axis=1)
@@ -475,4 +498,4 @@ def append_environment_data_to_year(filtered_dir: Path, merged_dir: Path) -> Non
 
 
 def append_environment_data_to_file(file_name, filtered_dir, merged_dir):
-    append_to_csv(Path(filtered_dir, file_name), Path(merged_dir, file_name), merged_dir)
+    append_to_csv(Path(filtered_dir, file_name), Path(merged_dir, file_name))
