@@ -45,7 +45,7 @@ GFS_50_VAR_LIST = variables = ['Temperature_surface', 'u-component_of_wind_maxim
                                'Relative_humidity_height_above_ground']
 
 
-def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
+def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points, global_path):
     """
         retrieve all wave variables for a specific timestamp, latitude, longitude concidering
         the temporal resolution of the dataset to calculate interpolated values
@@ -94,6 +94,7 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
         ds_nc = xr.open_mfdataset(datasets_paths)
         dataset = ds_nc.sel(longitude=slice(x_lo, x_hi), latitude=slice(y_lo, y_hi),
                             time=slice(t_lo, t_hi)).compute()
+        dataset.to_netcdf(global_path)
     else:
         url = base_url + '&service=' + service + '&product=' + product + '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&mode=console'.format(
             x_lo, x_hi, y_lo,
@@ -438,6 +439,11 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
 
                 df_chunk.reset_index(drop=True, inplace=True)
 
+                df_chunk = pd.concat(
+                    [df_chunk,
+                     get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
+                                     lon_points, out_path)], axis=1)
+
                 df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                         lat_points, lon_points)], axis=1)
 
@@ -450,10 +456,7 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
                      get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
                                      lon_points)], axis=1)
 
-                df_chunk = pd.concat(
-                    [df_chunk,
-                     get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
-                                     lon_points)], axis=1)
+
 
                 df_chunk.to_csv(out_path, chunksize=chunkSize, mode='a', header=header, index=False)
                 header = False
