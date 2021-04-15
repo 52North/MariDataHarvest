@@ -72,6 +72,14 @@ def years_arg_parser(input: str) -> list[int]:
             raise argparse.ArgumentTypeError(
                 "'" + input + "' is not Valid. Expected input 'YYYY' , 'YYYY-YYYY' or 'YYYY,YYYY,YYYY'.")
 
+def init_directories(dir, year, minutes):
+    download_dir = Path(dir, str(year))
+    merged_dir = Path(dir, str(year) + '_merged_%s' % minutes)
+    filtered_dir = Path(dir, '{0}_filtered_{1}'.format(str(year), minutes))
+    download_dir.mkdir(parents=True, exist_ok=True)
+    merged_dir.mkdir(parents=True, exist_ok=True)
+    filtered_dir.mkdir(parents=True, exist_ok=True)
+    return download_dir, filtered_dir, merged_dir
 
 if __name__ == '__main__':
     # arguments parameters
@@ -108,22 +116,18 @@ if __name__ == '__main__':
     for year in args.year:
         logger.info('Processing year %s' % str(year))
         # initialize directories
-        download_dir = Path(args.dir, str(year))
-        merged_dir = Path(args.dir, str(year) + '_merged_%s' % args.minutes)
-        filtered_dir = Path(args.dir, '{0}_filtered_{1}'.format(str(year), args.minutes))
-        download_dir.mkdir(parents=True, exist_ok=True)
-        merged_dir.mkdir(parents=True, exist_ok=True)
-        filtered_dir.mkdir(parents=True, exist_ok=True)
-        file_name = ''
-        interval = 10
+        download_dir, filtered_dir, merged_dir = init_directories(args.dir, year, args.minutes)
         merged_dir_list = check_dir(merged_dir)
         filtered_dir_list = check_dir(filtered_dir)
         if args.depth_first:
             logger.info('Task is started using Depth-first mode')
             for file in get_files_list(year, exclude_to_resume=merged_dir_list):
+                file_name = file.split('.')[0] + '.csv'
+                file_failed = True
+                interval = 10
                 while True:
                     try:
-                        if not file.split('.')[0] in filtered_dir_list:
+                        if not file_name in filtered_dir_list:
                             logger.info('STEP 1/3 downloading AIS data: %s' % file)
                             file_name = download_file(file, download_dir, year)
                         break
@@ -136,6 +140,7 @@ if __name__ == '__main__':
                                 file, interval // 10))
                             SaveToFailedList(e.file_name, e.exceptionType, args.dir)
                             interval = 10
+                            file_failed = True
                             break
                         logger.error('Re-run in {0} sec'.format(interval))
                         time.sleep(interval)
@@ -143,7 +148,7 @@ if __name__ == '__main__':
 
                 while True:
                     try:
-                        if not file_name: break
+                        if file_failed: break
                         if file_name in filtered_dir_list:
                             logger.info(
                                 'STEP 2/3 File: %s has been already subsampled from a previous run.' % file_name)
@@ -160,12 +165,13 @@ if __name__ == '__main__':
                                 'Skipping steps 2, 3 for file %s after attempting %d times' % (file, interval // 10))
                             SaveToFailedList(e.file_name, e.exceptionType, args.dir)
                             interval = 10
+                            file_failed = True
                             break
                         logger.error('Re-run in {0} sec'.format(interval))
                         time.sleep(interval)
                         interval += 10
 
-                if args.clear and file_name:
+                if args.clear and not file_failed:
                     logger.info('Remove raw file %s' % file_name)
                     if Path(download_dir, file_name).exists():
                         os.remove(str(Path(download_dir, file_name)))
@@ -174,7 +180,7 @@ if __name__ == '__main__':
 
                 while True:
                     try:
-                        if not file_name: break
+                        if file_failed: break
                         logger.info('STEP 3/3 appending weather data: %s' % file_name)
                         append_environment_data_to_file(file_name, filtered_dir, merged_dir)
                         break
@@ -186,7 +192,6 @@ if __name__ == '__main__':
                             logger.warning(
                                 'Skipping step 3 for file %s after attempting %d times' % (file, interval // 10))
                             SaveToFailedList(e.file_name, e.exceptionType, args.dir)
-                            interval = 10
                             break
                         logger.error('Re-run in {0} sec'.format(interval))
                         time.sleep(interval)
