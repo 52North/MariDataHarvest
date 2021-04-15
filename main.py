@@ -123,7 +123,7 @@ if __name__ == '__main__':
             logger.info('Task is started using Depth-first mode')
             for file in get_files_list(year, exclude_to_resume=merged_dir_list):
                 file_name = file.split('.')[0] + '.csv'
-                file_failed = True
+                file_failed = False
                 interval = 10
                 while True:
                     try:
