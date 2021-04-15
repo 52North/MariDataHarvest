@@ -219,8 +219,8 @@ if __name__ == '__main__':
                      download_dir=download_dir, filtered_dir=filtered_dir, merged_dir=merged_dir, year=year) for
                 file in list_of_files]
             l = mp.Lock()
-            with mp.Pool(initializer=init, initargs=(l,)) as pool:
-                pool.map_async(run_multi_task_wrapper, list_of_file_args)
+            with mp.Pool(initializer=init, initargs=(l,), processes=4) as pool:
+                pool.map(run_multi_task_wrapper, list_of_file_args)
                 pool.close()
                 pool.join()
         else:

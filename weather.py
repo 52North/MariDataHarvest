@@ -488,6 +488,8 @@ def append_to_csv(in_path: Path, out_path: Path, lock=None) -> None:
                 df_chunk.to_csv(out_path, chunksize=utils.CHUNK_SIZE, mode='a', header=header, index=False)
                 header = False
     except Exception as e:
+        if lock:
+            lock.release()
         # discard the file in case of an error to resume later properly
         out_path.unlink(missing_ok=True)
         raise FileFailedException(out_path.name, e)
