@@ -435,6 +435,8 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
         DAILY_PHY_VAR_LIST].reset_index(drop=True)
 
 def append_to_csv(in_path: Path, out_path: Path, lock=None) -> None:
+    if lock:
+        lock.acquire()
     logger.debug('append_environment_data in file %s' % in_path)
     header = True
     try:
@@ -460,8 +462,6 @@ def append_to_csv(in_path: Path, out_path: Path, lock=None) -> None:
                 lon_points = xr.DataArray(list(df_chunk['LON'].values))
 
                 df_chunk.reset_index(drop=True, inplace=True)
-                if lock:
-                    lock.acquire()
 
                 df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                         lat_points, lon_points, lock)], axis=1)
