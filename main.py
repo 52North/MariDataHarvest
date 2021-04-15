@@ -7,7 +7,6 @@ import time
 import traceback
 from pathlib import Path
 import yaml
-import multiprocessing as mp
 
 from ais import download_year_AIS, subsample_year_AIS_to_CSV, download_file, get_files_list, subsample_file
 from check_connection import CheckConnection
@@ -74,104 +73,6 @@ def years_arg_parser(input: str) -> list[int]:
                 "'" + input + "' is not Valid. Expected input 'YYYY' , 'YYYY-YYYY' or 'YYYY,YYYY,YYYY'.")
 
 
-def run_multi_task_wrapper(args):
-    return run_multi_task(**args)
-
-
-def run_multi_task(file,
-                   args,
-                   filtered_dir_list,
-                   download_dir,
-                   filtered_dir,
-                   merged_dir,
-                   year):
-    interval = 10
-    file_failed = False
-    file_name = file.split('.')[0] + '.csv'
-    while True:
-        try:
-            if not file_name in filtered_dir_list:
-                logger.info('STEP 1/3 downloading AIS data: %s' % file)
-                file_name = download_file(file, download_dir, year)
-            break
-        except FileFailedException as e:
-            logger.error(traceback.format_exc())
-            logger.error('Error when downloading AIS data')
-            if interval > 40:
-                Failed_Files.append(e.file_name)
-                logger.warning('Skipping steps 1, 2 and 3 for file %s after attempting %d times' % (
-                    file, interval // 10))
-                SaveToFailedList(e.file_name, e.exceptionType, args.dir)
-                interval = 10
-                file_failed = True
-                break
-            logger.error('Re-run in {0} sec'.format(interval))
-            time.sleep(interval)
-            interval += 10
-
-    while True:
-        try:
-            if file_failed: break
-            if file_name in filtered_dir_list:
-                logger.info(
-                    'STEP 2/3 File: %s has been already subsampled from a previous run.' % file_name)
-                break
-            logger.info('STEP 2/3 subsampling CSV data: %s' % file_name)
-            subsample_file(file_name, download_dir, filtered_dir, args.minutes)
-            break
-        except FileFailedException as e:
-            logger.error(traceback.format_exc())
-            logger.error('Error when subsampling CSV data')
-            if interval > 40:
-                Failed_Files.append(e.file_name)
-                logger.warning(
-                    'Skipping steps 2, 3 for file %s after attempting %d times' % (
-                        file, interval // 10))
-                SaveToFailedList(e.file_name, e.exceptionType, args.dir)
-                interval = 10
-                file_failed = True
-                break
-            logger.error('Re-run in {0} sec'.format(interval))
-            time.sleep(interval)
-            interval += 10
-
-    if args.clear and not file_failed:
-        logger.info('Remove raw file %s' % file_name)
-        if Path(download_dir, file_name).exists():
-            os.remove(str(Path(download_dir, file_name)))
-        else:
-            logger.error("Error: %s file not found" % str(Path(download_dir, file_name)))
-
-    while True:
-        try:
-            if file_failed: break
-            logger.info('STEP 3/3 appending weather data: %s' % file_name)
-            append_environment_data_to_file(file_name, filtered_dir, merged_dir)
-            break
-        except FileFailedException as e:
-            logger.error(traceback.format_exc())
-            logger.error('Error when appending environment data')
-            if interval > 40:
-                Failed_Files.append(e.file_name)
-                logger.warning(
-                    'Skipping step 3 for file %s after attempting %d times' % (file, interval // 10))
-                SaveToFailedList(e.file_name, e.exceptionType, args.dir)
-                break
-            logger.error('Re-run in {0} sec'.format(interval))
-            time.sleep(interval)
-            interval += 10
-
-
-def init_directories(dir, year, minutes):
-    download_dir = Path(dir, str(year))
-    merged_dir = Path(dir, str(year) + '_merged_%s' % minutes)
-    filtered_dir = Path(dir, '{0}_filtered_{1}'.format(str(year), minutes))
-    download_dir.mkdir(parents=True, exist_ok=True)
-    merged_dir.mkdir(parents=True, exist_ok=True)
-    filtered_dir.mkdir(parents=True, exist_ok=True)
-    return download_dir, filtered_dir, merged_dir
-
-
 if __name__ == '__main__':
     # arguments parameters
     parser = argparse.ArgumentParser(
@@ -194,6 +95,10 @@ if __name__ == '__main__':
                         help='Clears the raw output directory in order to free memory.',
                         action='store_true')
     args, unknown = parser.parse_known_args()
+    # initialize a Thread to check connection
+    connectionChecker = CheckConnection(check_interval=8)
+    connectionChecker.daemon = True
+    connectionChecker.start()
     arg_string = 'Starting a task for year(s) %s with subsampling of %d minutes' % (
         ','.join(list(map(str, args.year))).join(['[', ']']), int(args.minutes))
 
@@ -203,18 +108,90 @@ if __name__ == '__main__':
     for year in args.year:
         logger.info('Processing year %s' % str(year))
         # initialize directories
-        download_dir, filtered_dir, merged_dir = init_directories(args.dir, year, args.minutes)
+        download_dir = Path(args.dir, str(year))
+        merged_dir = Path(args.dir, str(year) + '_merged_%s' % args.minutes)
+        filtered_dir = Path(args.dir, '{0}_filtered_{1}'.format(str(year), args.minutes))
+        download_dir.mkdir(parents=True, exist_ok=True)
+        merged_dir.mkdir(parents=True, exist_ok=True)
+        filtered_dir.mkdir(parents=True, exist_ok=True)
+        file_name = ''
+        interval = 10
         merged_dir_list = check_dir(merged_dir)
         filtered_dir_list = check_dir(filtered_dir)
         if args.depth_first:
             logger.info('Task is started using Depth-first mode')
-            list_of_files = get_files_list(year, exclude_to_resume=merged_dir_list)
-            list_of_file_args = [
-                dict(file=file, filtered_dir_list=filtered_dir_list, args=args,
-                     download_dir=download_dir, filtered_dir=filtered_dir, merged_dir=merged_dir, year=year) for
-                file in list_of_files]
-            with mp.Pool() as pool:
-                pool.map(run_multi_task_wrapper, list_of_file_args)
+            for file in get_files_list(year, exclude_to_resume=merged_dir_list):
+                while True:
+                    try:
+                        if not file.split('.')[0] in filtered_dir_list:
+                            logger.info('STEP 1/3 downloading AIS data: %s' % file)
+                            file_name = download_file(file, download_dir, year)
+                        break
+                    except FileFailedException as e:
+                        logger.error(traceback.format_exc())
+                        logger.error('Error when downloading AIS data')
+                        if interval > 40:
+                            Failed_Files.append(e.file_name)
+                            logger.warning('Skipping steps 1, 2 and 3 for file %s after attempting %d times' % (
+                                file, interval // 10))
+                            SaveToFailedList(e.file_name, e.exceptionType, args.dir)
+                            interval = 10
+                            break
+                        logger.error('Re-run in {0} sec'.format(interval))
+                        time.sleep(interval)
+                        interval += 10
+
+                while True:
+                    try:
+                        if not file_name: break
+                        if file_name in filtered_dir_list:
+                            logger.info(
+                                'STEP 2/3 File: %s has been already subsampled from a previous run.' % file_name)
+                            break
+                        logger.info('STEP 2/3 subsampling CSV data: %s' % file_name)
+                        subsample_file(file_name, download_dir, filtered_dir, args.minutes)
+                        break
+                    except FileFailedException as e:
+                        logger.error(traceback.format_exc())
+                        logger.error('Error when subsampling CSV data')
+                        if interval > 40:
+                            Failed_Files.append(e.file_name)
+                            logger.warning(
+                                'Skipping steps 2, 3 for file %s after attempting %d times' % (file, interval // 10))
+                            SaveToFailedList(e.file_name, e.exceptionType, args.dir)
+                            interval = 10
+                            break
+                        logger.error('Re-run in {0} sec'.format(interval))
+                        time.sleep(interval)
+                        interval += 10
+
+                if args.clear and file_name:
+                    logger.info('Remove raw file %s' % file_name)
+                    if Path(download_dir, file_name).exists():
+                        os.remove(str(Path(download_dir, file_name)))
+                    else:
+                        logger.error("Error: %s file not found" % str(Path(download_dir, file_name)))
+
+                while True:
+                    try:
+                        if not file_name: break
+                        logger.info('STEP 3/3 appending weather data: %s' % file_name)
+                        append_environment_data_to_file(file_name, filtered_dir, merged_dir)
+                        break
+                    except FileFailedException as e:
+                        logger.error(traceback.format_exc())
+                        logger.error('Error when appending environment data')
+                        if interval > 40:
+                            Failed_Files.append(e.file_name)
+                            logger.warning(
+                                'Skipping step 3 for file %s after attempting %d times' % (file, interval // 10))
+                            SaveToFailedList(e.file_name, e.exceptionType, args.dir)
+                            interval = 10
+                            break
+                        logger.error('Re-run in {0} sec'.format(interval))
+                        time.sleep(interval)
+                        interval += 10
+
         else:
             if args.step != 0:
                 logger.info('Single step selected')
