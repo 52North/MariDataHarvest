@@ -305,11 +305,8 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_p
                         logger.warning('dataset %s is not complete' % name)
                 else:
                     logger.warning('dataset %s is not found' % name)
-    if lock:
-        lock.acquire()
     dataset = xr.combine_by_coords(x_arr_list, coords=['time'], combine_attrs='override', compat='override').squeeze()
-    if lock:
-        lock.release()
+
     lon_points = ((lon_points + 180) % 360) + 180
     b = xr.DataArray([1] * len(lon_points))
     res = dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points, bounds_dim=b).to_dataframe()[
@@ -359,11 +356,7 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, la
                         if attempts > 15:
                             raise e
                         time.sleep(2)
-    if lock:
-        lock.acquire()
     dataset = xr.combine_by_coords(x_arr_list, coords=['time'], combine_attrs='override', compat='override').squeeze()
-    if lock:
-        lock.release()
     lon_points = ((lon_points + 180) % 360) + 180
     res = dataset.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[GFS_50_VAR_LIST]
     res[['Wind_speed_gust_surface', 'Dewpoint_temperature_height_above_ground']] = [[np.nan, np.nan]] * len(res)
@@ -467,10 +460,13 @@ def append_to_csv(in_path: Path, out_path: Path, lock=None) -> None:
                 lon_points = xr.DataArray(list(df_chunk['LON'].values))
 
                 df_chunk.reset_index(drop=True, inplace=True)
+                if lock:
+                    lock.acquire()
 
                 df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                         lat_points, lon_points, lock)], axis=1)
-
+                if lock:
+                    lock.release()
                 df_chunk = pd.concat(
                     [df_chunk, get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                     lat_points, lon_points)], axis=1)
