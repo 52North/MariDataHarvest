@@ -1,5 +1,4 @@
 import logging
-import threading
 import time
 import traceback
 from datetime import datetime, timedelta
@@ -435,7 +434,6 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
     return dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
         DAILY_PHY_VAR_LIST].reset_index(drop=True)
 
-lock = threading.Lock()
 def append_to_csv(in_path: Path, out_path: Path) -> None:
     logger.debug('append_environment_data in file %s' % in_path)
     chunkSize = 100000
@@ -464,10 +462,8 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
 
                 df_chunk.reset_index(drop=True, inplace=True)
 
-                lock.acquire()
                 df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
                                                         lat_points, lon_points)], axis=1)
-                lock.release()
 
                 df_chunk = pd.concat(
                     [df_chunk, get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
