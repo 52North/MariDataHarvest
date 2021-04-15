@@ -252,14 +252,14 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
         drop=True)
 
 
-def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
+def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points, lock):
     logger.debug('obtaining GFS 0.25 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     start_date = datetime(date_lo.year, date_lo.month, date_lo.day) - timedelta(days=1)
     # consider the supported time range
     if start_date < datetime(2015, 1, 15):
         logger.debug('GFS 0.25 DATASET is out of supported range')
-        return get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points)
+        return get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points, lock)
     x_arr_list = []
     base_url = 'https://rda.ucar.edu/thredds/catalog/files/g/ds084.1'
     CheckConnection.set_url('rda.ucar.edu')
@@ -305,7 +305,11 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_p
                         logger.warning('dataset %s is not complete' % name)
                 else:
                     logger.warning('dataset %s is not found' % name)
+    if lock:
+        lock.acquire()
     dataset = xr.combine_by_coords(x_arr_list, coords=['time'], combine_attrs='override', compat='override').squeeze()
+    if lock:
+        lock.release()
     lon_points = ((lon_points + 180) % 360) + 180
     b = xr.DataArray([1] * len(lon_points))
     res = dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points, bounds_dim=b).to_dataframe()[
@@ -313,7 +317,7 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_p
     return res
 
 
-def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
+def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points, lock=None):
     logger.debug('obtaining GFS 0.50 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     base_url = 'https://www.ncei.noaa.gov/thredds/model-gfs-g4-anl-files-old/'
@@ -355,8 +359,11 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, la
                         if attempts > 15:
                             raise e
                         time.sleep(2)
-
+    if lock:
+        lock.acquire()
     dataset = xr.combine_by_coords(x_arr_list, coords=['time'], combine_attrs='override', compat='override').squeeze()
+    if lock:
+        lock.release()
     lon_points = ((lon_points + 180) % 360) + 180
     res = dataset.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[GFS_50_VAR_LIST]
     res[['Wind_speed_gust_surface', 'Dewpoint_temperature_height_above_ground']] = [[np.nan, np.nan]] * len(res)
@@ -434,7 +441,7 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
     return dataset.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
         DAILY_PHY_VAR_LIST].reset_index(drop=True)
 
-def append_to_csv(in_path: Path, out_path: Path) -> None:
+def append_to_csv(in_path: Path, out_path: Path, lock=None) -> None:
     logger.debug('append_environment_data in file %s' % in_path)
     chunkSize = 100000
     header = True
@@ -463,7 +470,7 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
                 df_chunk.reset_index(drop=True, inplace=True)
 
                 df_chunk = pd.concat([df_chunk, get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
-                                                        lat_points, lon_points)], axis=1)
+                                                        lat_points, lon_points, lock)], axis=1)
 
                 df_chunk = pd.concat(
                     [df_chunk, get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points,
@@ -494,5 +501,5 @@ def append_environment_data_to_year(filtered_dir: Path, merged_dir: Path) -> Non
         append_to_csv(Path(filtered_dir, file), Path(merged_dir, file))
 
 
-def append_environment_data_to_file(file_name, filtered_dir, merged_dir):
-    append_to_csv(Path(filtered_dir, file_name), Path(merged_dir, file_name))
+def append_environment_data_to_file(file_name, filtered_dir, merged_dir, lock):
+    append_to_csv(Path(filtered_dir, file_name), Path(merged_dir, file_name), lock)
