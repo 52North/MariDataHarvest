@@ -146,7 +146,7 @@ def run_multi_task(file,
         try:
             if file_failed: break
             logger.info('STEP 3/3 appending weather data: %s' % file_name)
-            append_environment_data_to_file(file_name, filtered_dir, merged_dir)
+            append_environment_data_to_file(file_name, filtered_dir, merged_dir, lock)
             break
         except FileFailedException as e:
             logger.error(traceback.format_exc())
@@ -170,6 +170,11 @@ def init_directories(dir, year, minutes):
     merged_dir.mkdir(parents=True, exist_ok=True)
     filtered_dir.mkdir(parents=True, exist_ok=True)
     return download_dir, filtered_dir, merged_dir
+
+
+def init(lc):
+    global lock
+    lock = lc
 
 
 if __name__ == '__main__':
@@ -213,8 +218,11 @@ if __name__ == '__main__':
                 dict(file=file, filtered_dir_list=filtered_dir_list, args=args,
                      download_dir=download_dir, filtered_dir=filtered_dir, merged_dir=merged_dir, year=year) for
                 file in list_of_files]
-            with mp.Pool() as pool:
+            l = mp.Lock()
+            with mp.Pool(initializer=init, initargs=(l,)) as pool:
                 pool.map(run_multi_task_wrapper, list_of_file_args)
+                pool.close()
+                pool.join()
         else:
             if args.step != 0:
                 logger.info('Single step selected')
