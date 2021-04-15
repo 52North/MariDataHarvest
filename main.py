@@ -75,7 +75,7 @@ def years_arg_parser(input: str) -> list[int]:
 
 
 def run_multi_task_wrapper(args):
-    return run_multi_task(**args)
+    run_multi_task(**args)
 
 
 def run_multi_task(file,
@@ -140,7 +140,7 @@ def run_multi_task(file,
         if Path(download_dir, file_name).exists():
             os.remove(str(Path(download_dir, file_name)))
         else:
-            logger.error("Error: %s file not found" % str(Path(download_dir, file_name)))
+            logger.warning("Tried to remove but File not found %s " % str(Path(download_dir, file_name)))
 
     while True:
         try:
@@ -220,7 +220,7 @@ if __name__ == '__main__':
                 file in list_of_files]
             l = mp.Lock()
             with mp.Pool(initializer=init, initargs=(l,)) as pool:
-                pool.map(run_multi_task_wrapper, list_of_file_args)
+                pool.map_async(run_multi_task_wrapper, list_of_file_args)
                 pool.close()
                 pool.join()
         else:

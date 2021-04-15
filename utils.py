@@ -9,6 +9,8 @@ import pandas as pd
 str_to_date = lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
 date_to_str = lambda x: x.strftime('%Y-%m-%dT%H:%M:%SZ')
 
+# define global maximum chunk size for processing large files
+CHUNK_SIZE = 50000
 
 # Custom exception to retrieve file names with exception handling
 class FileFailedException(Exception):
