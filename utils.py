@@ -33,8 +33,10 @@ def init_Failed_list(arg_string, work_dir):
         Path(work_dir, 'FailedFilesList.csv'), index=False)
 
 
-def check_dir(dir_name: Path) -> typing.List[str]:
+def check_dir(dir_name: Path, extension: bool = True) -> typing.List[str]:
     """
         List all contents of `dir_name` and returns is sorted using `str.lower` for `sorted`.
     """
+    if not extension:
+        return sorted(map(lambda name: name.split('.')[0], os.listdir(dir_name)), key=str.lower)
     return sorted(os.listdir(dir_name), key=str.lower)

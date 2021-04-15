@@ -5,7 +5,7 @@ import http.client as httplib
 
 logger = logging.getLogger(__name__)
 class CheckConnection(Thread):
-    online = False
+    online = True
     domain_url = ''
     check_interval = 30
 
