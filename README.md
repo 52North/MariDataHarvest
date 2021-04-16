@@ -191,7 +191,7 @@ The data is available directly at the server root via https. All requests to htt
 
 | Name            | Version   | License                                             |
 |-----------------|-----------|-----------------------------------------------------|
-| Fiona           | 1.8.18    | BSD License                                         |
+| Fiona           | 1.8.19    | BSD License                                         |
 | PyYAML          | 5.4.1     | MIT License                                         |
 | Shapely         | 1.7.1     | BSD License                                         |
 | attrs           | 20.3.0    | MIT License                                         |
@@ -203,14 +203,19 @@ The data is available directly at the server root via https. All requests to htt
 | click           | 7.1.2     | BSD License                                         |
 | click-plugins   | 1.1.1     | BSD License                                         |
 | cligj           | 0.7.1     | BSD                                                 |
+| cloudpickle     | 1.6.0     | BSD License                                         |
+| dask            | 2021.4.0  | BSD License                                         |
+| fsspec          | 0.9.0     | BSD License                                         |
 | geopandas       | 0.9.0     | BSD                                                 |
 | idna            | 2.10      | BSD License                                         |
+| locket          | 0.2.1     | BSD License                                         |
 | motuclient      | 1.8.8     | GNU Lesser General Public License v3 (LGPLv3)       |
 | munch           | 2.5.0     | MIT License                                         |
 | netCDF4         | 1.5.6     | MIT License                                         |
 | numpy           | 1.20.1    | BSD License                                         |
-| pandas          | 1.2.3     | BSD                                                 |
-| protobuf        | 3.15.7    | 3-Clause BSD License                                |
+| pandas          | 1.2.4     | BSD                                                 |
+| partd           | 1.2.0     | BSD                                                 |
+| protobuf        | 3.16.0rc1 | 3-Clause BSD License                                |
 | pyproj          | 3.0.1     | MIT License                                         |
 | python-dateutil | 2.8.1     | BSD License, Apache Software License                |
 | python-dotenv   | 0.17.0    | BSD License                                         |
@@ -220,9 +225,9 @@ The data is available directly at the server root via https. All requests to htt
 | siphon          | 0.9       | BSD License                                         |
 | six             | 1.15.0    | MIT License                                         |
 | soupsieve       | 2.2.1     | MIT License                                         |
+| toolz           | 0.11.1    | BSD License                                         |
 | urllib3         | 1.26.4    | MIT License                                         |
-| wget            | 3.2       | Public Domain                                       |
-| xarray          | 0.15.1    | Apache Software License                             |
+| xarray          | 0.17.0    | Apache Software License                             |
 
 <details>
 <summary>generate license list</summary>
