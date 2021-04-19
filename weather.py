@@ -39,7 +39,7 @@ GFS_25_VAR_LIST = ['Temperature_surface', 'Wind_speed_gust_surface', 'u-componen
                    'U-Component_Storm_Motion_height_above_ground_layer',
                    'V-Component_Storm_Motion_height_above_ground_layer', 'Relative_humidity_height_above_ground']
 
-GFS_50_VAR_LIST = variables = ['Temperature_surface', 'u-component_of_wind_maximum_wind',
+GFS_50_VAR_LIST = ['Temperature_surface', 'u-component_of_wind_maximum_wind',
                                'v-component_of_wind_maximum_wind', 'U-Component_Storm_Motion_height_above_ground_layer',
                                'V-Component_Storm_Motion_height_above_ground_layer',
                                'Relative_humidity_height_above_ground']
@@ -117,61 +117,6 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
         WAVE_VAR_LIST].reset_index(drop=True)
 
 
-def get_global_phy_hourly(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
-    """
-        retrieve <phy> including ... variables for a specific timestamp, latitude, longitude considering
-        the temporal resolution of the dataset to calculate interpolated values
-    """
-    if date_lo < datetime(2019, 1, 1): return None
-    logger.debug('obtaining GLOBAL_ANALYSIS_FORECAST_PHY Hourly dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
-        str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
-
-    CheckConnection.set_url('nrt.cmems-du.eu')
-    base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload&service=GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
-    products = ['global-analysis-forecast-phy-001-024-hourly-t-u-v-ssh',
-                'global-analysis-forecast-phy-001-024-hourly-merged-uv']
-    dataset_temporal_resolution = 60
-    time_in_min = (date_lo.hour * 60) + date_lo.minute
-    rest = time_in_min % dataset_temporal_resolution
-
-    # available times are at min 30 of each hour
-    if date_lo.minute >= 30:
-        t_lo = date_lo - timedelta(minutes=rest) + timedelta(minutes=30)
-    else:
-        t_lo = date_lo - timedelta(minutes=rest) - timedelta(minutes=30)
-
-    time_in_min = (date_hi.hour * 60) + date_hi.minute
-    rest = time_in_min % dataset_temporal_resolution
-
-    if date_hi.minute >= 30:
-        t_hi = date_hi + timedelta(minutes=(dataset_temporal_resolution - rest)) + timedelta(minutes=30)
-    else:
-        t_hi = date_hi + timedelta(minutes=(dataset_temporal_resolution - rest)) - timedelta(minutes=30)
-
-    # coordinates
-    y_lo = float(lat_lo)
-    y_hi = float(lat_hi)
-    x_lo = float(lon_lo)
-    x_hi = float(lon_hi)
-
-    # depth
-    z_hi = 0.50
-    z_lo = 0.49
-
-    url = base_url + '&product=' + products[0] + '&product=global-analysis-forecast-phy-001-024-hourly-t-u-v-ssh' + \
-          '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&z_lo={6}&z_hi={7}&mode=console'.format(x_lo, x_hi,
-                                                                                                         y_lo,
-                                                                                                         y_hi,
-                                                                                                         utils.date_to_str(
-                                                                                                             t_lo)
-                                                                                                         ,
-                                                                                                         utils.date_to_str(
-                                                                                                             t_hi),
-                                                                                                         z_lo, z_hi)
-    data = try_get_data(url)
-    return data
-
-
 def try_get_data(url):
     try:
         CheckConnection.is_online()
@@ -189,7 +134,8 @@ def try_get_data(url):
 def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
     logger.debug('obtaining WIND_GLO_WIND_L4_NRT_OBSERVATIONS dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
-
+    # offset according to the dataset resolution
+    offset = 0.25
     dataset_temporal_resolution = 360
     if date_lo >= datetime(2018, 1, 1, 6):
         CheckConnection.set_url('nrt.cmems-du.eu')
@@ -215,10 +161,10 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_point
     t_hi = date_hi + timedelta(minutes=dataset_temporal_resolution - rest)
 
     # coordinates bbox
-    y_lo = float(lat_lo) - 0.25
-    y_hi = float(lat_hi) + 0.25
-    x_lo = float(lon_lo) - 0.25
-    x_hi = float(lon_hi) + 0.25
+    y_lo = float(lat_lo) - offset
+    y_hi = float(lat_hi) + offset
+    x_lo = float(lon_lo) - offset
+    x_hi = float(lon_hi) + offset
 
     if Path(VM_FOLDER).exists():
         logger.debug('Accessing local data %s' % VM_FOLDER)
@@ -256,6 +202,8 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_p
     logger.debug('obtaining GFS 0.25 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     start_date = datetime(date_lo.year, date_lo.month, date_lo.day) - timedelta(days=1)
+    # offset according to the dataset resolution
+    offset = 0.25
     # consider the supported time range
     if start_date < datetime(2015, 1, 15):
         logger.debug('GFS 0.25 DATASET is out of supported range')
@@ -291,8 +239,8 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_p
                     end_date.year, end_date.month, end_date.day, cycle, hours)
                 if name in list(end_cat.datasets):
                     ds_subset = end_cat.datasets[name].subset()
-                    query = ds_subset.query().lonlat_box(north=lat_hi + 0.25, south=lat_lo - 0.25, east=lon_hi + 0.25,
-                                                         west=lon_lo - 0.25).variables(*GFS_25_VAR_LIST)
+                    query = ds_subset.query().lonlat_box(north=lat_hi + offset, south=lat_lo - offset, east=lon_hi + offset,
+                                                         west=lon_lo - offset).variables(*GFS_25_VAR_LIST)
                     CheckConnection.is_online()
                     try:
                         data = ds_subset.get_data(query)
@@ -318,7 +266,8 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, la
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     base_url = 'https://www.ncei.noaa.gov/thredds/model-gfs-g4-anl-files-old/'
     CheckConnection.set_url('ncei.noaa.gov')
-
+    # offset according to the dataset resolution
+    offset = 0.5
     x_arr_list = []
     start_date = datetime(date_lo.year, date_lo.month, date_lo.day) - timedelta(days=1)
     for day in range((date_hi - start_date).days + 1):
@@ -334,8 +283,8 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, la
                         name = 'gfsanl_4_%s%.2d%.2d_%.2d00_00%s.grb2' % (dt.year, dt.month, dt.day, cycle, hour)
                         if name in list(catalog.datasets):
                             ds_subset = catalog.datasets[name].subset()
-                            query = ds_subset.query().lonlat_box(north=lat_hi + 0.5, south=lat_lo - 0.5,
-                                                                 east=lon_hi + 0.5, west=lon_lo - 0.5).variables(
+                            query = ds_subset.query().lonlat_box(north=lat_hi + offset, south=lat_lo - offset,
+                                                                 east=lon_hi + offset, west=lon_lo - offset).variables(
                                 *GFS_50_VAR_LIST)
                             CheckConnection.is_online()
                             data = ds_subset.get_data(query)
@@ -359,14 +308,15 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, la
     dataset = xr.combine_by_coords(x_arr_list, coords=['time'], combine_attrs='override', compat='override').squeeze()
     lon_points = ((lon_points + 180) % 360) + 180
     res = dataset.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[GFS_50_VAR_LIST]
-    res[['Wind_speed_gust_surface', 'Dewpoint_temperature_height_above_ground']] = [[np.nan, np.nan]] * len(res)
+    # res[['Wind_speed_gust_surface', 'Dewpoint_temperature_height_above_ground']] = [[np.nan, np.nan]] * len(res)
     return res.reset_index(drop=True)
 
 
 def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points, lon_points):
     logger.debug('obtaining GLOBAL_ANALYSIS_FORECAST_PHY Daily dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
-
+    # offset according to the dataset resolution
+    offset = 0.1
     if date_lo >= datetime(2019, 1, 2):
         CheckConnection.set_url('nrt.cmems-du.eu')
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
@@ -387,10 +337,10 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
     t_hi = datetime(date_hi.year, date_hi.month, date_hi.day, 12) + timedelta(days=1)
 
     # coordinates bbox
-    y_lo = float(lat_lo) - 0.1
-    y_hi = float(lat_hi) + 0.1
-    x_lo = float(lon_lo) - 0.1
-    x_hi = float(lon_hi) + 0.1
+    y_lo = float(lat_lo) - offset
+    y_hi = float(lat_hi) + offset
+    x_lo = float(lon_lo) - offset
+    x_hi = float(lon_hi) + offset
 
     # depth
     z_hi = 0.50
