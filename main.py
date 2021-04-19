@@ -176,7 +176,7 @@ if __name__ == '__main__':
                     if Path(download_dir, file_name).exists():
                         os.remove(str(Path(download_dir, file_name)))
                     else:
-                        logger.error("Error: %s file not found" % str(Path(download_dir, file_name)))
+                        logger.warning("File not found  %s " % str(Path(download_dir, file_name)))
 
                 while True:
                     try:

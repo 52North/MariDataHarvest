@@ -437,11 +437,11 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_
 
 def append_to_csv(in_path: Path, out_path: Path) -> None:
     logger.debug('append_environment_data in file %s' % in_path)
-    chunkSize = 100000
+
     header = True
     try:
         for df_chunk in pd.read_csv(in_path, parse_dates=['BaseDateTime'], date_parser=utils.str_to_date,
-                                    chunksize=chunkSize):
+                                    chunksize=utils.CHUNK_SIZE):
             if len(df_chunk) > 1:
                 # remove index column
                 df_chunk.drop(['Unnamed: 0'], axis=1, errors='ignore', inplace=True)
@@ -480,7 +480,7 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
                      get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi, time_points, lat_points,
                                      lon_points)], axis=1)
 
-                df_chunk.to_csv(out_path, chunksize=chunkSize, mode='a', header=header, index=False)
+                df_chunk.to_csv(out_path, mode='a', header=header, index=False)
                 header = False
     except Exception as e:
         # discard the file in case of an error to resume later properly

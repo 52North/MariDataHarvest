@@ -14,14 +14,13 @@ from bs4 import BeautifulSoup
 
 from check_connection import CheckConnection
 from config import config
-from utils import FileFailedException, Failed_Files, check_dir
+from utils import FileFailedException, Failed_Files, check_dir, CHUNK_SIZE
 
 pd.options.mode.chained_assignment = None
 
 logger = logging.getLogger(__name__)
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
-
 
 
 def get_files_list(year: int, exclude_to_resume: typing.List[str]) -> typing.List[str]:
@@ -48,8 +47,8 @@ def get_files_list(year: int, exclude_to_resume: typing.List[str]) -> typing.Lis
     return files
 
 
-def chunkify_gdb(gdb_file: Path, file_path: Path, chunkSize: int) -> None:
-    end = chunkSize
+def chunkify_gdb(gdb_file: Path, file_path: Path) -> None:
+    end = CHUNK_SIZE
     start = 0
     header = True
     while True:
@@ -60,7 +59,7 @@ def chunkify_gdb(gdb_file: Path, file_path: Path, chunkSize: int) -> None:
         gdf_chunk.drop(columns=['geometry'], inplace=True)
         gdf_chunk.to_csv(file_path, mode='a', header=header, index=False)
         start = end
-        end += chunkSize
+        end += CHUNK_SIZE
         header = False
 
 
@@ -94,7 +93,7 @@ def download_file(zipped_file_name: str, download_dir: Path, year: int) -> str:
                     file_name = name.split('.')[0] + '.csv'
                     file_path = Path(download_dir, file_name)
                     try:
-                        chunkify_gdb(gdb_file, file_path, chunkSize=100000)
+                        chunkify_gdb(gdb_file, file_path)
                     except Exception as e:
                         # discard the file in case of an error to resume later properly
                         if file_path:
@@ -124,12 +123,11 @@ def rm_sec(date: datetime) -> datetime:
 
 
 def subsample_file(file_name, download_dir, filtered_dir, min_time_interval) -> str:
-    chunkSize = 100000
     logging.info("Subsampling  %s " % str(file_name))
     header = True
 
     try:
-        for df_chunk in pd.read_csv(Path(download_dir, file_name), chunksize=chunkSize):
+        for df_chunk in pd.read_csv(Path(download_dir, file_name), chunksize=CHUNK_SIZE):
             df_chunk = df_chunk.drop(['Unnamed: 0', 'MMSI', 'VesselName', 'CallSign', 'Cargo', 'TranscieverClass',
                                       'ReceiverType', 'ReceiverID'], axis=1, errors='ignore')
             df_chunk = df_chunk.dropna()
@@ -151,7 +149,7 @@ def subsample_file(file_name, download_dir, filtered_dir, min_time_interval) -> 
             df_chunk.reset_index(drop=True, inplace=True)
             df_chunk = df_chunk.dropna()
             file_path = Path(filtered_dir, str(file_name))
-            df_chunk.to_csv(file_path, chunksize=chunkSize, mode='a', header=header , index=False)
+            df_chunk.to_csv(file_path, mode='a', header=header, index=False)
             header = False
     except Exception as e:
         # discard the file in case of an error to resume later properly
