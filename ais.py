@@ -149,7 +149,7 @@ def subsample_file(file_name, download_dir, filtered_dir, min_time_interval) -> 
             df_chunk.reset_index(drop=True, inplace=True)
             df_chunk = df_chunk.dropna()
             file_path = Path(filtered_dir, str(file_name))
-            df_chunk.to_csv(file_path, mode='a', header=header, index=False)
+            df_chunk.to_csv(file_path, mode='a', header=header, index=False , date_format='%Y-%m-%d %H:%M:%S')
             header = False
     except Exception as e:
         # discard the file in case of an error to resume later properly

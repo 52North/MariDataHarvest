@@ -72,6 +72,7 @@ def years_arg_parser(input: str) -> list[int]:
             raise argparse.ArgumentTypeError(
                 "'" + input + "' is not Valid. Expected input 'YYYY' , 'YYYY-YYYY' or 'YYYY,YYYY,YYYY'.")
 
+
 def init_directories(dir, year, minutes):
     download_dir = Path(dir, str(year))
     merged_dir = Path(dir, str(year) + '_merged_%s' % minutes)
@@ -80,6 +81,7 @@ def init_directories(dir, year, minutes):
     merged_dir.mkdir(parents=True, exist_ok=True)
     filtered_dir.mkdir(parents=True, exist_ok=True)
     return download_dir, filtered_dir, merged_dir
+
 
 if __name__ == '__main__':
     # arguments parameters
@@ -119,6 +121,7 @@ if __name__ == '__main__':
         download_dir, filtered_dir, merged_dir = init_directories(args.dir, year, args.minutes)
         merged_dir_list = check_dir(merged_dir)
         filtered_dir_list = check_dir(filtered_dir)
+        download_dir_list = check_dir(download_dir)
         if args.depth_first:
             logger.info('Task is started using Depth-first mode')
             for file in get_files_list(year, exclude_to_resume=merged_dir_list):
@@ -127,7 +130,7 @@ if __name__ == '__main__':
                 interval = 10
                 while True:
                     try:
-                        if not file_name in filtered_dir_list:
+                        if not file_name in filtered_dir_list and not file_name in download_dir_list:
                             logger.info('STEP 1/3 downloading AIS data: %s' % file)
                             file_name = download_file(file, download_dir, year)
                         break
