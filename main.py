@@ -43,7 +43,7 @@ def years_arg_parser(input: str) -> list[int]:
         try:
             if int(start) in choices and int(end) in choices:
                 if start < end:
-                    return list(range(int(start), int(end)))
+                    return list(range(int(start), int(end)+1))
                 elif start == end:
                     return [start]
             raise ValueError
