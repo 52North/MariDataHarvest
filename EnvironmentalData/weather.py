@@ -14,7 +14,7 @@ from siphon.catalog import TDSCatalog
 from xarray.backends import NetCDF4DataStore
 
 from utilities.check_connection import CheckConnection
-from config import config
+from EnvironmentalData import config
 
 from utilities import helper_functions
 from utilities.helper_functions import FileFailedException, Failed_Files, check_dir

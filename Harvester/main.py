@@ -10,7 +10,7 @@ import yaml
 from ais import download_year_AIS, subsample_year_AIS_to_CSV, download_file, get_files_list, subsample_file
 from utilities.check_connection import CheckConnection
 from utilities.helper_functions import Failed_Files, SaveToFailedList, init_Failed_list, FileFailedException, check_dir
-from EnvironmentalData.weather import append_environment_data_to_year, append_environment_data_to_file, append_to_csv
+from EnvironmentalData.weather import append_to_csv
 
 logging_config_file = '../logging.yaml'
 level = logging.DEBUG

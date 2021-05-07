@@ -58,7 +58,7 @@ def download():
                                                                                                                date_hi - date_lo).days))
     try:
         if len(wave) > 0:
-            dataset_wave = get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
+            dataset_wave = get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)[0]
             dataset_wave = dataset_wave.interp(
                 latitude=xr.DataArray(lat_interpolation, coords=[lat_interpolation], dims=["latitude"]),
                 longitude=xr.DataArray(lon_interpolation, coords=[lon_interpolation], dims=["longitude"]),
@@ -70,7 +70,7 @@ def download():
 
     try:
         if len(wind) > 0:
-            dataset_wind = get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
+            dataset_wind = get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)[0]
             dataset_wind = dataset_wind.rename({'lat': 'latitude', 'lon': 'longitude'})
             dataset_wind = dataset_wind.interp(
                 latitude=xr.DataArray(lat_interpolation, coords=[lat_interpolation], dims=["latitude"]),
@@ -84,7 +84,7 @@ def download():
 
     if len(phy) > 0:
         try:
-            dataset_phy = get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
+            dataset_phy = get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)[0]
             dataset_phy = dataset_phy.squeeze()
             dataset_phy = dataset_phy.interp(
                 latitude=xr.DataArray(lat_interpolation, coords=[lat_interpolation], dims=["latitude"]),
@@ -98,7 +98,7 @@ def download():
 
     if len(gfs) > 0:
         try:
-            dataset_gfs = get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
+            dataset_gfs = get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)[0]
             dataset_gfs = dataset_gfs.rename({'lat': 'latitude', 'lon': 'longitude'})
             dataset_gfs = dataset_gfs.interp(
                 latitude=xr.DataArray(lat_interpolation, coords=[lat_interpolation], dims=["latitude"]),
