@@ -1,17 +1,18 @@
 <!doctype html>
-<html style="margin: 0; padding: 0;">
+<html class="w-100 h-100">
 <head>
     {% block head %}
         <script src="/static/js/page.js"></script>
+        <link rel="stylesheet"  href="/static/css/styles.css">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
               integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
               crossorigin="anonymous">
         <title>Environmental Data API</title>
     {% endblock %}
 </head>
-<body class="m-0 p-0">
+<body class="w-100 h-100">
 
-<div class="container">
+<div class="pr-4 pl-4">
     {% block content %}{% endblock %}
 </div>
 

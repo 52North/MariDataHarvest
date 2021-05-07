@@ -12,7 +12,7 @@ from utilities.check_connection import CheckConnection
 from utilities.helper_functions import Failed_Files, SaveToFailedList, init_Failed_list, FileFailedException, check_dir
 from EnvironmentalData.weather import append_to_csv
 
-logging_config_file = '../logging.yaml'
+logging_config_file = './logging.yaml'
 level = logging.DEBUG
 
 if os.path.exists(logging_config_file):

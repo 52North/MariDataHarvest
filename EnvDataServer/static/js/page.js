@@ -27,15 +27,20 @@ window.onload = () => {
 
 function createList(ls, name) {
     checkbox_list = document.getElementById('checkbox_list');
-    let strong = document.createElement("label")
-    strong.textContent = name + (name === 'GFS' ? '**' : '*');
-    strong.className = "mb-2 float-left "
+    let div = document.createElement("div")
+    div.className = 'col w-75'
+    let label = document.createElement("label")
+    label.textContent = name + (name === 'GFS' ? '**' : '*');
+    label.className = "pr-2 pl-2 envLabel firstEnvLabel " + name
+
 
     let btn = document.createElement("input")
     btn.type = 'checkbox'
     btn.className = "mt-1 mr-1 float-left"
-    strong.appendChild(btn);
-    checkbox_list.appendChild(strong);
+    label.appendChild(btn);
+    div.appendChild(label);
+    div.appendChild(document.createElement("br"));
+
 
     checkbox_list.appendChild(document.createElement('br'));
 
@@ -47,15 +52,16 @@ function createList(ls, name) {
         checkbox.className = name + '_checkbox ' + "mr-2"
 
         let label = document.createElement('label')
-        label.className = "col-auto"
+        label.className = "col-auto envLabel " + name
         label.appendChild(checkbox);
         label.appendChild(document.createTextNode(variable));
 
-        checkbox_list.appendChild(label);
+        div.appendChild(label);
     });
     btn.onchange = (source) => {
         let checkboxes = document.getElementsByClassName(name + '_checkbox');
         [].forEach.call(checkboxes, cb => cb.checked = source.target.checked);
     }
+    checkbox_list.appendChild(div);
     checkbox_list.appendChild(document.createElement('hr'));
 }

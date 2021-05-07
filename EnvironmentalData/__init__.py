@@ -1,10 +1,10 @@
 import logging
 import os
 import sys
-
+from pathlib import Path
 from dotenv import dotenv_values
 
-secrets_file = '../.env.secret'
+secrets_file = Path(Path(__file__).parent, '.env.secret')
 
 logger = logging.getLogger(__name__)
 
