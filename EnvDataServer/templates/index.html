@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block head %}
+    {{ super() }} {% endblock %} {% block content %}
+    <div class="text-center"><h1>Environmental Data API</h1></div>
+
+    <div class="row">
+        <form method="get" enctype="multipart/form-data" action="/download/request_env_data">
+            <div class="form-inline">
+                <label class="col-3">Timestamp </label> <input class="form-control col-3" type="datetime-local"
+                                                               name="date_lo" value="2013-06-02T03:44"> -
+                <input class="form-control col-3" type="datetime-local" name="date_hi" value="2013-06-03T09:55">
+            </div>
+
+            <div class="form-inline">
+                <label class="col-3">latitude </label> <input class="form-control col-3" type="number" name="lat_lo"
+                                                              value="23.08"> -
+                <input class="form-control col-3" type="number" name="lat_hi" value="24.08">
+
+            </div>
+
+            <div class="form-inline">
+                <label class="col-3">longitude </label> <input class="form-control col-3" type="number" name="lon_lo"
+                                                               value="-51.75"> -
+                <input class="form-control col-3"
+                       type="number" name="lon_hi" value="-50.75">
+            </div>
+            <hr>
+            <div id="checkbox_list">
+            </div>
+            <div class="col-auto float-right" style="position: absolute; top: 20px; right: 20px">
+                <button type="submit" class="btn btn-primary" style="font-size: 28px">Submit</button>
+            </div>
+
+        </form>
+    </div> {% endblock %}
+{% block footer %}
+
+    <small><i> All data is interpolated to match the following: <br></i>
+        <small> Spatial Resolution 0.083° x 0.083° </small><br>
+
+        <small> Temporal Resolution 3-hours interval </small>
+        <div><a
+                href="https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit#gid=0">
+            Click for a detailed description of the original datasets
+        </a></div>
+        <br>
+
+    </small>
+    <div><i>Licences</i> <br></div>
+    <small>* E.U. Copernicus Marine Service Information</small><br>
+    <small>** NOAA Global Forecast System (GFS)</small><br>
+    <small>** National Centers for Environmental Prediction/National Weather Service/NOAA/U.S. Department of
+        Commerce. 2015, updated daily. NCEP GFS 0.25 Degree Global Forecast Auxiliary Grids Historical Archive.
+        Research Data Archive at the National Center for Atmospheric Research, Computational and Information
+        Systems Laboratory. https://doi.org/10.5065/D6W09402. <br>Accessed on <i id="date"></i>.</small>{% endblock %}

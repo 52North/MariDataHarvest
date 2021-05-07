@@ -4,7 +4,6 @@ import traceback
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import xarray as xr
 from glob import glob
@@ -14,11 +13,11 @@ from siphon import http_util
 from siphon.catalog import TDSCatalog
 from xarray.backends import NetCDF4DataStore
 
-from check_connection import CheckConnection
+from utilities.check_connection import CheckConnection
 from config import config
 
-import utils
-from utils import FileFailedException, Failed_Files, check_dir
+from utilities import helper_functions
+from utilities.helper_functions import FileFailedException, Failed_Files, check_dir
 
 logger = logging.getLogger(__name__)
 
@@ -107,9 +106,9 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
         url = base_url + '&service=' + service + '&product=' + product + '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&mode=console'.format(
             x_lo, x_hi, y_lo,
             y_hi,
-            utils.date_to_str(
+            helper_functions.date_to_str(
                 t_lo),
-            utils.date_to_str(
+            helper_functions.date_to_str(
                 t_hi))
 
         dataset = try_get_data(url)
@@ -188,9 +187,9 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
         url = base_url + '&service=' + service + '&product=' + product + '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&mode=console'.format(
             x_lo, x_hi, y_lo,
             y_hi,
-            utils.date_to_str(
+            helper_functions.date_to_str(
                 t_lo),
-            utils.date_to_str(
+            helper_functions.date_to_str(
                 t_hi))
         dataset = try_get_data(url)
     return dataset, 'wind'
@@ -366,10 +365,10 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
               '&x_lo={0}&x_hi={1}&y_lo={2}&y_hi={3}&t_lo={4}&t_hi={5}&z_lo={6}&z_hi={7}&mode=console'.format(x_lo, x_hi,
                                                                                                              y_lo,
                                                                                                              y_hi,
-                                                                                                             utils.date_to_str(
+                                                                                                             helper_functions.date_to_str(
                                                                                                                  t_lo)
                                                                                                              ,
-                                                                                                             utils.date_to_str(
+                                                                                                             helper_functions.date_to_str(
                                                                                                                  t_hi),
                                                                                                              z_lo, z_hi)
         dataset = try_get_data(url)
@@ -430,8 +429,8 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
 
     header = True
     try:
-        for df_chunk in pd.read_csv(in_path, parse_dates=['BaseDateTime'], date_parser=utils.str_to_date,
-                                    chunksize=utils.CHUNK_SIZE):
+        for df_chunk in pd.read_csv(in_path, parse_dates=['BaseDateTime'], date_parser=helper_functions.str_to_date,
+                                    chunksize=helper_functions.CHUNK_SIZE):
             if len(df_chunk) > 1:
                 # remove index column
                 df_chunk.drop(['Unnamed: 0'], axis=1, errors='ignore', inplace=True)
@@ -480,14 +479,3 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
         # discard the file in case of an error to resume later properly
         out_path.unlink(missing_ok=True)
         raise FileFailedException(out_path.name, e)
-
-
-def append_environment_data_to_year(filtered_dir: Path, merged_dir: Path) -> None:
-    csv_list = check_dir(filtered_dir)
-    for file in csv_list:
-        if Path(merged_dir, file).exists() or file in Failed_Files: continue
-        append_to_csv(Path(filtered_dir, file), Path(merged_dir, file))
-
-
-def append_environment_data_to_file(file_name, filtered_dir, merged_dir):
-    append_to_csv(Path(filtered_dir, file_name), Path(merged_dir, file_name))

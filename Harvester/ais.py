@@ -12,9 +12,8 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-from check_connection import CheckConnection
-from config import config
-from utils import FileFailedException, Failed_Files, check_dir, CHUNK_SIZE
+from utilities.check_connection import CheckConnection
+from utilities.helper_functions import FileFailedException, Failed_Files, check_dir, CHUNK_SIZE
 
 pd.options.mode.chained_assignment = None
 

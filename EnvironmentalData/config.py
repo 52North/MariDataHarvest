@@ -4,7 +4,7 @@ import sys
 
 from dotenv import dotenv_values
 
-secrets_file = '.env.secret'
+secrets_file = '../.env.secret'
 
 logger = logging.getLogger(__name__)
 

@@ -8,9 +8,11 @@ import pandas as pd
 # string dates converters
 str_to_date = lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
 date_to_str = lambda x: x.strftime('%Y-%m-%dT%H:%M:%SZ')
+str_to_date_min = lambda x: datetime.strptime(x, '%Y-%m-%dT%H:%M')
 
 # Chunk size to manage huge files
 CHUNK_SIZE = 10000
+
 
 # Custom exception to retrieve file names with exception handling
 class FileFailedException(Exception):

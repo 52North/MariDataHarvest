@@ -1,5 +1,4 @@
 import argparse
-import logging
 import logging.config
 import os
 import shutil
@@ -9,11 +8,11 @@ from pathlib import Path
 import yaml
 
 from ais import download_year_AIS, subsample_year_AIS_to_CSV, download_file, get_files_list, subsample_file
-from check_connection import CheckConnection
-from utils import Failed_Files, SaveToFailedList, init_Failed_list, FileFailedException, check_dir
-from weather import append_environment_data_to_year, append_environment_data_to_file
+from utilities.check_connection import CheckConnection
+from utilities.helper_functions import Failed_Files, SaveToFailedList, init_Failed_list, FileFailedException, check_dir
+from EnvironmentalData.weather import append_environment_data_to_year, append_environment_data_to_file, append_to_csv
 
-logging_config_file = 'logging.yaml'
+logging_config_file = '../logging.yaml'
 level = logging.DEBUG
 
 if os.path.exists(logging_config_file):
@@ -185,7 +184,7 @@ if __name__ == '__main__':
                     try:
                         if file_failed: break
                         logger.info('STEP 3/3 appending weather data: %s' % file_name)
-                        append_environment_data_to_file(file_name, filtered_dir, merged_dir)
+                        append_to_csv(Path(filtered_dir, file_name), Path(merged_dir, file_name))
                         break
                     except FileFailedException as e:
                         logger.error(traceback.format_exc())
@@ -254,7 +253,9 @@ if __name__ == '__main__':
                 while True:
                     try:
                         logger.info('STEP 3/3 appending weather data')
-                        append_environment_data_to_year(filtered_dir, merged_dir)
+                        for file in filtered_dir_list:
+                            if Path(merged_dir, file).exists() or file in Failed_Files: continue
+                            append_to_csv(Path(filtered_dir, file), Path(merged_dir, file))
                         break
                     except FileFailedException as e:
                         logger.error(traceback.format_exc())
