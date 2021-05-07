@@ -149,3 +149,4 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 /EnvironmentalData/.env.secret
+/EnvDataServer/download/*
