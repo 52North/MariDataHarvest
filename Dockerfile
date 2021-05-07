@@ -37,12 +37,12 @@ FROM python:3-slim-buster
 
 ENV YEAR=2019
 ENV MINUTES=30
-ENV DATA_DIR=/maridata/data
+ENV DATA_DIR=/mari-data/data
 ENV STEP=0
 ENV PYTHONUNBUFFERED=1
 ENV DEPTH_FIRST=--depth-first
 ENV CLEAR=--clear
-ARG USER=maridata
+ARG USER=mari-data
 ARG HOME=/${USER}
 ARG GROUP=${USER}
 ARG ID=52142

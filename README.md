@@ -109,10 +109,10 @@ You can use the [Dockerfile](./Dockerfile) to build a docker image and run the s
 
    ```sh
    docker volume create \
-      --label org.52north.contact=dev-opser+maridata_harvester@example.org \
+      --label org.52north.contact=dev-opser+mari-data_harvester@example.org \
       --label org.52north.context="MariData Project: Data Harvesting Script" \
       --label org.52north.end-of-life="2021-12-31T23:59:59Z" \
-      maridata-harvester_data
+      mari-data-harvester_data
    ```
 
 
@@ -120,11 +120,11 @@ You can use the [Dockerfile](./Dockerfile) to build a docker image and run the s
 
    ```sh
    docker run \
-      --label org.52north.contact=dev-opser+maridata_harvester@example.org \
+      --label org.52north.contact=dev-opser+mari-data_harvester@example.org \
       --label org.52north.context="MariData Project: Data Harvesting Script" \
       --label org.52north.end-of-life="2021-12-31T23:59:59Z" \
-      --volume maridata-harvester_data:/maridata/data \
-      --volume $(pwd)/.env.secret:/maridata/.env.secret:ro \
+      --volume mari-data-harvester_data:/mari-data/data \
+      --volume $(pwd)/.env.secret:/mari-data/.env.secret:ro \
       --name=mari-data_harvester \
       --env-file docker.env \
       --detach \
@@ -137,7 +137,7 @@ You can use the [Dockerfile](./Dockerfile) to build a docker image and run the s
    ```sh
    YEAR=2019
    MINUTES=30
-   DATA_DIR=/data
+   DATA_DIR=/mari-data/data
    STEP=0
    DEPTH_FIRST=--depth-first
    CLEAR=--clear
@@ -164,7 +164,7 @@ rsync --recursive --verbose --times --rsh ssh \
    --exclude='AIS-DATA' --exclude='*.tmp' \
    --exclude='*.swp' --exclude='.vscode' \
    --exclude='__pycache__' --delete . \
-   mari-data-harvester.example.org:/home/user/maridata-harvester
+   mari-data-harvester.example.org:/home/user/mari-data-harvester
 ```
 
 ### Web Access to the Data
