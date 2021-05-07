@@ -1,3 +1,5 @@
+import logging
+
 from flask import Flask, render_template, request, send_from_directory, Response
 from utilities.helper_functions import str_to_date_min
 from EnvironmentalData.weather import get_global_wave, get_global_wind, get_GFS, get_global_phy_daily
@@ -8,6 +10,8 @@ import uuid
 import numpy as np
 
 app = Flask(__name__, static_folder=os.path.abspath("static/"))
+
+logger = logging.getLogger(__name__)
 
 
 def parse_requested_var(args):
@@ -55,7 +59,7 @@ def download():
             'Error occurred: requested bbox ({0}° lat x {1}° lon x {2} days) is too large.'.format(int(lat_hi - lat_lo),
                                                                                                    int(lon_hi - lon_lo),
                                                                                                    (
-                                                                                                               date_hi - date_lo).days))
+                                                                                                           date_hi - date_lo).days))
     try:
         if len(wave) > 0:
             dataset_wave = get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)[0]

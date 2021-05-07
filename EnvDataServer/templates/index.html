@@ -4,7 +4,7 @@
     <div class="text-center"><h1>Environmental Data API</h1></div>
 
     <div class="row justify-content-center no-gutters">
-        <form method="get" enctype="multipart/form-data" action="/download/request_env_data">
+        <form method="get" enctype="multipart/form-data" action="/download/request_env_data"  id="submitForm">
             <div class="form-inline">
                 <label class="col-3">Timestamp </label> <input class="form-control col-2" type="datetime-local"
                                                                name="date_lo" value="2013-06-02T03:44"> -
@@ -28,7 +28,7 @@
             <div id="checkbox_list" class="row no-gutters">
             </div>
             <div class="col-auto float-right" style="position: absolute; top: 20px; right: 20px">
-                <button type="submit" class="btn btn-primary" style="font-size: 28px">Submit</button>
+                <button type="submit" class="btn btn-primary" id="submitBtn" style="font-size: 25px">Submit</button>
             </div>
 
         </form>

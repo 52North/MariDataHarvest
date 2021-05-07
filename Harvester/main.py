@@ -1,34 +1,14 @@
 import argparse
-import logging.config
+import logging
 import os
 import shutil
 import time
 import traceback
 from pathlib import Path
-import yaml
-
 from ais import download_year_AIS, subsample_year_AIS_to_CSV, download_file, get_files_list, subsample_file
 from utilities.check_connection import CheckConnection
 from utilities.helper_functions import Failed_Files, SaveToFailedList, init_Failed_list, FileFailedException, check_dir
 from EnvironmentalData.weather import append_to_csv
-
-logging_config_file = './logging.yaml'
-level = logging.DEBUG
-
-if os.path.exists(logging_config_file):
-    with open(logging_config_file, 'rt') as file:
-        try:
-            config = yaml.safe_load(file.read())
-            logging.config.dictConfig(config)
-        except Exception as e:
-            print(e)
-            print(
-                'Error while loading logging configuration from file "%s". Using defaults' % logging_config_file)
-            logging.basicConfig(level=level)
-else:
-    print('Logging file configuration does not exist: "%s". Using defaults.' %
-          logging_config_file)
-    logging.basicConfig(level=level)
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +22,7 @@ def years_arg_parser(input: str) -> list[int]:
         try:
             if int(start) in choices and int(end) in choices:
                 if start < end:
-                    return list(range(int(start), int(end)+1))
+                    return list(range(int(start), int(end) + 1))
                 elif start == end:
                     return [start]
             raise ValueError

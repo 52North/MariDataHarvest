@@ -23,6 +23,11 @@ window.onload = () => {
     document.getElementById("date").innerHTML = d.toLocaleDateString('en-GB', {
         day: 'numeric', month: 'short', year: 'numeric'
     });
+
+    document.getElementById('submitForm').onsubmit = ()=>{
+        document.getElementById('submitBtn').disabled = true
+    }
+
 }
 
 function createList(ls, name) {
@@ -40,9 +45,6 @@ function createList(ls, name) {
     label.appendChild(btn);
     div.appendChild(label);
     div.appendChild(document.createElement("br"));
-
-
-    checkbox_list.appendChild(document.createElement('br'));
 
     ls.forEach((variable) => {
         let checkbox = document.createElement("input");
@@ -63,5 +65,4 @@ function createList(ls, name) {
         [].forEach.call(checkboxes, cb => cb.checked = source.target.checked);
     }
     checkbox_list.appendChild(div);
-    checkbox_list.appendChild(document.createElement('hr'));
 }
