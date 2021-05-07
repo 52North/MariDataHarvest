@@ -16,8 +16,11 @@
     margin-right: 1px;
     word-break: break-all;
     user-select: none;
+    opacity: 0.9
 }
-
+.envLabel:hover{
+opacity: 1
+}
 
 .firstEnvLabel{
     border: 2px solid black

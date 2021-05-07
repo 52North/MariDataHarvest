@@ -67,6 +67,8 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
         product = 'global-reanalysis-wav-001-032'
         VM_FOLDER = '/eodata/CMEMS/REP/GLO/WAV/GLOBAL_REANALYSIS_WAV_001_032'
         offset = 0.2
+    else:
+        raise ValueError('Out of Range values')
     # time lower
     time_in_min = (date_lo.hour * 60) + date_lo.minute
     rest = time_in_min % dataset_temporal_resolution
@@ -148,7 +150,8 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
         service = 'WIND_GLO_WIND_L4_REP_OBSERVATIONS_012_006-TDS'
         product = 'CERSAT-GLO-BLENDED_WIND_L4_REP-V6-OBS_FULL_TIME_SERIE'
         VM_FOLDER = '/eodata/CMEMS/REP/GLO/WIN/WIND_GLO_WIND_L4_REP_OBSERVATIONS_012_006'
-
+    else:
+        raise ValueError('Out of Range values')
     # time range
     time_in_min = (date_lo.hour * 60) + date_lo.minute
     rest = time_in_min % dataset_temporal_resolution
@@ -202,9 +205,12 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     # offset according to the dataset resolution
     offset = 0.25
     # consider the supported time range
-    if start_date < datetime(2015, 1, 15):
+    if datetime(2004, 3, 1) < start_date < datetime(2015, 1, 15):
         logger.debug('GFS 0.25 DATASET is out of supported range')
         return get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
+    else:
+        raise ValueError('Out of Range values')
+
     x_arr_list = []
     base_url = 'https://rda.ucar.edu/thredds/catalog/files/g/ds084.1'
     CheckConnection.set_url('rda.ucar.edu')
@@ -322,7 +328,8 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
         product = 'global-reanalysis-phy-001-030-daily'
         VM_FOLDER = '/eodata/CMEMS/REP/GLO/PHY/GLOBAL_REANALYSIS_PHY_001_030'
         NRT_FLAG = False
-
+    else:
+        raise ValueError('Out of Range values')
     # time range
     t_lo = datetime(date_lo.year, date_lo.month, date_lo.day, 12) - timedelta(days=1)
     t_hi = datetime(date_hi.year, date_hi.month, date_hi.day, 12) + timedelta(days=1)

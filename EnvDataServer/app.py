@@ -1,6 +1,8 @@
 import logging
 
 from flask import Flask, render_template, request, send_from_directory, Response
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from utilities.helper_functions import str_to_date_min
 from EnvironmentalData.weather import get_global_wave, get_global_wind, get_GFS, get_global_phy_daily
 from datetime import timedelta
@@ -10,7 +12,11 @@ import uuid
 import numpy as np
 
 app = Flask(__name__, static_folder=os.path.abspath("static/"))
-
+limiter = Limiter(
+    app,
+    key_func=get_remote_address,
+    default_limits=["70 per hour"]
+)
 logger = logging.getLogger(__name__)
 
 
@@ -32,7 +38,9 @@ def parse_requested_var(args):
 
 
 @app.route('/download/request_env_data')
+@limiter.limit("1/30second")
 def download():
+    logger.info(request)
     dataset_list = []
     wave, wind, gfs, phy = parse_requested_var(request.args)
     date_lo = str_to_date_min(request.args.get('date_lo')) - timedelta(hours=1)
