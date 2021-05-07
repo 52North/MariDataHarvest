@@ -2,7 +2,7 @@
 # own ignores
 #
 # docker env files
-*.env
+*.env*
 #
 # vscode stuff
 #
