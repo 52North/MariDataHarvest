@@ -1,9 +1,24 @@
 # MariDataHarvest
 
+## TODOS - Repository-Reconstruction
+
+- [ ] `requirements.txt`: one for all or all one
+- [ ] `README.md`: one for all or all one
+- [ ] Add Package Overview to root `README.md`
+- [ ] Update dependency list generation step incl. one for all or all one
+- [ ] Update `docker-compose.yml` after repo restructuring
+- [ ] Rename repo to ???
+- [ ] `Dockerfile` of harvester:
+  - [ ] copy package and the dependency packages
+  - [ ] adjust `CMD` to match new python package structure
+- [ ] Add `Dockerfile` for EnvDataServer
+- [ ] Add venv instructions (?)
+
 <div style="float:right; border: 1px solid #cecece; padding: 5px;">
 <!-- TOC -->
 
 - [MariDataHarvest](#maridataharvest)
+    - [TODOS - Repository-Reconstruction](#todos---repository-reconstruction)
     - [Requirements](#requirements)
     - [Usage](#usage)
     - [Docker](#docker)
