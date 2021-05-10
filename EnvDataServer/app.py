@@ -86,7 +86,7 @@ def request_env_data():
             longitude=xr.DataArray(lon_interpolation, coords=[lon_interpolation], dims=["longitude"]),
             time=xr.DataArray(temporal_interpolation, coords=[temporal_interpolation], dims=["time"]))
 
-    if int(lat_hi - lat_lo) > 10 and int(lon_hi - lon_lo) > 10 and (date_hi - date_lo).days > 10:
+    if int(lat_hi - lat_lo) > 20 or int(lon_hi - lon_lo) > 20 or (date_hi - date_lo).days > 10:
         error = 'Error occurred: requested bbox ({0}° lat x {1}° lon x {2} days) is too large.'.format(
             int(lat_hi - lat_lo),
             int(lon_hi - lon_lo), (date_hi - date_lo).days)
