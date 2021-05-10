@@ -205,9 +205,15 @@ The data is available directly at the server root via https. All requests to htt
 
 | Name            | Version   | License                                             |
 |-----------------|-----------|-----------------------------------------------------|
-| Fiona           | 1.8.19    | BSD License                                         |
+| Fiona           | 1.8.18    | BSD License                                         |
+| Flask           | 1.1.2     | BSD License                                         |
+| Flask-Limiter   | 1.4       | MIT License                                         |
+| GDAL            | 3.2.2     | MIT                                                 |
+| Jinja2          | 2.11.3    | BSD License                                         |
+| MarkupSafe      | 1.1.1     | BSD License                                         |
 | PyYAML          | 5.4.1     | MIT License                                         |
 | Shapely         | 1.7.1     | BSD License                                         |
+| Werkzeug        | 1.0.1     | BSD License                                         |
 | attrs           | 20.3.0    | MIT License                                         |
 | beautifulsoup4  | 4.9.3     | MIT License                                         |
 | bs4             | 0.0.1     | MIT License                                         |
@@ -222,25 +228,32 @@ The data is available directly at the server root via https. All requests to htt
 | fsspec          | 0.9.0     | BSD License                                         |
 | geopandas       | 0.9.0     | BSD                                                 |
 | idna            | 2.10      | BSD License                                         |
+| itsdangerous    | 1.1.0     | BSD License                                         |
+| joblib          | 1.0.1     | BSD License                                         |
+| limits          | 1.5.1     | MIT License                                         |
 | locket          | 0.2.1     | BSD License                                         |
 | motuclient      | 1.8.8     | GNU Lesser General Public License v3 (LGPLv3)       |
 | munch           | 2.5.0     | MIT License                                         |
 | netCDF4         | 1.5.6     | MIT License                                         |
 | numpy           | 1.20.1    | BSD License                                         |
-| pandas          | 1.2.4     | BSD                                                 |
+| pandas          | 1.2.3     | BSD                                                 |
 | partd           | 1.2.0     | BSD                                                 |
-| protobuf        | 3.16.0rc1 | 3-Clause BSD License                                |
+| protobuf        | 3.15.6    | 3-Clause BSD License                                |
 | pyproj          | 3.0.1     | MIT License                                         |
 | python-dateutil | 2.8.1     | BSD License, Apache Software License                |
-| python-dotenv   | 0.17.0    | BSD License                                         |
+| python-dotenv   | 0.15.0    | BSD License                                         |
 | pytz            | 2021.1    | MIT License                                         |
 | requests        | 2.25.1    | Apache Software License                             |
-| scipy           | 1.6.2     | BSD License                                         |
+| scikit-learn    | 0.24.2    | new BSD                                             |
+| scipy           | 1.6.1     | BSD License                                         |
 | siphon          | 0.9       | BSD License                                         |
 | six             | 1.15.0    | MIT License                                         |
 | soupsieve       | 2.2.1     | MIT License                                         |
+| threadpoolctl   | 2.1.0     | BSD License                                         |
 | toolz           | 0.11.1    | BSD License                                         |
 | urllib3         | 1.26.4    | MIT License                                         |
+| waitress        | 2.0.0     | Zope Public License                                 |
+| wget            | 3.2       | Public Domain                                       |
 | xarray          | 0.17.0    | Apache Software License                             |
 
 <details>
