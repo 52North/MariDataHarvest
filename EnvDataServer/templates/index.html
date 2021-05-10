@@ -2,12 +2,18 @@
 {% block head %}
 {{ super() }} {% endblock %}
 {% block header %}
-<div class="row justify-content-between no-gutters">
-    <div class="p-2">
-        <a href="https://52north.org/"><img src="/static/img/logo.gif" href alt="52° North"></a>
+<div class="row no-gutters">
+
+    <div class="col-2">
+        <div class="float-left p-2">
+            <a href="https://52north.org/"><img height="40" src="/static/img/logo.gif" href alt="52° North"></a>
+        </div>
     </div>
+
     <div class="col text-center">
         <h2>Environmental Data API</h2>
+    </div>
+    <div class="col-2 ">
     </div>
 </div>
 {% endblock %}
