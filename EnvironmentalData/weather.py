@@ -134,9 +134,11 @@ def try_get_data(url):
 def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     logger.debug('obtaining WIND_GLO_WIND_L4_NRT_OBSERVATIONS dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
+
     # offset according to the dataset resolution
     offset = 0.25
     dataset_temporal_resolution = 360
+    # TODO Split request if date_lo and date_hi intersect with dataset's time boundaries
     if date_lo >= datetime(2018, 1, 1, 6):
         CheckConnection.set_url('nrt.cmems-du.eu')
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
@@ -202,15 +204,15 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     logger.debug('obtaining GFS 0.25 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     start_date = datetime(date_lo.year, date_lo.month, date_lo.day) - timedelta(days=1)
-    # offset according to the dataset resolution
-    offset = 0.25
+
     # consider the supported time range
     if datetime(2004, 3, 1) < start_date < datetime(2015, 1, 15):
         logger.debug('GFS 0.25 DATASET is out of supported range')
         return get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
-    else:
+    elif datetime(2004, 3, 1) > start_date:
         raise ValueError('Out of Range values')
-
+    # offset according to the dataset resolution
+    offset = 0.25
     x_arr_list = []
     base_url = 'https://rda.ucar.edu/thredds/catalog/files/g/ds084.1'
     CheckConnection.set_url('rda.ucar.edu')
@@ -459,9 +461,9 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
 
                 df_chunk.reset_index(drop=True, inplace=True)
 
-                # df_chunk = pd.concat(
-                #     [df_chunk, interpolate(*get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi), time_points,
-                #                            lat_points, lon_points)], axis=1)
+                df_chunk = pd.concat(
+                    [df_chunk, interpolate(*get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi), time_points,
+                                           lat_points, lon_points)], axis=1)
 
                 df_chunk = pd.concat(
                     [df_chunk,

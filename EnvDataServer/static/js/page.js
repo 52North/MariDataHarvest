@@ -19,6 +19,7 @@ window.onload = () => {
     createList(WIND_VAR_LIST, 'Wind')
     createList(DAILY_PHY_VAR_LIST, 'Physical')
     createList(GFS_25_VAR_LIST, 'GFS')
+
     let d = new Date();
     document.getElementById("date").innerHTML = d.toLocaleDateString('en-GB', {
         day: 'numeric', month: 'short', year: 'numeric'
@@ -31,13 +32,12 @@ window.onload = () => {
 }
 
 function createList(ls, name) {
-    checkbox_list = document.getElementById('checkbox_list');
+    let checkbox_list = document.getElementById('checkbox_list');
     let div = document.createElement("div")
     div.className = 'col w-75'
     let label = document.createElement("label")
     label.textContent = name + (name === 'GFS' ? '**' : '*');
     label.className = "pr-2 pl-2 envLabel firstEnvLabel " + name
-
 
     let btn = document.createElement("input")
     btn.type = 'checkbox'
