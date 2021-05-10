@@ -1,7 +1,7 @@
 import logging
 import time
 import traceback
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from pathlib import Path
 
 import pandas as pd
@@ -140,6 +140,8 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     dataset_temporal_resolution = 360
     # TODO Split request if date_lo and date_hi intersect with dataset's time boundaries
     if date_lo >= datetime(2018, 1, 1, 6):
+        if (date_lo + timedelta(days=2)).date() > date.today() or (date_hi + timedelta(days=2)).date() > date.today():
+            raise ValueError('Out of Range values')
         CheckConnection.set_url('nrt.cmems-du.eu')
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'WIND_GLO_WIND_L4_NRT_OBSERVATIONS_012_004-TDS'

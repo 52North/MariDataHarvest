@@ -154,7 +154,7 @@ def request_env_data():
     csv_str = timeRange + lon + lat + spatial_res + temporal_res + credit_CMEMS + credit_GFS + created + err + csv_str
     with open(file_path, 'w', newline='', encoding='utf-8') as f:
         f.write(csv_str)
-    resp = errorString + 'Download requested CSV file: <a href="/download/' + str(
+    resp = errorString + 'Download requested CSV file: <a href="/EnvDataAPI/' + str(
         file_path.name) + '"> /EnvDataAPI/' + str(
         file_path.name) + '</a>'
     logger.debug(resp)
