@@ -44,7 +44,7 @@ def parse_requested_var(args):
 @app.route('/download/request_env_data')
 @limiter.limit("1/10second")
 def download():
-    logger.info(request)
+    logger.debug(request)
     dataset_list = []
     wave, wind, gfs, phy = parse_requested_var(request.args)
     date_lo = str_to_date_min(request.args.get('date_lo')) - timedelta(hours=1)
@@ -54,12 +54,16 @@ def download():
     lon_lo = float(request.args.get('lon_lo')) - 0.0833
     lon_hi = float(request.args.get('lon_hi')) + 0.0833
     if lat_lo > lat_hi:
+        logger.debug('Error: lat_lo > lat_hi')
         return Response('Error: lat_lo > lat_hi')
     if lon_lo > lon_hi:
-        return Response('Error: lon_lo > lon_hi ')
+        logger.debug('Error: lon_lo > lon_hi ')
+        return Response('Error: lon_lo > lon_hi')
     if date_lo > date_hi:
+        logger.debug('Error: date_lo > date_hi')
         return Response('Error: date_lo > date_hi')
     if len(wave + wind + gfs + phy) == 0:
+        logger.debug('Error: No variables are selected')
         return Response('Error: No variables are selected')
     errorString = ''
 
@@ -81,11 +85,12 @@ def download():
             time=xr.DataArray(temporal_interpolation, coords=[temporal_interpolation], dims=["time"]))
 
     if int(lat_hi - lat_lo) > 40 and int(lon_hi - lon_lo) > 40 and (date_hi - date_lo).days > 30:
-        return Response(
-            'Error occurred: requested bbox ({0}° lat x {1}° lon x {2} days) is too large.'.format(int(lat_hi - lat_lo),
-                                                                                                   int(lon_hi - lon_lo),
-                                                                                                   (
-                                                                                                           date_hi - date_lo).days))
+        error = 'Error occurred: requested bbox ({0}° lat x {1}° lon x {2} days) is too large.'.format(
+            int(lat_hi - lat_lo),
+            int(lon_hi - lon_lo), (date_hi - date_lo).days)
+        logger.debug(error)
+        return Response(error)
+
     try:
         if len(wave) > 0:
             with get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)[0] as wave_ds:
@@ -126,6 +131,7 @@ def download():
 
     combined = xr.combine_by_coords(dataset_list, combine_attrs='override', compat='override')
     if len(combined) == 0:
+        logger.debug(errorString + 'Error occurred: Empty dataset')
         return Response(errorString + 'Error occurred: Empty dataset')
     dir_path = Path(Path(__file__).parent, 'download')
     dir_path.mkdir(exist_ok=True)
@@ -137,15 +143,17 @@ def download():
     lat = 'Latitude extent: %.2f to %.2f' % (lat_lo, lat_hi) + header
     spatial_res = 'Spatial Resolution 0.083deg x 0.083deg' + header
     temporal_res = 'Temporal Resolution 3-hours interval' + header
-    credit_cmems = 'Credit (Wave, Wind and Physical): E.U. Copernicus Marine Service Information (CMEMS)' + header
+    credit_CMEMS = 'Credit (Wave, Wind and Physical): E.U. Copernicus Marine Service Information (CMEMS)' + header
     credit_GFS = 'Credit (GFS): National Centers for Environmental Prediction/National Weather Service/NOAA' + header
     created = 'Accessed on %s' % time.strftime('%Y-%m-%d %H:%M:%S') + header
-    csv_str = timeRange + lon + lat + spatial_res + temporal_res + credit_cmems + credit_GFS + created + csv_str
+    csv_str = timeRange + lon + lat + spatial_res + temporal_res + credit_CMEMS + credit_GFS + created + csv_str
     with open(file_path, 'w', newline='', encoding='utf-8') as f:
         f.write(csv_str)
-    return errorString + 'Download requested CSV file: <a href="/download/' + str(
+    resp = errorString + 'Download requested CSV file: <a href="/download/' + str(
         file_path.name) + '"> /download/' + str(
         file_path.name) + '</a>'
+    logger.debug(resp)
+    return resp
 
 
 @app.route('/download/<path:filename>')

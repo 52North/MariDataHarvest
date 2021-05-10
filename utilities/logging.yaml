@@ -26,27 +26,31 @@ root:
   propagate: true
 
 loggers:
-  main:
+  Harvester.main:
     level: DEBUG
     handlers: [console]
     propagate: false
-  env_data_validator:
+  EnvironmentalData.env_data_validator:
     level: DEBUG
     handlers: [console]
     propagate: false
-  app:
+  EnvDataServer.app:
     level: DEBUG
     handlers: [console]
     propagate: false
-  ais:
+  Harvester.ais:
     level: DEBUG
     handlers: [console]
     propagate: false
-  config:
+  EnvironmentalData.__init__:
     level: DEBUG
     handlers: [console]
     propagate: false
-  weather:
+  EnvironmentalData.weather:
+    level: DEBUG
+    handlers: [console]
+    propagate: false
+  utilities.check_connection:
     level: DEBUG
     handlers: [console]
     propagate: false

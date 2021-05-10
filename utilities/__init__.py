@@ -18,4 +18,3 @@ else:
     print('Logging file configuration does not exist: "%s". Using defaults.' %
           logging_config_file)
     logging.basicConfig(level=level)
-logger = logging.getLogger(__name__)
