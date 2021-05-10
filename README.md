@@ -2,7 +2,7 @@
 
 ## TODOS - Repository-Reconstruction
 
-- [ ] `requirements.txt`: one for all or all one
+- [x] `requirements.txt`: one for all or all one
 - [ ] `README.md`: one for all or all one
 - [ ] Add Package Overview to root `README.md`
 - [ ] Update dependency list generation step incl. one for all or all one

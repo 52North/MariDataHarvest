@@ -14,6 +14,9 @@ import xarray as xr
 import uuid
 import numpy as np
 import time
+from waitress import serve
+
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__, static_folder=os.path.abspath("static/"))
 limiter = Limiter(
@@ -21,7 +24,6 @@ limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["70 per hour"]
 )
-logger = logging.getLogger(__name__)
 
 
 def parse_requested_var(args):
@@ -41,9 +43,9 @@ def parse_requested_var(args):
     return wave, wind, gfs, phy
 
 
-@app.route('/download/request_env_data')
+@app.route('/EnvDataAPI/request_env_data')
 @limiter.limit("1/10second")
-def download():
+def request_env_data():
     logger.debug(request)
     dataset_list = []
     wave, wind, gfs, phy = parse_requested_var(request.args)
@@ -84,7 +86,7 @@ def download():
             longitude=xr.DataArray(lon_interpolation, coords=[lon_interpolation], dims=["longitude"]),
             time=xr.DataArray(temporal_interpolation, coords=[temporal_interpolation], dims=["time"]))
 
-    if int(lat_hi - lat_lo) > 40 and int(lon_hi - lon_lo) > 40 and (date_hi - date_lo).days > 30:
+    if int(lat_hi - lat_lo) > 10 and int(lon_hi - lon_lo) > 10 and (date_hi - date_lo).days > 10:
         error = 'Error occurred: requested bbox ({0}° lat x {1}° lon x {2} days) is too large.'.format(
             int(lat_hi - lat_lo),
             int(lon_hi - lon_lo), (date_hi - date_lo).days)
@@ -153,22 +155,21 @@ def download():
     with open(file_path, 'w', newline='', encoding='utf-8') as f:
         f.write(csv_str)
     resp = errorString + 'Download requested CSV file: <a href="/download/' + str(
-        file_path.name) + '"> /download/' + str(
+        file_path.name) + '"> /EnvDataAPI/' + str(
         file_path.name) + '</a>'
     logger.debug(resp)
     return resp
 
 
-@app.route('/download/<path:filename>')
+@app.route('/EnvDataAPI/<path:filename>')
 def send_file(filename):
     return send_from_directory(directory='download', filename=filename)
 
 
-@app.route('/download/', methods=['GET'])
+@app.route('/EnvDataAPI/', methods=['GET'])
 def index():
     return render_template('index.html')
 
 
 if __name__ == '__main__':
-    from waitress import serve
-    serve(app, host="0.0.0.0", port=8080)
+    serve(app, host="localhost", port=80)

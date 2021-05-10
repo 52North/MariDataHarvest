@@ -10,18 +10,20 @@
         <title>Environmental Data API</title>
     {% endblock %}
 </head>
-<body class="w-100 h-100">
+<body class="w-100 h-100"  style="background: #dadada;">
 
-<div class="pr-4 pl-4">
+<div class="text-center" style="background: #ffffff;">
+    {% block header %}
+    {% endblock %}
+</div>
+<div class="pr-4 pl-4" style="background: #e5e8ea;">
     {% block content %}{% endblock %}
 </div>
 
-<hr>
-<div class="text-center">
+
+<div class="text-center" style="background: #dadada;">
     {% block footer %}
     {% endblock %}
 </div>
-
-
 </body>
 </html>
