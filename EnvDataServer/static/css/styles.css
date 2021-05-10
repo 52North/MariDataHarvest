@@ -13,10 +13,12 @@
 
 .envLabel{
     border-radius: 9px;
-    margin-right: 1px;
+    margin-right: 5px;
     word-break: break-all;
     user-select: none;
-    opacity: 0.9
+    box-shadow: 2px 1px 2px 0px #7a7d7a;
+    opacity: 0.9;
+    cursor: pointer;
 }
 .envLabel:hover{
 opacity: 1
