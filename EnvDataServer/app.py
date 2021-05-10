@@ -146,7 +146,10 @@ def download():
     credit_CMEMS = 'Credit (Wave, Wind and Physical): E.U. Copernicus Marine Service Information (CMEMS)' + header
     credit_GFS = 'Credit (GFS): National Centers for Environmental Prediction/National Weather Service/NOAA' + header
     created = 'Accessed on %s' % time.strftime('%Y-%m-%d %H:%M:%S') + header
-    csv_str = timeRange + lon + lat + spatial_res + temporal_res + credit_CMEMS + credit_GFS + created + csv_str
+    err = ''
+    if len(errorString) > 0:
+        err = 'Error: ' + errorString + header
+    csv_str = timeRange + lon + lat + spatial_res + temporal_res + credit_CMEMS + credit_GFS + created + err + csv_str
     with open(file_path, 'w', newline='', encoding='utf-8') as f:
         f.write(csv_str)
     resp = errorString + 'Download requested CSV file: <a href="/download/' + str(
@@ -167,4 +170,5 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run()
+    from waitress import serve
+    serve(app, host="0.0.0.0", port=8080)
