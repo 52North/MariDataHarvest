@@ -4,6 +4,7 @@
 
 - [x] `requirements.txt`: one for all or all one
 - [ ] `README.md`: one for all or all one
+- [ ] one convention for package names: currently: UpperCamelCase (e.g. `EnvDataServer`) and lower case (e.g. `utilities`)
 - [ ] Add Package Overview to root `README.md`
 - [ ] Update dependency list generation step incl. one for all or all one
 - [ ] Update `docker-compose.yml` after repo restructuring
