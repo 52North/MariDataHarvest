@@ -17,9 +17,19 @@ import numpy as np
 import time
 from waitress import serve
 
-logger = logging.getLogger('EnvDataServer.app')
+logger = logging.getLogger('waitress')
+logger.setLevel(logging.DEBUG)
+static_folder = os.getenv("STATIC_PATH") if "STATIC_PATH" in os.environ else os.path.abspath("EnvDataServer/static/")
+static_url_path = '/EnvDataServer/static'
+logger.debug("Static folder is: '{}'".format(static_folder))
+logger.debug("Does static folder exist? '{}'".format(os.access(static_folder, os.F_OK)))
+logger.debug("Is static folder directory? '{}'".format(os.path.isdir(static_folder)))
+logger.debug("Can I read static folder? '{}'".format(os.access(static_folder, os.R_OK)))
+logger.debug("Static url path is: '{}'".format(static_url_path))
 
-app = Flask(__name__, static_folder=os.path.abspath("static/"))
+app = Flask(__name__,
+            static_folder=static_folder,
+            static_url_path=static_url_path)
 limiter = Limiter(
     app,
     key_func=get_remote_address,
