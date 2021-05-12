@@ -74,10 +74,10 @@ USER ${USER}
 CMD python ./main.py --year="$YEAR" --minutes="$MINUTES" --dir="$DATA_DIR" --step="$STEP" "$CLEAR" "$DEPTH_FIRST"
 
 ARG GIT_COMMIT
-LABEL org.opencontainers.image.revision "${GIT_COMMIT}"
+LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
 
 ARG BUILD_DATE
-LABEL org.opencontainers.image.created "${BUILD_DATE}"
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
 
 ARG VERSION=1.0.0
 LABEL org.opencontainers.image.version="${VERSION}" \
