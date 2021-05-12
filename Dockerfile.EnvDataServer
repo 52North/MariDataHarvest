@@ -79,7 +79,7 @@ RUN addgroup --system --gid ${ID} ${GROUP} && \
 
 USER ${USER}
 
-CMD python ./app.py
+CMD ["python", "./app.py"]
 
 ARG GIT_COMMIT
 LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
