@@ -11,6 +11,7 @@ services:
             interval: 10s
             timeout: 10s
             retries: 3
+        restart: unless-stopped
         volumes:
             - "/etc/ssl/certs/dhparam.pem:/etc/ssl/certs/dhparam.pem:ro"
             - "/etc/letsencrypt/live/harvester.maridata.dev.52north.org/fullchain.pem:/etc/letsencrypt/live/harvester.maridata.dev.52north.org/fullchain.pem:ro"
