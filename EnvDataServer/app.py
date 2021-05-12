@@ -26,11 +26,14 @@ limiter = Limiter(
     default_limits=["70 per hour"]
 )
 
-# global variables TODO move to a config file
+# global variables
+# TODO move to a config file
 delete_file_queue = dict()
-FILE_LIFE_SPAN = 20 * 60  # seconds
+# in seconds => 20 Minutes
+FILE_LIFE_SPAN = 20 * 60
 spatial_interpolation_rate = 0.083
-temporal_interpolation_rate = 3  # hours
+# in hours
+temporal_interpolation_rate = 3
 
 
 def remove_files():
