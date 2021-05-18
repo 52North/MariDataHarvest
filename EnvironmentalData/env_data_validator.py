@@ -20,8 +20,8 @@ def validate_random_rows(df: pd.DataFrame, num_of_rows=10):
             date = pd.to_datetime(str(rand_row.BaseDateTime.values[0])).replace(tzinfo=None)
             logger.debug('Validating the interpolation of AIS point with LAT = %s, LON = %s, Timestamp = %s' % (
                 str(lat), str(lon), str(date)))
-            # gfs_data = select_grid_point(*get_GFS(date, date, lat, lat, lon, lon), date, lat, lon)
-            # gfs.append(sum(cosine_similarity(rand_row[gfs_data.columns].values, gfs_data.values))[0])
+            gfs_data = select_grid_point(*get_GFS(date, date, lat, lat, lon, lon), date, lat, lon)
+            gfs.append(sum(cosine_similarity(rand_row[gfs_data.columns].values, gfs_data.values))[0])
             wave_data = select_grid_point(*get_global_wave(date, date, lat, lat, lon, lon), date, lat, lon)
             wave.append(sum(cosine_similarity(rand_row[wave_data.columns].values, wave_data.values))[0])
 

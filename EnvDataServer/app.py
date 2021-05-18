@@ -1,9 +1,6 @@
 import os
-import sys
 import threading
 from pathlib import Path
-
-sys.path.append(os.getcwd())
 import logging
 from flask import Flask, render_template, request, send_from_directory, Response
 from flask_limiter import Limiter
@@ -41,9 +38,12 @@ limiter = Limiter(
 delete_file_queue = dict()
 # in seconds => 20 Minutes
 FILE_LIFE_SPAN = 20 * 60
+# in degrees
 spatial_interpolation_rate = 0.083
 # in hours
 temporal_interpolation_rate = 3
+# max bounding box
+max_lat, max_lon, max_days = 20, 20, 10
 
 
 def remove_files():
@@ -66,7 +66,7 @@ def parse_requested_var(args):
     wave, wind, gfs, phy = [], [], [], []
     for var in args:
         var = str(var)
-        if str(var).startswith('var'):
+        if var.startswith('var'):
             _, name, varName = var.split('-$$-')
             if name == 'Wave':
                 wave.append(varName)
@@ -85,8 +85,8 @@ def request_env_data():
     logger.debug(request)
     dataset_list = []
     wave, wind, gfs, phy = parse_requested_var(request.args)
-    date_lo = str_to_date_min(request.args.get('date_lo')) - timedelta(hours=1)
-    date_hi = str_to_date_min(request.args.get('date_hi')) + timedelta(hours=1)
+    date_lo = str_to_date_min(request.args.get('date_lo')) - timedelta(hours=temporal_interpolation_rate)
+    date_hi = str_to_date_min(request.args.get('date_hi')) + timedelta(hours=temporal_interpolation_rate)
     lat_lo = float(request.args.get('lat_lo')) - spatial_interpolation_rate
     lat_hi = float(request.args.get('lat_hi')) + spatial_interpolation_rate
     lon_lo = float(request.args.get('lon_lo')) - spatial_interpolation_rate
@@ -123,31 +123,31 @@ def request_env_data():
             longitude=xr.DataArray(lon_interpolation, coords=[lon_interpolation], dims=["longitude"]),
             time=xr.DataArray(temporal_interpolation, coords=[temporal_interpolation], dims=["time"]))
 
-    if int(lat_hi - lat_lo) > 20 or int(lon_hi - lon_lo) > 20 or (date_hi - date_lo).days > 10:
+    if int(lat_hi - lat_lo) > max_lat or int(lon_hi - lon_lo) > max_lon or (date_hi - date_lo).days > max_days:
         error = 'Error occurred: requested bbox ({0}° lat x {1}° lon x {2} days) is too large. Maximal bbox dimension ({3}° lat x {4}° lon x {5} days).'.format(
             int(lat_hi - lat_lo),
-            int(lon_hi - lon_lo), (date_hi - date_lo).days, 20, 20, 10)
+            int(lon_hi - lon_lo), (date_hi - date_lo).days, max_lat, max_lon, max_days)
         logger.debug(error)
         return Response(error)
 
-    try:
-        if len(wave) > 0:
+    if len(wave) > 0:
+        try:
             with get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)[0] as wave_ds:
                 dataset_list.append(rescale_dataset(wave_ds))
                 wave = [var for var in wave if var in list(wave_ds.keys())]
-    except Exception as e:
-        wave = []
-        errorString += 'Error occurred while retrieving Wave data:  ' + str(e) + '<br>'
+        except Exception as e:
+            wave = []
+            errorString += 'Error occurred while retrieving Wave data:  ' + str(e) + '<br>'
 
-    try:
-        if len(wind) > 0:
+    if len(wind) > 0:
+        try:
             with get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)[0].rename(
                     {'lat': 'latitude', 'lon': 'longitude'}) as dataset_wind:
                 dataset_list.append(rescale_dataset(dataset_wind))
                 wind = [var for var in wind if var in list(dataset_wind.keys())]
-    except Exception as e:
-        wind = []
-        errorString += 'Error occurred while retrieving Wind data:  ' + str(e) + '<br>'
+        except Exception as e:
+            wind = []
+            errorString += 'Error occurred while retrieving Wind data:  ' + str(e) + '<br>'
 
     if len(phy) > 0:
         try:
@@ -176,18 +176,16 @@ def request_env_data():
     dir_path.mkdir(exist_ok=True)
     file_path = Path(dir_path, str(uuid.uuid1()) + '.csv')
     csv_str = combined.to_dataframe()[wave + wind + phy + gfs].to_csv()
-    header = csv_str[:csv_str.find('\n')].count(',') * ',' + '\n'
-    timeRange = 'Time range: %s to %s' % (str(date_lo), str(date_hi)) + header
-    lon = 'Longitude extent: %.2f to %.2f' % (lon_lo, lon_hi) + header
-    lat = 'Latitude extent: %.2f to %.2f' % (lat_lo, lat_hi) + header
-    spatial_res = 'Spatial Resolution 0.083deg x 0.083deg' + header
-    temporal_res = 'Temporal Resolution 3-hours interval' + header
-    credit_CMEMS = 'Credit (Wave-Wind-Physical): E.U. Copernicus Marine Service Information (CMEMS)' + header
-    credit_GFS = 'Credit (GFS): National Centers for Environmental Prediction/National Weather Service/NOAA' + header
-    created = 'Accessed on %s' % datetime.now().strftime('%Y-%m-%d %H:%M:%S') + header
-    err = ''
-    if len(errorString) > 0:
-        err = 'Error: ' + errorString + header
+    csv_coma_line = csv_str[:csv_str.find('\n')].count(',') * ',' + '\n'
+    timeRange = 'Time range: %s to %s' % (str(date_lo), str(date_hi)) + csv_coma_line
+    lon = 'Longitude extent: %.2f to %.2f' % (lon_lo, lon_hi) + csv_coma_line
+    lat = 'Latitude extent: %.2f to %.2f' % (lat_lo, lat_hi) + csv_coma_line
+    spatial_res = 'Spatial Resolution 0.083deg x 0.083deg' + csv_coma_line
+    temporal_res = 'Temporal Resolution 3-hours interval' + csv_coma_line
+    credit_CMEMS = 'Credit (Wave-Wind-Physical): E.U. Copernicus Marine Service Information (CMEMS)' + csv_coma_line
+    credit_GFS = 'Credit (GFS): National Centers for Environmental Prediction/National Weather Service/NOAA' + csv_coma_line
+    created = 'Accessed on %s' % datetime.now().strftime('%Y-%m-%d %H:%M:%S') + csv_coma_line
+    err = 'Error(s): ' + errorString.replace(',', ' ') + csv_coma_line
     csv_str = timeRange + lon + lat + spatial_res + temporal_res + credit_CMEMS + credit_GFS + created + err + csv_str
     with open(file_path, 'w', newline='', encoding='utf-8') as f:
         f.write(csv_str)
