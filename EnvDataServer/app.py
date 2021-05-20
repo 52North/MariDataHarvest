@@ -73,10 +73,9 @@ def parse_requested_var(args):
 def create_csv(df, metadata_dict, file_path):
     csv_str = df.to_csv()
     csv_coma_line = csv_str[:csv_str.find('\n')].count(',') * ',' + '\n'
-    csv_str = csv_coma_line.join(metadata_dict.values()) + csv_str
+    csv_str = csv_coma_line.join(metadata_dict.values()) + csv_coma_line + csv_str
     with open(file_path, 'w', newline='', encoding='utf-8') as f:
         f.write(csv_str)
-    delete_file_queue[file_path] = datetime.now()
 
 
 @app.route('/EnvDataAPI/request_env_data')
@@ -184,7 +183,7 @@ def request_env_data():
         credit_CMEMS='Credit (Wave-Wind-Physical): E.U. Copernicus Marine Service Information (CMEMS)',
         credit_GFS='Credit (GFS): National Centers for Environmental Prediction/National Weather Service/NOAA',
         created='Accessed on %s' % datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        errors='Error(s): ' + errorString.replace(',', ' ')
+        errors='Error(s): ' + errorString.replace(',', ' ').replace('\n', ' ')
     )
     if data_format == 'csv':
         file_path = Path(dir_path, str(uuid.uuid1()) + '.csv')
@@ -193,11 +192,11 @@ def request_env_data():
         file_path = Path(dir_path, str(uuid.uuid1()) + '.nc')
         combined.attrs = metadata_dict
         combined.to_netcdf(file_path)
-
     resp = errorString + '<a href="/EnvDataAPI/' + str(
         file_path.name) + '"> Download requested {0} file</a> <strong> The file will be deleted after {1} Minutes automatically.</strong>'.format(
         data_format,
         FILE_LIFE_SPAN)
+    delete_file_queue[file_path] = datetime.now()
     logger.debug(resp)
     return resp
 
