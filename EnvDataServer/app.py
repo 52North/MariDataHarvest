@@ -27,8 +27,8 @@ limiter = Limiter(
 # global variables
 # TODO move to a config file
 delete_file_queue = dict()
-# in seconds => 20 Minutes
-FILE_LIFE_SPAN = 20 * 60
+# in Minutes
+FILE_LIFE_SPAN = 20
 # in degrees
 spatial_interpolation_rate = 0.083
 # in hours
@@ -41,7 +41,7 @@ def remove_files():
     while True:
         _deep_copy = delete_file_queue.copy()
         for f_path, created_time in _deep_copy.items():
-            if (datetime.now() - created_time).seconds > FILE_LIFE_SPAN:
+            if (datetime.now() - created_time).seconds > FILE_LIFE_SPAN * 60:
                 Path(f_path).unlink(missing_ok=True)
                 del delete_file_queue[f_path]
                 logger.debug('Deleting expired file %s ' % f_path)
@@ -70,6 +70,15 @@ def parse_requested_var(args):
     return wave, wind, gfs, phy
 
 
+def create_csv(df, metadata_dict, file_path):
+    csv_str = df.to_csv()
+    csv_coma_line = csv_str[:csv_str.find('\n')].count(',') * ',' + '\n'
+    csv_str = csv_coma_line.join(metadata_dict.values()) + csv_str
+    with open(file_path, 'w', newline='', encoding='utf-8') as f:
+        f.write(csv_str)
+    delete_file_queue[file_path] = datetime.now()
+
+
 @app.route('/EnvDataAPI/request_env_data')
 @limiter.limit("1/10second")
 def request_env_data():
@@ -82,6 +91,7 @@ def request_env_data():
     lat_hi = float(request.args.get('lat_hi')) + spatial_interpolation_rate
     lon_lo = float(request.args.get('lon_lo')) - spatial_interpolation_rate
     lon_hi = float(request.args.get('lon_hi')) + spatial_interpolation_rate
+    data_format = request.args.get('format_radio')
     if lat_lo > lat_hi:
         logger.debug('Error: lat_lo > lat_hi')
         return Response('Error: lat_lo > lat_hi')
@@ -159,30 +169,35 @@ def request_env_data():
             gfs = []
             errorString += 'Error occurred while retrieving GFS data:  ' + str(e) + '<br>'
 
-    combined = xr.combine_by_coords(dataset_list, combine_attrs='override', compat='override')
+    combined = xr.combine_by_coords(dataset_list, combine_attrs='drop', compat='override')[wave + wind + phy + gfs]
     if len(combined) == 0:
         logger.debug(errorString + 'Error occurred: Empty dataset')
         return Response(errorString + 'Error occurred: Empty dataset')
     dir_path = Path(Path(__file__).parent, 'download')
     dir_path.mkdir(exist_ok=True)
-    file_path = Path(dir_path, str(uuid.uuid1()) + '.csv')
-    csv_str = combined.to_dataframe()[wave + wind + phy + gfs].to_csv()
-    csv_coma_line = csv_str[:csv_str.find('\n')].count(',') * ',' + '\n'
-    timeRange = 'Time range: %s to %s' % (str(date_lo), str(date_hi)) + csv_coma_line
-    lon = 'Longitude extent: %.2f to %.2f' % (lon_lo, lon_hi) + csv_coma_line
-    lat = 'Latitude extent: %.2f to %.2f' % (lat_lo, lat_hi) + csv_coma_line
-    spatial_res = 'Spatial Resolution 0.083deg x 0.083deg' + csv_coma_line
-    temporal_res = 'Temporal Resolution 3-hours interval' + csv_coma_line
-    credit_CMEMS = 'Credit (Wave-Wind-Physical): E.U. Copernicus Marine Service Information (CMEMS)' + csv_coma_line
-    credit_GFS = 'Credit (GFS): National Centers for Environmental Prediction/National Weather Service/NOAA' + csv_coma_line
-    created = 'Accessed on %s' % datetime.now().strftime('%Y-%m-%d %H:%M:%S') + csv_coma_line
-    err = 'Error(s): ' + errorString.replace(',', ' ') + csv_coma_line
-    csv_str = timeRange + lon + lat + spatial_res + temporal_res + credit_CMEMS + credit_GFS + created + err + csv_str
-    with open(file_path, 'w', newline='', encoding='utf-8') as f:
-        f.write(csv_str)
+    metadata_dict = dict(
+        timeRange='Time range: %s to %s' % (str(date_lo), str(date_hi)),
+        lon_extent='Longitude extent: %.2f to %.2f' % (lon_lo, lon_hi),
+        lat_extent='Latitude extent: %.2f to %.2f' % (lat_lo, lat_hi),
+        spatial_res='Spatial Resolution 0.083deg x 0.083deg',
+        temporal_res='Temporal Resolution 3-hours interval',
+        credit_CMEMS='Credit (Wave-Wind-Physical): E.U. Copernicus Marine Service Information (CMEMS)',
+        credit_GFS='Credit (GFS): National Centers for Environmental Prediction/National Weather Service/NOAA',
+        created='Accessed on %s' % datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        errors='Error(s): ' + errorString.replace(',', ' ')
+    )
+    if data_format == 'csv':
+        file_path = Path(dir_path, str(uuid.uuid1()) + '.csv')
+        create_csv(combined.to_dataframe(), metadata_dict, file_path)
+    elif data_format == 'netcdf':
+        file_path = Path(dir_path, str(uuid.uuid1()) + '.nc')
+        combined.attrs = metadata_dict
+        combined.to_netcdf(file_path)
+
     resp = errorString + '<a href="/EnvDataAPI/' + str(
-        file_path.name) + '"> Download requested CSV file</a> <strong> The file will be deleted after 20 Minutes automatically.</strong>'
-    delete_file_queue[file_path] = datetime.now()
+        file_path.name) + '"> Download requested {0} file</a> <strong> The file will be deleted after {1} Minutes automatically.</strong>'.format(
+        data_format,
+        FILE_LIFE_SPAN)
     logger.debug(resp)
     return resp
 
