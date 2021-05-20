@@ -160,10 +160,11 @@ def request_env_data():
 
     if len(gfs) > 0:
         try:
-            with get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)[0].rename(
-                    {'lat': 'latitude', 'lon': 'longitude'}) as dataset_gfs:
-                dataset_list.append(rescale_dataset(dataset_gfs, gfs_flag=True))
-                gfs = [var for var in gfs if var in list(dataset_gfs.keys())]
+            dataset_gfs, gfs_type = get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
+            if gfs_type == 'gfs_50':
+                dataset_gfs = dataset_gfs.rename({'lat': 'latitude', 'lon': 'longitude'})
+            dataset_list.append(rescale_dataset(dataset_gfs, gfs_flag=True))
+            gfs = [var for var in gfs if var in list(dataset_gfs.keys())]
         except Exception as e:
             gfs = []
             errorString += 'Error occurred while retrieving GFS data:  ' + str(e) + '<br>'

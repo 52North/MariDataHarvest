@@ -213,6 +213,11 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
         return get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
     elif datetime(2004, 3, 1) > start_date:
         raise ValueError('Out of Range values')
+
+    # TODO      sorted(list(
+    #             TDSCatalog('https://rda.ucar.edu/thredds/catalog/files/g/ds084.1/2021/catalog.html').catalog_refs.keys()))[
+    #             -1] for future prognoses
+
     # offset according to the dataset resolution
     offset = 0.25
     x_arr_list = []
@@ -220,13 +225,16 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     CheckConnection.set_url('rda.ucar.edu')
     # calculate a day prior for midnight interpolation
     http_util.session_manager.set_session_options(auth=(config['UN_RDA'], config['PW_RDA']))
-    start_cat = TDSCatalog(
-        "%s/%s/%s%.2d%.2d/catalog.xml" % (base_url, start_date.year, start_date.year, start_date.month, start_date.day))
-    name = 'gfs.0p25.%s%.2d%.2d18.f006.grib2' % (start_date.year, start_date.month, start_date.day)
-    ds_subset = start_cat.datasets[name].subset()
-    query = ds_subset.query().lonlat_box(north=lat_hi + offset, south=lat_lo - offset, east=lon_hi + offset,
-                                         west=lon_lo - offset).variables(
-        *GFS_25_VAR_LIST)
+    try:
+        start_cat = TDSCatalog(
+            "%s/%s/%s%.2d%.2d/catalog.xml" % (base_url, start_date.year, start_date.year, start_date.month, start_date.day))
+        name = 'gfs.0p25.%s%.2d%.2d18.f006.grib2' % (start_date.year, start_date.month, start_date.day)
+        ds_subset = start_cat.datasets[name].subset()
+        query = ds_subset.query().lonlat_box(north=lat_hi + offset, south=lat_lo - offset, east=lon_hi + offset,
+                                             west=lon_lo - offset).variables(
+            *GFS_25_VAR_LIST)
+    except Exception as e:
+        logger.warning('grib2 file error ' % e)
     CheckConnection.is_online()
     try:
         data = ds_subset.get_data(query)
