@@ -1,19 +1,31 @@
-# MariDataHarvest
+# MariDataIngestio
 
-## TODOS - Repository-Reconstruction
+## TODOS
 
-- [x] `requirements.txt`: one for all or all one
-- [ ] `README.md`: one for all or all one
-- [ ] one convention for package names: currently: UpperCamelCase (e.g. `EnvDataServer`) and lower case (e.g. `utilities`)
-- [ ] Add Package Overview to root `README.md`
-- [ ] Update dependency list generation step incl. one for all or all one
-- [ ] Update `docker-compose.yml` after repo restructuring
-- [ ] Rename repo to ???
+- [x] `requirements.txt`: all one
+- [x] `README.md`: one for all
+- [ ] `requirements.(base|harvester).txt`
+- [ ] `requirements.ed2.txt`
+- [ ] Rename packages: lowerCamelCase (e.g. `envDataServer`) and lower case (e.g. `utilities`)
+- [ ] Add Package/Component Overview to root `README.md`
+- [ ] Update `docker-compose.yml`: add ED2
+- [ ] Rename repo to MariDataIngestio
 - [ ] `Dockerfile` of harvester:
-  - [ ] copy package and the dependency packages
+  - [ ] reuqirements.txt -> new name
+  - [ ] copy package and the dependency packages (utilities, environmentData)
   - [ ] adjust `CMD` to match new python package structure
-- [ ] Add `Dockerfile` for EnvDataServer
-- [ ] Add venv instructions (?)
+    - [ ] add env pythonpath
+    - [ ] change CMD to variant with "["s
+- [ ] "Buttons" unter die Variablen
+- [ ] Label neben die Eingabefelder mit den Constraints
+- [ ] style of submit after submit deutlicher anpassen
+- [ ] "loading spinner"
+- [ ] label von submit: anfrage kann eventuell länger dauern
+- [ ] Für Wave-Variablen Tooltip mit "Long-name" einbauen 
+- [ ] Response in template rendern und nicht nur rohes html
+- [ ] Label "in case of variable is not available it will be skipped in the result data set"
+- [ ] Aktuellen Stand deployen (12 Minuten Proxy-Timeout)
+- [ ] technischen Account für GFS und CMEMS in der Infrastruktur
 
 <div style="float:right; border: 1px solid #cecece; padding: 5px;">
 <!-- TOC -->
