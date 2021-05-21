@@ -6,21 +6,23 @@
 <div class="row justify-content-center no-gutters pt-2">
     <form method="get" enctype="multipart/form-data" action="/EnvDataAPI/request_env_data" id="submitForm">
         <div class="form-inline" data-toggle="tooltip" data-placement="bottom" title="Maximal timestamp range is {{ max_days }} days and timestamp_lo must be lower than timestamp_hi.">
-            <label class="col-2">Timestamp </label> <input class="form-control col-2" type="datetime-local"
+            <label class="col-2">Timestamp </label>
+            <input class="form-control col-4" type="datetime-local"
                                                            name="date_lo" value="2013-06-02T03:44"> -
-            <input class="form-control col-2" type="datetime-local" name="date_hi" value="2013-06-03T09:55">
+            <input class="form-control col-4" type="datetime-local" name="date_hi" value="2013-06-03T09:55">
         </div>
 
         <div class="form-inline" data-toggle="tooltip" data-placement="bottom" title="Maximal extent {{ max_lat }}° latitude and lat_lo must be lower than lat_hi.">
-            <label class="col-2">latitude </label> <input class="form-control col-2" type="number" name="lat_lo"
+            <label class="col-2">latitude </label> <input class="form-control col-4" type="number" name="lat_lo"
                                                           value="23.08"> -
-            <input class="form-control col-2" type="number" name="lat_hi" value="24.08">
+            <input class="form-control col-4" type="number" name="lat_hi" value="24.08">
         </div>
 
         <div class="form-inline" data-toggle="tooltip" data-placement="bottom" title="Maximal extent {{ max_lon }}° longitude and lon_lo must be lower than lon_hi.">
-            <label class="col-2">longitude </label> <input class="form-control col-2" type="number" name="lon_lo"
+            <label class="col-2">longitude
+            </label> <input class="form-control col-4" type="number" name="lon_lo"
                                                            value="-51.75"> -
-            <input class="form-control col-2"
+            <input class="form-control col-4"
                    type="number" name="lon_hi" value="-50.75">
         </div>
 
