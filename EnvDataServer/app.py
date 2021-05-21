@@ -91,6 +91,18 @@ def request_env_data():
     lat_hi = float(request.args.get('lat_hi')) + spatial_interpolation_rate
     lon_lo = float(request.args.get('lon_lo')) - spatial_interpolation_rate
     lon_hi = float(request.args.get('lon_hi')) + spatial_interpolation_rate
+    #
+    #   rounding coordinates to reasonable accuracy
+    #
+    #   see https://gis.stackexchange.com/a/208739
+    #
+    lat_lo = round(lat_lo, 4)
+    lat_hi = round(lat_hi, 4)
+    lon_hi = round(lon_hi, 4)
+    lon_lo = round(lon_lo, 4)
+    logger.debug("Rounded coordinates to 4 decimal places: Lat: [{}, {}]; Lon: [{}, {}]".format(
+        lat_lo, lat_hi, lon_lo, lon_hi
+    ))
     data_format = request.args.get('format')
     if lat_lo > lat_hi:
         logger.debug('Error: lat_lo > lat_hi')
