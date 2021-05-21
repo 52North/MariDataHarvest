@@ -2,24 +2,26 @@
 {% block content %}
 <div class="container w-50">
     <div class="row justify-content-center no-gutters pt-2">
-    {% if errorFlag %}
-        <div class="row errorPanel">
-            <div class="col">
-                {{ error }}
+        {% if errorFlag %}
+        <div class="col-10">
+            <div class="row justify-content-center errorPanel">
+                <div class="col">
+                    {{ error }}
+                </div>
+            </div>
+            <div class="row warningPanel">
+                <div class="col">
+                    Some missing variables/data sets are skipped.
+                </div>
             </div>
         </div>
-        <div class="row warningPanel">
-            <div class="col">
-                Some missing variables/data sets are skipped.
-            </div>
+        {% endif %}
+        <div class="col-12 text-center m-2">
+            <a href="{{ download_link }}" class="btn btn-success">{{ download_text }}</a>
         </div>
-    {% endif %}
-    <div class="col-12 text-center m-2">
-        <a href= "{{ download_link }}" class="btn btn-success">{{ download_text }}</a>
-    </div>
-    <div class="col-auto">
-        <strong>{{ note }}</strong>
-    </div>
+        <div class="col-auto">
+            <strong>{{ note }}</strong>
+        </div>
     </div>
 </div>
 {% endblock %}
