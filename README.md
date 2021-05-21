@@ -16,7 +16,7 @@
   - [ ] adjust `CMD` to match new python package structure
     - [ ] add env pythonpath
     - [ ] change CMD to variant with "["s
-- [ ] "Buttons" unter die Variablen
+- [x] "Buttons" unter die Variablen
 - [x] Label neben die Eingabefelder mit den Constraints
 - [x] style of submit after submit deutlicher anpassen
 - [x] "loading spinner"

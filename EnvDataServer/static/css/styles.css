@@ -1,17 +1,56 @@
-.Wave{
-    background: #adadf9;
+.Wave {
+    background: #adadf929;
 }
-.GFS{
-    background: #ffc107;
+.GFS {
+    background: #ffc10729;
 }
-.Physical{
-    background: #28a745;
+.Physical {
+    background: #28a74529;
 }
-.Wind{
-    background: #ec8891;
+.Wind {
+    background: #ec889129;
 }
 
-.envLabel{
+body#body {
+    background: #efefef;
+}
+
+div#content-wrapper {
+    min-width: 1024px;
+}
+
+div#header {
+    background: #fff;
+    border-bottom: 1px solid #e2992b;
+}
+
+div#content {
+    background: #fff;
+    min-height: 1024px;
+}
+
+div#footer {
+    background: #eaeaea;
+    font-size: 80%;
+}
+
+div#footer span#date {
+    font-family: monospace;
+}
+
+h2#page-title > a,
+h2#page-title > a:hover,
+h2#page-title > a:visited,
+h2#page-title > a:active {
+    text-decoration:none;
+    color: #000;
+}
+
+div.mdash {
+    padding: 7.5px;
+}
+
+.envLabel {
     border-radius: 9px;
     margin-right: 5px;
     word-break: break-all;
@@ -20,13 +59,40 @@
     opacity: 0.9;
     cursor: pointer;
 }
-.envLabel:hover{
-opacity: 1
+.envLabel:hover {
+    opacity: 1
 }
 
-.firstEnvLabel{
+.firstEnvLabel {
     border: 2px solid black
 }
+
+#spinnerPanel {
+    background-color: #c3c3c36b;
+    position: fixed;
+    z-index: 4;
+
+}
+
+#spinnerPanel > div > div > div {
+    display: flex;
+    align-items: center;
+}
+
+#spinnerPanel > div > div > div > div {
+    width: 4rem;
+    height: 4rem;
+    color: #656464;
+}
+
+#spinnerPanel > div > div > div > div#spinner-message {
+    background: #656464;
+    color: white;
+    padding: 8px;
+    border-radius: 8px;
+    min-width: 250px;
+}
+
 
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
@@ -39,7 +105,7 @@ input[type=number] {
 }
 
 .errorPanel {
- background: #ef5a68;
+    background: #ef5a68;
     text-align: center;
     margin: 6px;
     padding: 7px;
@@ -47,24 +113,12 @@ input[type=number] {
     color: white;
 }
 
-.warningPanel {
- background: #c7a047;
-    text-align: center;
-    margin: 6px;
-    padding: 7px;
-    border-radius: 8px;
-    color: white;
-}
-
-#submitBtn:disabled{
+#submitBtn:disabled {
     background-color: #c3c3c3 !important;
     border-color: #ffffff !important;
     cursor: not-allowed !important;
 }
 
-#spinnerPanel{
-    background-color: #c3c3c36b;
-    position: fixed;
-    z-index: 4;
-
+div#download-button {
+    margin: auto;
 }

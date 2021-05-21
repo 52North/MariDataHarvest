@@ -1,5 +1,5 @@
 <!doctype html>
-<html class="w-100 h-100">
+<html>
 <head>
     {% block head %}
        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
@@ -11,64 +11,70 @@
         <title>Environmental Data API</title>
     {% endblock %}
 </head>
-<body class="w-100 h-100"  style="background: #dadada;">
-<div id="spinnerPanel" class="w-100 h-100" hidden>
-<div class="container w-25 h-100">
-    <div class="row justify-content-center d-flex align-items-center h-100">
-        <div class="col-auto vcenter   d-flex align-self-center"  style="align-items: center;">
-            <div class="spinner-border mr-4" role="status" style="width: 4rem; height: 4rem; color: #656464">
+<body id="body" class="m-auto pt-5 pl-0 pb-5 pr-0" >
+<div id="content-wrapper" class="shadow-lg m-5 rounded">
+    <div id="spinnerPanel" class="w-100 h-100" hidden>
+        <div class="container w-25 h-100">
+            <div class="row justify-content-center h-100">
+                <div class="col-auto vcenter">
+                    <div class="spinner-border mr-4" role="status"></div>
+                    <div id="spinner-message">This may take a few minutes...</div>
+                </div>
             </div>
-            </div>
-            <div class="col vcenter   d-flex align-self-center"  style="align-items: center;">
-             <div style="background: #656464;color: white;padding: 8px;border-radius: 8px;">This may take a few minutes...</div>
         </div>
     </div>
-</div>
-</div>
-<div class="text-center" style="background: #ffffff; border-bottom: 1px solid#e2992b;">
-   {% block header %}
-<div class="row no-gutters">
+    <div id="header" class="text-center p-5">
+       {% block header %}
+    <div class="row no-gutters">
 
-    <div class="col-2">
-        <div class="float-left p-2">
-            <a href="https://52north.org/"><img height="40" src="/static/img/logo.gif" href alt="52° North"></a>
+        <div class="col-2">
+            <div class="float-left">
+                <a href="https://52north.org/"><img height="40" src="/static/img/logo.gif" alt="52°North"></a>
+            </div>
+        </div>
+
+        <div class="col text-center">
+            <h2 id="page-title"><a href="./">Environmental Data API</a></h2>
+        </div>
+        <div class="col-2 ">
         </div>
     </div>
-
-    <div class="col text-center">
-        <h2>Environmental Data API</h2>
+    {% endblock %}
     </div>
-    <div class="col-2 ">
+    <div id="content" class="p-4">
+        {% block content %}{% endblock %}
     </div>
-</div>
-{% endblock %}
-</div>
-<div class="pr-4 pl-4" style="background: #e5e8ea;  height: calc(100% - 180px); overflow: auto;">
-    {% block content %}{% endblock %}
-</div>
 
 
-<div class="text-center" style="background: #dadada; border-top: 1px solid#e2992b; height: 120px; overflow: auto">
- {% block footer %}
-
-<small><i> All data is interpolated to match the following: <br></i>
-    <small> Spatial Resolution 0.083° x 0.083° </small><br>
-
-    <small> Temporal Resolution 3-hours interval </small>
-    <div><a
-            href="https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit#gid=0">
-        Click for a detailed description of the original datasets
-    </a></div>
-</small>
-<small>
-    <div><i>Licences</i> <br></div>
-    <small>* E.U. Copernicus Marine Service Information</small><br>
-    <small>** NOAA Global Forecast System (GFS)</small><br>
-    <small>** National Centers for Environmental Prediction/National Weather Service/NOAA/U.S. Department of
-        Commerce. 2015, updated daily. NCEP GFS 0.25 Degree Global Forecast Auxiliary Grids Historical Archive.
-        Research Data Archive at the National Center for Atmospheric Research, Computational and Information
-        Systems Laboratory. https://doi.org/10.5065/D6W09402. <br>Accessed on <i id="date"></i>.</small></small>
-{% endblock %}
+    <div id="footer" class="container-fluid pt-2 pl-5 pr-5 pb-0">
+     {% block footer %}
+        <div class="row">
+            <div class="col-4">
+                &copy;52&deg;North GmbH 2021.
+                <a href="https://52north.org/about-us/contact-us/legal-notice/" target="_blank">Imprint</a>
+                and <a href="https://52north.org/privacy-statement/" target="_blank">data privacy</a>.
+                <br />
+                Accessed on <span id="date"></span>.
+            </div>
+            <div class="col-8">
+                Licences
+                <ul>
+                    <li><b>*</b>: E.U. Copernicus Marine Service Information</li>
+                    <li><b>**</b>:
+                        <ul>
+                            <li>NOAA Global Forecast System (GFS)</li>
+                            <li>National Centers for Environmental Prediction/National Weather Service/NOAA/U.S. Department of
+                                Commerce. 2015, updated daily. NCEP GFS 0.25 Degree Global Forecast Auxiliary Grids Historical
+                                Archive. Research Data Archive at the National Center for Atmospheric Research, Computational
+                                and Information Systems Laboratory.<br />
+                                <a href="https://doi.org/10.5065/D6W09402" target="_blank">DOI: 10.5065/D6W09402</a>.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    {% endblock %}
+    </div>
 </div>
 </body>
 </html>
