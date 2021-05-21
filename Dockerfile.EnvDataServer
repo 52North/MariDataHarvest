@@ -47,7 +47,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 # https://flask.palletsprojects.com/en/1.1.x/config/#ENV
 ENV FLASK_ENV=production
 ENV STATIC_URL /static
-ENV STATIC_PATH ${HOME}/EnvDataServer/static
+ENV STATIC_PATH /www/data/static
 ENV PYTHONPATH "${PYTHONPATH}:."
 
 LABEL maintainer="Jürrens, Eike Hinderk <e.h.juerrens@52north.org>" \

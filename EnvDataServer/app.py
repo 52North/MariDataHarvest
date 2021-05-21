@@ -229,4 +229,4 @@ def index():
 
 
 if __name__ == '__main__':
-    serve(TransLogger(app, logger=logger), host='0.0.0.0', port=8080, url_scheme='https')
+    serve(TransLogger(app, logger=logger), port=8080)

@@ -2,7 +2,9 @@ version: '3'
 
 services:
     web:
-        build: ./web/
+        build:
+            context: .
+            dockerfile: Dockerfile.web
         ports:
             - 443:443
             - 80:80
