@@ -18,6 +18,12 @@ services:
             - "/etc/letsencrypt/live/harvester.maridata.dev.52north.org/privkey.pem:/etc/letsencrypt/live/harvester.maridata.dev.52north.org/privkey.pem:ro"
             - "maridata-harvester_data:/www/data/:ro"
 
+    ed2:
+        build:
+            context: .
+            dockerfile: Dockerfile.EnvDataServer
+        restart: unless-stopped
+
 volumes:
     maridata-harvester_data:
         external: true
