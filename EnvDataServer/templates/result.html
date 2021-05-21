@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container w-50">
+    <div class="row justify-content-center no-gutters pt-2">
+    {% if errorFlag %}
+        <div class="row errorPanel">
+            <div class="col">
+                {{ error }}
+            </div>
+        </div>
+        <div class="row warningPanel">
+            <div class="col">
+                Some missing variables/data sets are skipped.
+            </div>
+        </div>
+    {% endif %}
+    <div class="col-12 text-center m-2">
+        <a href= "{{ download_link }}" class="btn btn-success">{{ download_text }}</a>
+    </div>
+    <div class="col-auto">
+        <strong>{{ note }}</strong>
+    </div>
+    </div>
+</div>
+{% endblock %}
+{% block footer %}
+
+<small><i> All data is interpolated to match the following: <br></i>
+    <small> Spatial Resolution 0.083° x 0.083° </small><br>
+
+    <small> Temporal Resolution 3-hours interval </small>
+    <div><a
+            href="https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit#gid=0">
+        Click for a detailed description of the original datasets
+    </a></div>
+</small>
+<small>
+    <div><i>Licences</i> <br></div>
+    <small>* E.U. Copernicus Marine Service Information</small><br>
+    <small>** NOAA Global Forecast System (GFS)</small><br>
+    <small>** National Centers for Environmental Prediction/National Weather Service/NOAA/U.S. Department of
+        Commerce. 2015, updated daily. NCEP GFS 0.25 Degree Global Forecast Auxiliary Grids Historical Archive.
+        Research Data Archive at the National Center for Atmospheric Research, Computational and Information
+        Systems Laboratory. https://doi.org/10.5065/D6W09402. <br>Accessed on <i id="date"></i>.</small></small>
+{% endblock %}

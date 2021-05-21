@@ -16,5 +16,5 @@ config = {
     # load sensitive variables
     **dotenv_values(secrets_file),
     # override loaded values with environment variables
-    **os.environ,
+    # **os.environ,
 }

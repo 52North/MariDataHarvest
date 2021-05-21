@@ -90,19 +90,19 @@ def request_env_data():
     lat_hi = float(request.args.get('lat_hi')) + spatial_interpolation_rate
     lon_lo = float(request.args.get('lon_lo')) - spatial_interpolation_rate
     lon_hi = float(request.args.get('lon_hi')) + spatial_interpolation_rate
-    data_format = request.args.get('format_radio')
+    data_format = request.args.get('format')
     if lat_lo > lat_hi:
         logger.debug('Error: lat_lo > lat_hi')
-        return Response('Error: lat_lo > lat_hi')
+        return render_template('error.html', error='Error: lat_lo > lat_hi')
     if lon_lo > lon_hi:
         logger.debug('Error: lon_lo > lon_hi ')
-        return Response('Error: lon_lo > lon_hi')
+        return render_template('error.html', error='Error: lon_lo > lon_hi')
     if date_lo > date_hi:
         logger.debug('Error: date_lo > date_hi')
-        return Response('Error: date_lo > date_hi')
+        return render_template('error.html', error='Error: date_lo > date_hi')
     if len(wave + wind + gfs + phy) == 0:
         logger.debug('Error: No variables are selected')
-        return Response('Error: No variables are selected')
+        return render_template('error.html', error='Error: No variables are selected')
     errorString = ''
 
     lat_interpolation = list(np.arange(lat_lo, lat_hi, spatial_interpolation_rate))
@@ -128,7 +128,7 @@ def request_env_data():
             int(lat_hi - lat_lo),
             int(lon_hi - lon_lo), (date_hi - date_lo).days, max_lat, max_lon, max_days)
         logger.debug(error)
-        return Response(error)
+        return render_template('error.html', error=error)
 
     if len(wave) > 0:
         try:
@@ -172,7 +172,7 @@ def request_env_data():
     combined = xr.combine_by_coords(dataset_list, combine_attrs='drop', compat='override')[wave + wind + phy + gfs]
     if len(combined) == 0:
         logger.debug(errorString + 'Error occurred: Empty dataset')
-        return Response(errorString + 'Error occurred: Empty dataset')
+        return render_template('error.html', error=errorString + 'Error occurred: Empty dataset')
     dir_path = Path(Path(__file__).parent, 'download')
     dir_path.mkdir(exist_ok=True)
     metadata_dict = dict(
@@ -193,13 +193,13 @@ def request_env_data():
         file_path = Path(dir_path, str(uuid.uuid1()) + '.nc')
         combined.attrs = metadata_dict
         combined.to_netcdf(file_path)
-    resp = errorString + '<a href="/EnvDataAPI/' + str(
-        file_path.name) + '"> Download requested {0} file</a> <strong> The file will be deleted after {1} Minutes automatically.</strong>'.format(
-        data_format,
-        FILE_LIFE_SPAN)
     delete_file_queue[file_path] = datetime.now()
-    logger.debug(resp)
-    return resp
+    logger.debug('Processing request finished {0}'.format(errorString))
+    return render_template('result.html',
+                           download_link='/EnvDataAPI/' + str(file_path.name),
+                           download_text='Download requested {0} file '.format(data_format),
+                           note='The file will be deleted after {0} Minutes automatically.'.format(FILE_LIFE_SPAN),
+                           errorFlag=len(errorString) > 0, error=errorString)
 
 
 @app.route('/EnvDataAPI/<path:filename>')
@@ -209,8 +209,8 @@ def send_file(filename):
 
 @app.route('/EnvDataAPI/', methods=['GET'])
 def index():
-    return render_template('index.html')
+    return render_template('index.html', max_lat=max_lat, max_lon=max_lon, max_days = max_days)
 
 
 if __name__ == '__main__':
-    serve(TransLogger(app), host='0.0.0.0', port=8080, url_scheme='https')
+    serve(TransLogger(app, logger=logger), host='0.0.0.0', port=8080, url_scheme='https')

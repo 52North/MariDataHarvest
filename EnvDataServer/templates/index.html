@@ -1,82 +1,56 @@
 {% extends "base.html" %}
 {% block head %}
 {{ super() }} {% endblock %}
-{% block header %}
-<div class="row no-gutters">
 
-    <div class="col-2">
-        <div class="float-left p-2">
-            <a href="https://52north.org/"><img height="40" src="/static/img/logo.gif" href alt="52° North"></a>
-        </div>
-    </div>
-
-    <div class="col text-center">
-        <h2>Environmental Data API</h2>
-    </div>
-    <div class="col-2 ">
-    </div>
-</div>
-{% endblock %}
 {% block content %}
 <div class="row justify-content-center no-gutters pt-2">
     <form method="get" enctype="multipart/form-data" action="/EnvDataAPI/request_env_data" id="submitForm">
-        <div class="form-inline">
+        <div class="form-inline" data-toggle="tooltip" data-placement="bottom" title="Maximal timestamp range is {{ max_days }} days and timestamp_lo must be lower than timestamp_hi.">
             <label class="col-2">Timestamp </label> <input class="form-control col-2" type="datetime-local"
                                                            name="date_lo" value="2013-06-02T03:44"> -
             <input class="form-control col-2" type="datetime-local" name="date_hi" value="2013-06-03T09:55">
         </div>
 
-        <div class="form-inline">
+        <div class="form-inline" data-toggle="tooltip" data-placement="bottom" title="Maximal extent {{ max_lat }}° latitude and lat_lo must be lower than lat_hi.">
             <label class="col-2">latitude </label> <input class="form-control col-2" type="number" name="lat_lo"
                                                           value="23.08"> -
             <input class="form-control col-2" type="number" name="lat_hi" value="24.08">
-
         </div>
 
-        <div class="form-inline">
+        <div class="form-inline" data-toggle="tooltip" data-placement="bottom" title="Maximal extent {{ max_lon }}° longitude and lon_lo must be lower than lon_hi.">
             <label class="col-2">longitude </label> <input class="form-control col-2" type="number" name="lon_lo"
                                                            value="-51.75"> -
             <input class="form-control col-2"
                    type="number" name="lon_hi" value="-50.75">
-            <div class="col">
-                  <button type="submit" class="btn btn-primary  ml-2 float-right" id="submitBtn" style="font-size: 21px">
-                    Submit
-                </button>
-                    <label class="form-control col-2 float-right ml-2"> CSV <input class="form-control col-2" type="radio"
-                                                                  name="format_radio" value="csv"
-                                                                  checked> </label>
-                    <label class="form-control col-2 float-right ml-2"> netCDF <input class="form-control col-2" type="radio" value="netcdf"
-                                                                     name="format_radio">
-                    </label>
-
-            </div>
         </div>
 
         <hr>
         <div id="checkbox_list" class="row no-gutters">
         </div>
+        <hr>
+    <div class="col form-inline">
+              <button type="submit" class="btn btn-primary ml-2 " id="submitBtn">
+            Submit
+        </button>
+                    <label class="form-control form-inline col-auto  ml-2"> CSV <input class="form-control col-2" type="radio"
+                                                                  name="format" value="csv"
+                                                                  checked> </label>
+                    <label class="form-control form-inline col-auto  ml-2"> netCDF <input class="form-control col-2" type="radio" value="netcdf"
+                                                                     name="format">
+                    </label>
 
-
+            </div>
+        <small>
+            <div>
+            <i>- Missing variables or missing data sets are going to be skipped.</i>
+        </div>
+        <div>
+            <i>- Requests are limited to max 1 request per 10 seconds and 70 requests per hour.</i>
+        </div>
+        <div>
+            <i>- Maximal bbox dimension ({{ max_lat }}° lat x {{ max_lon }}° lon x {{ max_days }} days).</i>
+        </div>
+        </small>
     </form>
 </div>
-{% endblock %}
-{% block footer %}
-
-<small><i> All data is interpolated to match the following: <br></i>
-    <small> Spatial Resolution 0.083° x 0.083° </small><br>
-
-    <small> Temporal Resolution 3-hours interval </small>
-    <div><a
-            href="https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit#gid=0">
-        Click for a detailed description of the original datasets
-    </a></div>
-</small>
-<small>
-    <div><i>Licences</i> <br></div>
-    <small>* E.U. Copernicus Marine Service Information</small><br>
-    <small>** NOAA Global Forecast System (GFS)</small><br>
-    <small>** National Centers for Environmental Prediction/National Weather Service/NOAA/U.S. Department of
-        Commerce. 2015, updated daily. NCEP GFS 0.25 Degree Global Forecast Auxiliary Grids Historical Archive.
-        Research Data Archive at the National Center for Atmospheric Research, Computational and Information
-        Systems Laboratory. https://doi.org/10.5065/D6W09402. <br>Accessed on <i id="date"></i>.</small></small>
 {% endblock %}

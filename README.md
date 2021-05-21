@@ -17,13 +17,13 @@
     - [ ] add env pythonpath
     - [ ] change CMD to variant with "["s
 - [ ] "Buttons" unter die Variablen
-- [ ] Label neben die Eingabefelder mit den Constraints
-- [ ] style of submit after submit deutlicher anpassen
-- [ ] "loading spinner"
-- [ ] label von submit: anfrage kann eventuell länger dauern
-- [ ] Für Wave-Variablen Tooltip mit "Long-name" einbauen 
-- [ ] Response in template rendern und nicht nur rohes html
-- [ ] Label "in case of variable is not available it will be skipped in the result data set"
+- [x] Label neben die Eingabefelder mit den Constraints
+- [x] style of submit after submit deutlicher anpassen
+- [x] "loading spinner"
+- [x] label von submit: anfrage kann eventuell länger dauern
+- [x] Für Wave-Variablen Tooltip mit "Long-name" einbauen 
+- [x] Response in template rendern und nicht nur rohes html
+- [x] Label "in case of variable is not available it will be skipped in the result data set"
 - [ ] Aktuellen Stand deployen (12 Minuten Proxy-Timeout)
 - [ ] technischen Account für GFS und CMEMS in der Infrastruktur
 
