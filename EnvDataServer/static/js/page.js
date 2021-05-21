@@ -85,7 +85,7 @@ function createList(ls, name) {
     let tomorrow = new Date();
 
     if (name === 'GFS' || name == 'Wind'){
-    tomorrow.setDate(today.getDate()-2)
+    tomorrow.setDate(today.getDate()-3)
     div.append($('<i><small> Data provided til '+tomorrow.toLocaleDateString('en-GB', {
         day: 'numeric', month: 'short', year: 'numeric'
     }) +'<small></i>'));
