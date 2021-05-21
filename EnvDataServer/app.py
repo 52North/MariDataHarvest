@@ -12,6 +12,7 @@ import xarray as xr
 import uuid
 import numpy as np
 import time
+import pytz
 from waitress import serve
 from paste.translogger import TransLogger
 
@@ -28,7 +29,7 @@ limiter = Limiter(
 # TODO move to a config file
 delete_file_queue = dict()
 # in Minutes
-FILE_LIFE_SPAN = 20
+FILE_LIFE_SPAN = 120
 # in degrees
 spatial_interpolation_rate = 0.083
 # in hours
@@ -194,11 +195,14 @@ def request_env_data():
         combined.attrs = metadata_dict
         combined.to_netcdf(file_path)
     delete_file_queue[file_path] = datetime.now()
-    logger.debug('Processing request finished {0}'.format(errorString))
+    logger.debug('Processing request finished {}'.format(errorString))
     return render_template('result.html',
                            download_link='/EnvDataAPI/' + str(file_path.name),
-                           download_text='Download requested {0} file '.format(data_format),
-                           note='The file will be deleted after {0} Minutes automatically.'.format(FILE_LIFE_SPAN),
+                           download_text='Download requested {} file '.format(data_format),
+                           note='The file will be automatically deleted in {} Minutes: {}.'.format(
+                               FILE_LIFE_SPAN,
+                               (datetime.now(pytz.utc) + timedelta(minutes=FILE_LIFE_SPAN)).strftime("%I:%M %p %Z")
+                           ),
                            errorFlag=len(errorString) > 0, error=errorString)
 
 
