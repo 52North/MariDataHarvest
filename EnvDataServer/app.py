@@ -137,7 +137,7 @@ def request_env_data():
                 wave = [var for var in wave if var in list(wave_ds.keys())]
         except Exception as e:
             wave = []
-            errorString += 'Error occurred while retrieving Wave data:  ' + str(e) + '<br>'
+            errorString += 'Error occurred while retrieving Wave data:  ' + str(e) + '\n'
 
     if len(wind) > 0:
         try:
@@ -147,7 +147,7 @@ def request_env_data():
                 wind = [var for var in wind if var in list(dataset_wind.keys())]
         except Exception as e:
             wind = []
-            errorString += 'Error occurred while retrieving Wind data:  ' + str(e) + '<br>'
+            errorString += 'Error occurred while retrieving Wind data:  ' + str(e) + '\n'
 
     if len(phy) > 0:
         try:
@@ -156,7 +156,7 @@ def request_env_data():
                 phy = [var for var in phy if var in list(dataset_phy.keys())]
         except Exception as e:
             phy = []
-            errorString += 'Error occurred while retrieving Physical data:  ' + str(e) + '<br>'
+            errorString += 'Error occurred while retrieving Physical data:  ' + str(e) + '\n'
 
     if len(gfs) > 0:
         try:
@@ -167,7 +167,7 @@ def request_env_data():
             gfs = [var for var in gfs if var in list(dataset_gfs.keys())]
         except Exception as e:
             gfs = []
-            errorString += 'Error occurred while retrieving GFS data:  ' + str(e) + '<br>'
+            errorString += 'Error occurred while retrieving GFS data:  ' + str(e) + '\n'
 
     combined = xr.combine_by_coords(dataset_list, combine_attrs='drop', compat='override')[wave + wind + phy + gfs]
     if len(combined) == 0:
