@@ -124,13 +124,7 @@ def request_env_data():
                               range(0, (date_hi - date_lo).days * 24 + (date_hi - date_lo).seconds // 3600,
                                     temporal_interpolation_rate)]
 
-    def rescale_dataset(dataset: xr.Dataset, gfs_flag=False) -> xr.Dataset:
-        if gfs_flag:
-            return dataset.interp(
-                latitude=xr.DataArray(lat_interpolation, coords=[lat_interpolation], dims=["latitude"]),
-                longitude=((xr.DataArray(lon_interpolation, coords=[lon_interpolation],
-                                         dims=["longitude"]) + 180) % 360) + 180,
-                time=xr.DataArray(temporal_interpolation, coords=[temporal_interpolation], dims=["time"]))
+    def rescale_dataset(dataset: xr.Dataset) -> xr.Dataset:
         return dataset.interp(
             latitude=xr.DataArray(lat_interpolation, coords=[lat_interpolation], dims=["latitude"]),
             longitude=xr.DataArray(lon_interpolation, coords=[lon_interpolation], dims=["longitude"]),
@@ -176,7 +170,7 @@ def request_env_data():
             dataset_gfs, gfs_type = get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi)
             if gfs_type == 'gfs_50':
                 dataset_gfs = dataset_gfs.rename({'lat': 'latitude', 'lon': 'longitude'})
-            dataset_list.append(rescale_dataset(dataset_gfs, gfs_flag=True))
+            dataset_list.append(rescale_dataset(dataset_gfs))
             gfs = [var for var in gfs if var in list(dataset_gfs.keys())]
         except Exception as e:
             gfs = []
@@ -225,7 +219,7 @@ def send_file(filename):
 
 @app.route('/EnvDataAPI/', methods=['GET'])
 def index():
-    return render_template('index.html', max_lat=max_lat, max_lon=max_lon, max_days = max_days)
+    return render_template('index.html', max_lat=max_lat, max_lon=max_lon, max_days=max_days)
 
 
 if __name__ == '__main__':

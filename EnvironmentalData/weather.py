@@ -269,8 +269,11 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                         logger.warning('dataset %s is not complete' % name)
                 else:
                     logger.warning('dataset %s is not found' % name)
-    return xr.combine_by_coords(x_arr_list, coords=['time'], combine_attrs='override',
-                                compat='override').squeeze(), 'gfs'
+    combined_xarrays = xr.combine_by_coords(x_arr_list, coords=['time'], combine_attrs='override',
+                                compat='override').squeeze()
+    combined_xarrays['longitude'] = xr.where(combined_xarrays['longitude'] > 180, combined_xarrays['longitude'] - 360,
+                                             combined_xarrays['longitude'])
+    return combined_xarrays, 'gfs'
 
 
 def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
@@ -317,8 +320,10 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                             raise e
                         time.sleep(2)
 
-    dataset = xr.combine_by_coords(x_arr_list, coords=['time'], combine_attrs='override', compat='override').squeeze()
-    return dataset, 'gfs_50'
+    combined_xarrays = xr.combine_by_coords(x_arr_list, coords=['time'], combine_attrs='override', compat='override').squeeze()
+    combined_xarrays['lon'] = xr.where(combined_xarrays['lon'] > 180, combined_xarrays['lon'] - 360,
+                                             combined_xarrays['lon'])
+    return combined_xarrays, 'gfs_50'
 
 
 def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
@@ -403,12 +408,10 @@ def interpolate(ds: xr.Dataset, ds_name: str, time_points: xr.DataArray, lat_poi
         res = ds.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[WIND_VAR_LIST].reset_index(
             drop=True)
     elif ds_name == 'gfs':
-        lon_points = ((lon_points + 180) % 360) + 180
         b = xr.DataArray([1] * len(lon_points))
         res = ds.interp(longitude=lon_points, latitude=lat_points, time=time_points, bounds_dim=b).to_dataframe()[
             GFS_25_VAR_LIST].reset_index(drop=True)
     elif ds_name == 'gfs_50':
-        lon_points = ((lon_points + 180) % 360) + 180
         res = ds.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[GFS_50_VAR_LIST].reset_index(
             drop=True)
     elif ds_name == 'phy':
@@ -427,12 +430,10 @@ def select_grid_point(ds: xr.Dataset, ds_name: str, time_point: datetime, lat_po
         res = ds.sel(lon=lon_point, lat=lat_point, method='nearest').to_dataframe()[WIND_VAR_LIST].reset_index(
             drop=True)
     elif ds_name == 'gfs':
-        lon_point = ((lon_point + 180) % 360) + 180
         res = ds.sel(longitude=lon_point, latitude=lat_point, time=time_point, method='nearest').to_dataframe()[
             GFS_25_VAR_LIST].reset_index(
             drop=True)
     elif ds_name == 'gfs_50':
-        lon_point = ((lon_point + 180) % 360) + 180
         res = ds.sel(lon=lon_point, lat=lat_point, time=time_point, method='nearest').to_dataframe()[
             GFS_50_VAR_LIST].reset_index(
             drop=True)
