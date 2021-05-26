@@ -227,7 +227,8 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     http_util.session_manager.set_session_options(auth=(config['UN_RDA'], config['PW_RDA']))
     try:
         start_cat = TDSCatalog(
-            "%s/%s/%s%.2d%.2d/catalog.xml" % (base_url, start_date.year, start_date.year, start_date.month, start_date.day))
+            "%s/%s/%s%.2d%.2d/catalog.xml" % (
+                base_url, start_date.year, start_date.year, start_date.month, start_date.day))
         name = 'gfs.0p25.%s%.2d%.2d18.f006.grib2' % (start_date.year, start_date.month, start_date.day)
         ds_subset = start_cat.datasets[name].subset()
         query = ds_subset.query().lonlat_box(north=lat_hi + offset, south=lat_lo - offset, east=lon_hi + offset,
@@ -270,13 +271,22 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                 else:
                     logger.warning('dataset %s is not found' % name)
     combined_xarrays = xr.combine_by_coords(x_arr_list, coords=['time'], combine_attrs='override',
-                                compat='override').squeeze()
+                                            compat='override').squeeze()
     combined_xarrays['longitude'] = xr.where(combined_xarrays['longitude'] > 180, combined_xarrays['longitude'] - 360,
                                              combined_xarrays['longitude'])
     return combined_xarrays, 'gfs'
 
 
 def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
+    # check meridian bbox for GFS 50
+    if lon_lo < 0 and lon_hi > 0:
+        logger.debug(
+            'GFS 0.50 dataset: splitting the requested bbox over th prime meridian into LON [%s, %s] and LON [%s, %s]' % (
+                lon_lo, -0.5, 0, lon_hi))
+        a = get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, -0.5)[0]
+        b = get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, 0, lon_hi)[0]
+        return xr.combine_by_coords([a, b], coords=['lon'], combine_attrs='override',
+                                    compat='override').squeeze(), 'gfs_50'
     logger.debug('obtaining GFS 0.50 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     base_url = 'https://www.ncei.noaa.gov/thredds/model-gfs-g4-anl-files-old/'
@@ -301,6 +311,7 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                             query = ds_subset.query().lonlat_box(north=lat_hi + offset, south=lat_lo - offset,
                                                                  east=lon_hi + offset, west=lon_lo - offset).variables(
                                 *GFS_50_VAR_LIST)
+
                             CheckConnection.is_online()
                             data = ds_subset.get_data(query)
                             x_arr = xr.open_dataset(NetCDF4DataStore(data))
@@ -320,9 +331,10 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                             raise e
                         time.sleep(2)
 
-    combined_xarrays = xr.combine_by_coords(x_arr_list, coords=['time'], combine_attrs='override', compat='override').squeeze()
+    combined_xarrays = xr.combine_by_coords(x_arr_list, coords=['time'], combine_attrs='override',
+                                            compat='override').squeeze()
     combined_xarrays['lon'] = xr.where(combined_xarrays['lon'] > 180, combined_xarrays['lon'] - 360,
-                                             combined_xarrays['lon'])
+                                       combined_xarrays['lon'])
     return combined_xarrays, 'gfs_50'
 
 
