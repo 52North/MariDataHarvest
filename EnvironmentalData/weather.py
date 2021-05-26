@@ -281,7 +281,7 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     # check meridian bbox for GFS 50
     if lon_lo < 0 and lon_hi > 0:
         logger.debug(
-            'GFS 0.50 dataset: splitting the requested bbox over th prime meridian into LON [%s, %s] and LON [%s, %s]' % (
+            'GFS 0.50 dataset: splitting the requested bbox over the prime meridian into LON [%s, %s] and LON [%s, %s]' % (
                 lon_lo, -0.5, 0, lon_hi))
         a = get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, -0.5)[0]
         b = get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, 0, lon_hi)[0]
