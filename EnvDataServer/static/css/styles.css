@@ -71,7 +71,7 @@ div.mdash {
     background-color: #c3c3c36b;
     position: fixed;
     z-index: 4;
-
+    top: 0;
 }
 
 #spinnerPanel > div > div > div {

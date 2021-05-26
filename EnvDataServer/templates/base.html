@@ -12,17 +12,18 @@
     {% endblock %}
 </head>
 <body id="body" class="m-auto pt-5 pl-0 pb-5 pr-0" >
-<div id="content-wrapper" class="shadow-lg m-5 rounded">
-    <div id="spinnerPanel" class="w-100 h-100" hidden>
+<div id="spinnerPanel" class="w-100 h-100" hidden>
         <div class="container w-25 h-100">
             <div class="row justify-content-center h-100">
                 <div class="col-auto vcenter">
-                    <div class="spinner-border mr-4" role="status"></div>
+                    <div class="spinner-border mr-4" role="status" style="display: table;"></div>
                     <div id="spinner-message">This may take a few minutes...</div>
                 </div>
             </div>
         </div>
     </div>
+<div id="content-wrapper" class="shadow-lg m-5 rounded">
+
     <div id="header" class="text-center p-5">
        {% block header %}
     <div class="row no-gutters">
