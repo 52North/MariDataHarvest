@@ -2,7 +2,15 @@ window.onload = () => {
     $(function () {
       $('[data-toggle="tooltip"]').tooltip()
      })
-
+    var mymap = L.map('mapid').setView([51.505, -0.09], 13);
+    L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoic3VmaWFuemEiLCJhIjoiY2twODloeGV5MDZweTJvbXBseWN2anc3ZiJ9.IoiJIA50gTlBv0nCXx1vVw', {
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+        maxZoom: 18,
+        id: 'mapbox/streets-v11',
+        tileSize: 512,
+        zoomOffset: -1,
+        accessToken: 'your.mapbox.access.token'
+    }).addTo(mymap);
     WAVE_VAR_LIST = {'VHM0_WW':		'sea_surface_wind_wave_significant_height',
         'VMDR_SW2':		'sea_surface_secondary_swell_wave_from_direction',
         'VMDR_SW1':		'sea_surface_primary_swell_wave_from_direction',
@@ -84,12 +92,18 @@ function createList(ls, name) {
     let today = new Date();
     let tomorrow = new Date();
 
-    if (name === 'GFS' || name == 'Wind'){
+    if (name == 'Wind'){
     tomorrow.setDate(today.getDate()-4)
     div.append($('<i><small> Data provided til '+tomorrow.toLocaleDateString('en-GB', {
         day: 'numeric', month: 'short', year: 'numeric'
     }) +'<small></i>'));
-    }else{
+    }else if(name === 'GFS'){
+     tomorrow.setDate(today.getDate()+17)
+    div.append($('<i><small> Data provided til '+tomorrow.toLocaleDateString('en-GB', {
+        day: 'numeric', month: 'short', year: 'numeric'
+    }) +'<small></i>'));
+    }
+    else{
     tomorrow.setDate(today.getDate()+9)
      div.append($('<i><small> Data provided til '+tomorrow.toLocaleDateString('en-GB', {
         day: 'numeric', month: 'short', year: 'numeric'
