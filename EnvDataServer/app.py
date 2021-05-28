@@ -1,5 +1,6 @@
 import os
 import threading
+import traceback
 from pathlib import Path
 import logging
 from flask import Flask, render_template, request, send_from_directory, Response
@@ -143,6 +144,7 @@ def request_env_data():
                 dataset_list.append(rescale_dataset(wave_ds))
                 wave = [var for var in wave if var in list(wave_ds.keys())]
         except Exception as e:
+            logger.error(traceback.format_exc())
             wave = []
             errorString += 'Error occurred while retrieving Wave data:  ' + str(e) + '\n'
 
@@ -153,6 +155,7 @@ def request_env_data():
                 dataset_list.append(rescale_dataset(dataset_wind))
                 wind = [var for var in wind if var in list(dataset_wind.keys())]
         except Exception as e:
+            logger.error(traceback.format_exc())
             wind = []
             errorString += 'Error occurred while retrieving Wind data:  ' + str(e) + '\n'
 
@@ -162,6 +165,7 @@ def request_env_data():
                 dataset_list.append(rescale_dataset(dataset_phy))
                 phy = [var for var in phy if var in list(dataset_phy.keys())]
         except Exception as e:
+            logger.error(traceback.format_exc())
             phy = []
             errorString += 'Error occurred while retrieving Physical data:  ' + str(e) + '\n'
 
@@ -173,6 +177,7 @@ def request_env_data():
             dataset_list.append(rescale_dataset(dataset_gfs))
             gfs = [var for var in gfs if var in list(dataset_gfs.keys())]
         except Exception as e:
+            logger.error(traceback.format_exc())
             gfs = []
             errorString += 'Error occurred while retrieving GFS data:  ' + str(e) + '\n'
 
