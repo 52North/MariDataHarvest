@@ -79,12 +79,6 @@ div.mdash {
     align-items: center;
 }
 
-#spinnerPanel > div > div > div > div {
-    width: 4rem;
-    height: 4rem;
-    color: #656464;
-}
-
 #spinnerPanel > div > div > div > div#spinner-message {
     background: #656464;
     color: white;
