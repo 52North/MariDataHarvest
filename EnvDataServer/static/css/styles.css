@@ -70,7 +70,7 @@ div.mdash {
 #spinnerPanel {
     background-color: #c3c3c36b;
     position: fixed;
-    z-index: 4;
+    z-index: 999;
     top: 0;
 }
 
@@ -87,7 +87,9 @@ div.mdash {
     min-width: 250px;
 }
 
-
+#mapid {
+height: 400px;
+}
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
     -webkit-appearance: none;
