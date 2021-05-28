@@ -8,9 +8,24 @@ window.onload = () => {
         maxZoom: 18,
         id: 'mapbox/streets-v11',
         tileSize: 512,
-        zoomOffset: -1,
-        accessToken: 'your.mapbox.access.token'
+        zoomOffset: -1
     }).addTo(mymap);
+
+    var bounds = [[$('#lat_lo').val(),$('#lon_lo').val()], [$('#lat_hi').val(), $('#lon_hi').val()]];
+    var layerGroup = L.layerGroup().addTo(mymap)
+    var boundingBox = L.rectangle(bounds, {color: "#ffffff", weight: 1}).addTo(layerGroup);
+    mymap.fitBounds(bounds, {padding: [80,80]})
+    var boundingBox_id = L.stamp(boundingBox);
+
+    $('.bbox').on('input', (e)=>{
+        layerGroup.removeLayer(boundingBox_id)
+        var bounds = [[$('#lat_lo').val(),$('#lon_lo').val()], [$('#lat_hi').val(), $('#lon_hi').val()]];
+        var boundingBox = L.rectangle(bounds, {color: "#ffffff", weight: 1}).addTo(layerGroup);
+        mymap.fitBounds(bounds, {padding: [80,80]})
+        mymap.addLayer(boundingBox);
+        boundingBox_id= L.stamp(boundingBox);
+    });
+
     WAVE_VAR_LIST = {'VHM0_WW':		'sea_surface_wind_wave_significant_height',
         'VMDR_SW2':		'sea_surface_secondary_swell_wave_from_direction',
         'VMDR_SW1':		'sea_surface_primary_swell_wave_from_direction',
