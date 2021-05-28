@@ -4,41 +4,60 @@
 
 {% block content %}
 <div class="row justify-content-center no-gutters pt-2 pb-5">
+
+
     <form method="get" enctype="multipart/form-data" action="/EnvDataAPI/request_env_data" id="submitForm">
-        <!--
-            TIMESTAMP
-        -->
-        <fieldset class="row m-3" data-toggle="tooltip" data-placement="bottom"
-                  title="Maximal temporal bounding box size is {{ max_days }} days. Start must be before end.">
-            <legend>Temporal Bounding Box</legend>
-            <div class="col-form-label col-2 text-right">&nbsp;</div>
-            <input id="date_lo" class="form-control col-2" type="datetime-local" name="date_lo" value="2019-06-02T03:44">
-            <div class="col-1 text-center mdash">&nbsp;&rarr;&nbsp</div>
-            <input id="date_hi" class="form-control col-2" type="datetime-local" name="date_hi" value="2019-06-03T09:55">
-        </fieldset>
-        <!--
-            Spatial Bounding Box
-        -->
-        <fieldset class="m-2">
-            <legend>Spatial Bounding Box</legend>
-            <fieldset class="row m-3" data-toggle="tooltip" data-placement="bottom"
-                  title="Maximal latitude extent is {{ max_lat }}°; start must be lower than end.">
-                <div class="col-form-label col-2 text-right">Latitude</div>
-                <input id="lat_lo" class="form-control col-2" type="number" name="lat_lo" value="53.08" step="any">
-                <div class="col-1 text-center mdash">&nbsp;&rarr;&nbsp</div>
-                <input id="lat_hi" class="form-control col-2" type="number" name="lat_hi" value="55.08" step="any">
-            </fieldset>
-            <fieldset class="row m-3" data-toggle="tooltip" data-placement="bottom"
-                  title="Maximal longitude extent is {{ max_lon }}°; start must be lower than end.">
-                <div class="col-form-label col-2 text-right">Longitude</div>
-                <input id="lon_lo" class="form-control col-2" type="number" name="lon_lo" value="1.69" step="any">
-                <div class="col-1 text-center mdash">&nbsp;&rarr;&nbsp</div>
-                <input id="lon_hi" class="form-control col-2" type="number" name="lon_hi" value="6.1" step="any">
-            </fieldset>
-        </fieldset>
-        <!--
-            Enviromental Parameters
-        -->
+        <div class="col-12">
+            <div class="row">
+
+                <div class="col-6">
+                    <!--
+                        TIMESTAMP
+                    -->
+                    <fieldset class="row m-1" data-toggle="tooltip" data-placement="bottom"
+                              title="Maximal temporal bounding box size is {{ max_days }} days. Start must be before end.">
+                        <legend>Temporal Bounding Box</legend>
+                        <div class="col-form-label text-right">&nbsp;</div>
+                        <input id="date_lo" class="form-control col-5" type="datetime-local" name="date_lo"
+                               value="2019-06-02T03:44">
+                        <div class="col-1 text-center mdash">&nbsp;&rarr;&nbsp</div>
+                        <input id="date_hi" class="form-control col-5" type="datetime-local" name="date_hi"
+                               value="2019-06-03T09:55">
+                    </fieldset>
+                    <!--
+                        Spatial Bounding Box
+                    -->
+                    <fieldset class="m-2">
+                        <legend>Spatial Bounding Box</legend>
+                        <fieldset class="row m-1" data-toggle="tooltip" data-placement="bottom"
+                                  title="Maximal latitude extent is {{ max_lat }}°; start must be lower than end.">
+                            <div class="col-form-label col-2 text-right">Latitude</div>
+                            <input id="lat_lo" class="form-control col-4" type="number" name="lat_lo" value="53.08"
+                                   step="any">
+                            <div class="col-1 text-center mdash">&nbsp;&rarr;&nbsp</div>
+                            <input id="lat_hi" class="form-control col-4" type="number" name="lat_hi" value="55.08"
+                                   step="any">
+                        </fieldset>
+                        <fieldset class="row m-1" data-toggle="tooltip" data-placement="bottom"
+                                  title="Maximal longitude extent is {{ max_lon }}°; start must be lower than end.">
+                            <div class="col-form-label col-2 text-right">Longitude</div>
+                            <input id="lon_lo" class="form-control col-4" type="number" name="lon_lo" value="1.69"
+                                   step="any">
+                            <div class="col-1 text-center mdash">&nbsp;&rarr;&nbsp</div>
+                            <input id="lon_hi" class="form-control col-4" type="number" name="lon_hi" value="6.1"
+                                   step="any">
+                        </fieldset>
+                    </fieldset>
+                    <!--
+                        Enviromental Parameters
+                    -->
+                </div>
+                <div class="col-6 w-100">
+                    <div id="mapid"></div>
+                </div>
+
+            </div>
+        </div>
         <fieldset class="m-3">
             <legend>Enviromental Parameters</legend>
             <div id="checkbox_list" class="row no-gutters m-3"></div>
@@ -50,7 +69,8 @@
             <legend>File Format</legend>
             <div class="col-10">
                 <div class="form-check">
-                    <input class="form-check-input" type="radio" id="format_csv" name="format" value="csv" checked="checked">
+                    <input class="form-check-input" type="radio" id="format_csv" name="format" value="csv"
+                           checked="checked">
                     <label class="form-check-label" for="format_csv">CSV</label>
                 </div>
                 <div class="form-check">

@@ -87,7 +87,9 @@ div.mdash {
     min-width: 250px;
 }
 
-
+#mapid {
+height: 400px;
+}
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
     -webkit-appearance: none;
