@@ -202,6 +202,46 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     return dataset, 'wind'
 
 
+def get_GFS_prognoses(start_date, end_date, lat_lo, lat_hi, lon_lo, lon_hi):
+    offset = 0.25
+    # check meridian bbox for GFS 50
+    if lon_lo < 0 and lon_hi > 0:
+        logger.debug(
+            'GFS prognoses dataset: splitting the requested bbox over the prime meridian into LON [%s, %s] and LON [%s, %s]' % (
+                lon_lo, -0.25, 0, lon_hi))
+        a = get_GFS_prognoses(start_date, end_date, lat_lo, lat_hi, lon_lo, -0.25)
+        b = get_GFS_prognoses(start_date, end_date, lat_lo, lat_hi, 0, lon_hi)
+        return xr.combine_by_coords([a, b], coords=['longitude'], combine_attrs='override',
+                                    compat='override').squeeze()
+
+    end_cat = TDSCatalog(
+        catalog_url="http://thredds.ucar.edu/thredds/catalog/grib/NCEP/GFS/"
+                    "Global_0p25deg/catalog.xml?dataset=grib/NCEP/GFS/Global_0p25deg/Best"
+    )
+    ds_subset = end_cat.datasets[0].subset()
+    query = ds_subset.query().lonlat_box(north=lat_hi + offset, south=lat_lo - offset,
+                                         east=lon_hi + offset,
+                                         west=lon_lo - offset).time_range(end_date + timedelta(
+        hours=0 if end_date == start_date + timedelta(days=1) else 3), end_date + timedelta(
+        days=1)).variables(*GFS_25_VAR_LIST)
+    CheckConnection.is_online()
+    try:
+        data = ds_subset.get_data(query)
+        x_arr = xr.open_dataset(NetCDF4DataStore(data))[GFS_25_VAR_LIST]
+        if 'time1' in list(x_arr.coords):
+            x_arr = x_arr.rename({'time1': 'time', 'reftime1': 'reftime'})
+        if 'height_above_ground' in list(x_arr.coords):
+            x_arr = x_arr.rename({'height_above_ground': 'height_above_ground4'})
+        if 'lon' in list(x_arr.coords):
+            x_arr = x_arr.rename({'lon': 'longitude'})
+        if 'lat' in list(x_arr.coords):
+            x_arr = x_arr.rename({'lat': 'latitude'})
+        return x_arr
+    except Exception as e:
+        print(e)
+        logger.warning(traceback.format_exc())
+
+
 def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     logger.debug('obtaining GFS 0.25 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
@@ -247,32 +287,7 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 
         # check for real time dataset (today - 4) - 17 in the future
         if (end_date + timedelta(days=4)).date() > date.today():
-            end_cat = TDSCatalog(
-                catalog_url="http://thredds.ucar.edu/thredds/catalog/grib/NCEP/GFS/"
-                            "Global_0p25deg/catalog.xml?dataset=grib/NCEP/GFS/Global_0p25deg/Best"
-            )
-            ds_subset = end_cat.datasets[0].subset()
-            query = ds_subset.query().lonlat_box(north=lat_hi + offset, south=lat_lo - offset,
-                                                 east=lon_hi + offset,
-                                                 west=lon_lo - offset).time_range(end_date + timedelta(
-                hours=0 if end_date == start_date + timedelta(days=1) else 3), end_date + timedelta(
-                days=1)).variables(*GFS_25_VAR_LIST)
-            CheckConnection.is_online()
-            try:
-                data = ds_subset.get_data(query)
-                x_arr = xr.open_dataset(NetCDF4DataStore(data))[GFS_25_VAR_LIST]
-                if 'time1' in list(x_arr.coords):
-                    x_arr = x_arr.rename({'time1': 'time', 'reftime1': 'reftime'})
-                if 'height_above_ground' in list(x_arr.coords):
-                    x_arr = x_arr.rename({'height_above_ground': 'height_above_ground4'})
-                if 'lon' in list(x_arr.coords):
-                    x_arr = x_arr.rename({'lon': 'longitude'})
-                if 'lat' in list(x_arr.coords):
-                    x_arr = x_arr.rename({'lat': 'latitude'})
-                x_arr_list.append(x_arr)
-            except Exception as e:
-                print(e)
-                logger.warning('dataset %s is not complete' % name)
+            x_arr_list.append(get_GFS_prognoses(start_date, end_date, lat_lo, lat_hi, lon_lo, lon_hi))
         else:
             end_cat = TDSCatalog(
                 "%s/%s/%s%.2d%.2d/catalog.xml" % (base_url, end_date.year, end_date.year, end_date.month, end_date.day))
@@ -298,7 +313,9 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                             logger.warning('dataset %s is not complete' % name)
                     else:
                         logger.warning('dataset %s is not found' % name)
-    combined_xarrays = xr.combine_by_coords(x_arr_list, coords=['time', 'reftime'], combine_attrs='override',
+    combined_xarrays = xr.combine_by_coords(x_arr_list,
+                                            coords=['time', 'reftime'],
+                                            combine_attrs='override',
                                             compat='override').squeeze().dropna('time')
     combined_xarrays['longitude'] = xr.where(combined_xarrays['longitude'] > 180, combined_xarrays['longitude'] - 360,
                                              combined_xarrays['longitude'])
