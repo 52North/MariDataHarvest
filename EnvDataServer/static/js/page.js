@@ -113,13 +113,13 @@ function createList(ls, name) {
         day: 'numeric', month: 'short', year: 'numeric'
     }) +'<small></i>'));
     }else if(name === 'GFS'){
-     tomorrow.setDate(today.getDate()+17)
+     tomorrow.setDate(today.getDate()+15)
     div.append($('<i><small> Data provided til '+tomorrow.toLocaleDateString('en-GB', {
         day: 'numeric', month: 'short', year: 'numeric'
     }) +'<small></i>'));
     }
-    else{
-    tomorrow.setDate(today.getDate()+9)
+    else if(name === 'Wave' or name === 'Physical'){
+    tomorrow.setDate(today.getDate()+8)
      div.append($('<i><small> Data provided til '+tomorrow.toLocaleDateString('en-GB', {
         day: 'numeric', month: 'short', year: 'numeric'
     }) +'<small></i>'));
