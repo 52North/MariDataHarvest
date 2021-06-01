@@ -457,29 +457,30 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 
 
 def interpolate(ds: xr.Dataset, ds_name: str, time_points: xr.DataArray, lat_points: xr.DataArray,
-                lon_points: xr.DataArray):
+                lon_points: xr.DataArray, var_list: list):
     if ds_name == 'wave':
         res = ds.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
-            WAVE_VAR_LIST].reset_index(drop=True)
+            var_list].reset_index(drop=True)
     elif ds_name == 'wind':
-        res = ds.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[WIND_VAR_LIST].reset_index(
+        res = ds.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[var_list].reset_index(
             drop=True)
     elif ds_name == 'gfs':
-        b = xr.DataArray([1] * len(lon_points))
-        res = ds.interp(longitude=lon_points, latitude=lat_points, time=time_points, bounds_dim=b).to_dataframe()[
-            GFS_25_VAR_LIST].reset_index(drop=True)
+        # b = xr.DataArray([1] * len(lon_points))
+        res = ds.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
+            var_list].reset_index(drop=True)
     elif ds_name == 'gfs_50':
-        res = ds.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[GFS_50_VAR_LIST].reset_index(
+        gfs_var = [var for var in var_list if var in GFS_50_VAR_LIST] # skipping missing variables in older datasets
+        res = ds.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[gfs_var].reset_index(
             drop=True)
     elif ds_name == 'phy':
         res = ds.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
-            DAILY_PHY_VAR_LIST].reset_index(drop=True)
+            var_list].reset_index(drop=True)
     ds.close()
     return res
 
 
 def select_grid_point(ds: xr.Dataset, ds_name: str, time_point: datetime, lat_point: float,
-                      lon_point: float):
+                      lon_point: float) -> pd.DataFrame:
     if ds_name == 'wave':
         res = ds.sel(longitude=lon_point, latitude=lat_point, method='nearest').to_dataframe()[
             WAVE_VAR_LIST].reset_index(drop=True)
@@ -501,10 +502,19 @@ def select_grid_point(ds: xr.Dataset, ds_name: str, time_point: datetime, lat_po
     return res.fillna(value=0)
 
 
-def append_to_csv(in_path: Path, out_path: Path) -> None:
+def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wave=None, phy=None) -> str:
+    if phy is None:
+        phy = DAILY_PHY_VAR_LIST
+    if wave is None:
+        wave = WAVE_VAR_LIST
+    if wind is None:
+        wind = WIND_VAR_LIST
+    if gfs is None:
+        gfs = GFS_25_VAR_LIST
     logger.debug('append_environment_data in file %s' % in_path)
 
     header = True
+    csv_str = ''
     try:
         for df_chunk in pd.read_csv(in_path, parse_dates=['BaseDateTime'], date_parser=helper_functions.str_to_date,
                                     chunksize=helper_functions.CHUNK_SIZE):
@@ -529,30 +539,40 @@ def append_to_csv(in_path: Path, out_path: Path) -> None:
 
                 df_chunk.reset_index(drop=True, inplace=True)
 
-                df_chunk = pd.concat(
-                    [df_chunk, interpolate(*get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi), time_points,
-                                           lat_points, lon_points)], axis=1)
+                if len(gfs) > 0:
+                    df_chunk = pd.concat(
+                        [df_chunk, interpolate(*get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi), time_points,
+                                               lat_points, lon_points, gfs)], axis=1)
 
-                df_chunk = pd.concat(
-                    [df_chunk,
-                     interpolate(*get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi), time_points,
-                                 lat_points, lon_points)], axis=1)
+                if len(phy) > 0:
+                    df_chunk = pd.concat(
+                        [df_chunk,
+                         interpolate(*get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi),
+                                     time_points,
+                                     lat_points, lon_points, phy)], axis=1)
 
-                df_chunk = pd.concat(
-                    [df_chunk,
-                     interpolate(*get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi), time_points,
-                                 lat_points,
-                                 lon_points)], axis=1)
+                if len(wind) > 0:
+                    df_chunk = pd.concat(
+                        [df_chunk,
+                         interpolate(*get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi), time_points,
+                                     lat_points,
+                                     lon_points, wind)], axis=1)
 
-                df_chunk = pd.concat(
-                    [df_chunk,
-                     interpolate(*get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi), time_points,
-                                 lat_points,
-                                 lon_points)], axis=1)
-
-                df_chunk.to_csv(out_path, mode='a', header=header, index=False)
-                header = False
+                if len(wave) > 0:
+                    df_chunk = pd.concat(
+                        [df_chunk,
+                         interpolate(*get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi), time_points,
+                                     lat_points,
+                                     lon_points, wave)], axis=1)
+                if out_path:
+                    df_chunk.to_csv(out_path, mode='a', header=header, index=False)
+                    header = False
+                else:
+                    csv_str += df_chunk.to_csv()
+        return csv_str
     except Exception as e:
         # discard the file in case of an error to resume later properly
-        out_path.unlink(missing_ok=True)
-        raise FileFailedException(out_path.name, e)
+        if out_path:
+            out_path.unlink(missing_ok=True)
+            raise FileFailedException(out_path.name, e)
+        raise e
