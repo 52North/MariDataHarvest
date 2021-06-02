@@ -15,6 +15,8 @@
                     <!--
                         TIMESTAMP
                     -->
+                    <div id="boundingBoxPanel">
+
                     <fieldset class="row m-1" data-toggle="tooltip" data-placement="bottom"
                               title="Maximal temporal bounding box size is {{ max_days }} days. Start must be before end.">
                         <legend>Temporal Bounding Box</legend>
@@ -49,12 +51,33 @@
                                    step="any">
                         </fieldset>
                   </fieldset>
+
+                    </div>
                     <!--
                          Upload csv file
                         -->
                     <fieldset class="m-3">
                         <legend>Upload a csv file</legend>
-                        <input type="file" id="csvUpload" name="csvUpload" class="form-control-file row no-gutters m-3">
+                        <div class="row m-1">
+                            <input type="file" id="csvUpload" name="csvUpload" class="col-auto m-2">
+                            <a id="removeFileBtn" class="btn uploadFileTools col-auto" style="display: none">x</a>
+                        </div>
+                        <div class="uploadFileTools"  style="display: none">
+
+
+                            <div class="row m-1">
+                                <div class="col-form-label col-2 text-right">Timestamp</div>
+                                <select  class="col-auto"></select>
+                                    </div>
+                            <div class="row m-1" >
+                                <div class="col-form-label col-2 text-right">Latitude</div>
+                                <select  class="col-auto"></select>
+                                    </div>
+                            <div class="row m-1">
+                                <div class="col-form-label col-2 text-right">Longitude</div>
+                                <select  class="col-auto"></select>
+                            </div>
+                         </div>
                     </fieldset>
                 </div>
                 <div class="col-6 w-100">

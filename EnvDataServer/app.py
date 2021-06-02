@@ -86,21 +86,27 @@ def merge_data():
     logger.debug(request)
     errorString = ''
     wave, wind, gfs, phy = parse_requested_var(json.loads(request.form['var']))
+    if len(wave + wind + gfs + phy) == 0:
+        logger.debug('Error: No variables are selected')
+        return render_template('error.html', error='Error: No variables are selected')
     file = request.files['file']
     dir_path_up = Path(Path(__file__).parent, 'upload')
     dir_path_up.mkdir(exist_ok=True)
     dir_path_down = Path(Path(__file__).parent, 'download')
     dir_path_down.mkdir(exist_ok=True)
-    filename =  str(uuid.uuid1()) + '.csv'
-    file_path = Path(dir_path_up, filename)
-    file.save(file_path)
+    filename = str(uuid.uuid1()) + '.csv'
+    file_path_up = Path(dir_path_up, filename)
+    file_path_down = Path(dir_path_down, filename)
+    file.save(file_path_up)
     try:
-        append_to_csv(file_path, Path(dir_path_down, filename), wave=wave, wind=wind, gfs=gfs, phy=phy)
+        append_to_csv(file_path_up, file_path_down, wave=wave, wind=wind, gfs=gfs, phy=phy)
     except Exception as e:
         logger.error(traceback.format_exc())
         errorString += 'Error occurred while appending env data:  ' + str(e) + '\n'
+    delete_file_queue[str(file_path_up)] = datetime.now() + timedelta(minutes=FILE_LIFE_SPAN)
+    delete_file_queue[str(file_path_down)] = datetime.now()
     return render_template('result.html',
-                           download_link='/EnvDataAPI/' + str(file_path.name),
+                           download_link='/EnvDataAPI/' + str(file_path_up.name),
                            download_text='Download merged csv file',
                            note='The file will be automatically deleted in {} Minutes: {}.'.format(
                                FILE_LIFE_SPAN,

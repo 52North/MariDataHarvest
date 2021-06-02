@@ -90,6 +90,25 @@ window.onload = () => {
         day: 'numeric', month: 'short', year: 'numeric'
     });
 
+    $('#removeFileBtn').click((event)=>{
+        event.stopImmediatePropagation();
+        event.preventDefault();
+        $("#csvUpload").val('');
+        $("#csvUpload").trigger('change')
+    });
+
+    $('#csvUpload').change(()=>{
+
+        var files = $('#csvUpload')[0].files;
+        if(files.length > 0 ){
+            $('#boundingBoxPanel').slideUp()
+            $('.uploadFileTools').attr("style", "display:block");
+           }else{
+            $('#boundingBoxPanel').slideDown()
+            $('.uploadFileTools').attr("style", "display:none");
+           }
+    });
+
     $('#submitBtn').click((event)=>{
         var files = $('#csvUpload')[0].files;
         if(files.length > 0 ){
@@ -98,11 +117,8 @@ window.onload = () => {
             $('#submitBtn').prop('disabled',true);
             $('#spinnerPanel').prop('hidden',false);
             var fd = new FormData();
-
             data = getVariables();
-            // Check file selected or not
-
-               fd.append('file',files[0]);
+            fd.append('file',files[0]);
             fd.append('var',JSON.stringify(data));
 
             $.ajax({
