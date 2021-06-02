@@ -90,13 +90,48 @@ window.onload = () => {
         day: 'numeric', month: 'short', year: 'numeric'
     });
 
-    document.getElementById('submitForm').onsubmit = ()=>{
-        document.getElementById('submitBtn').disabled = true
-        document.getElementById('spinnerPanel').hidden = false
-    }
+    $('#submitBtn').click((event)=>{
+        var files = $('#csvUpload')[0].files;
+        if(files.length > 0 ){
+            event.stopImmediatePropagation();
+            event.preventDefault();
+            $('#submitBtn').prop('disabled',true);
+            $('#spinnerPanel').prop('hidden',false);
+            var fd = new FormData();
+
+            data = getVariables();
+            // Check file selected or not
+
+               fd.append('file',files[0]);
+            fd.append('var',JSON.stringify(data));
+
+            $.ajax({
+              url: window.location + '/merge_data',
+              data: fd,
+              processData: false,
+              contentType: false,
+              type: 'POST',
+              success: function(data){
+                $('html').html(data)
+              }
+            });
+        }
+    });
 
 }
 
+function getVariables() {
+    data = []
+    ls = ['Wave', 'Wind', 'GFS', 'Physical']
+    ls.forEach( ds =>{
+        $('.'+ds+'_checkbox').each( (x, i) => {
+            if ($(i).is(':checked')){
+             data.push(i.name)
+            }
+        });
+    });
+    return data
+}
 function createList(ls, name) {
     let checkbox_list = $('#checkbox_list');
     let div = $('<div class="col w-75"> </div>')

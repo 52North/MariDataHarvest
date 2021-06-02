@@ -502,7 +502,7 @@ def select_grid_point(ds: xr.Dataset, ds_name: str, time_point: datetime, lat_po
     return res.fillna(value=0)
 
 
-def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wave=None, phy=None) -> str:
+def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wave=None, phy=None):
     if phy is None:
         phy = DAILY_PHY_VAR_LIST
     if wave is None:
@@ -514,7 +514,6 @@ def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wav
     logger.debug('append_environment_data in file %s' % in_path)
 
     header = True
-    csv_str = ''
     try:
         for df_chunk in pd.read_csv(in_path, parse_dates=['BaseDateTime'], date_parser=helper_functions.str_to_date,
                                     chunksize=helper_functions.CHUNK_SIZE):
@@ -564,12 +563,9 @@ def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wav
                          interpolate(*get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi), time_points,
                                      lat_points,
                                      lon_points, wave)], axis=1)
-                if out_path:
+
                     df_chunk.to_csv(out_path, mode='a', header=header, index=False)
                     header = False
-                else:
-                    csv_str += df_chunk.to_csv()
-        return csv_str
     except Exception as e:
         # discard the file in case of an error to resume later properly
         if out_path:

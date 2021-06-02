@@ -7,7 +7,7 @@ from flask import Flask, render_template, request, send_from_directory, Response
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from utilities.helper_functions import str_to_date_min
-from EnvironmentalData.weather import get_global_wave, get_global_wind, get_GFS, get_global_phy_daily
+from EnvironmentalData.weather import get_global_wave, get_global_wind, get_GFS, get_global_phy_daily, append_to_csv
 from datetime import timedelta, datetime
 import xarray as xr
 import uuid
@@ -16,7 +16,7 @@ import time
 import pytz
 from waitress import serve
 from paste.translogger import TransLogger
-
+import json
 logger = logging.getLogger('EnvDataServer.app')
 
 app = Flask(__name__)
@@ -80,7 +80,36 @@ def create_csv(df, metadata_dict, file_path):
         f.write(csv_str)
 
 
-@app.route('/EnvDataAPI/request_env_data')
+@app.route('/EnvDataAPI/merge_data', methods=['POST'])
+@limiter.limit("1/10second")
+def merge_data():
+    logger.debug(request)
+    errorString = ''
+    wave, wind, gfs, phy = parse_requested_var(json.loads(request.form['var']))
+    file = request.files['file']
+    dir_path_up = Path(Path(__file__).parent, 'upload')
+    dir_path_up.mkdir(exist_ok=True)
+    dir_path_down = Path(Path(__file__).parent, 'download')
+    dir_path_down.mkdir(exist_ok=True)
+    filename =  str(uuid.uuid1()) + '.csv'
+    file_path = Path(dir_path_up, filename)
+    file.save(file_path)
+    try:
+        append_to_csv(file_path, Path(dir_path_down, filename), wave=wave, wind=wind, gfs=gfs, phy=phy)
+    except Exception as e:
+        logger.error(traceback.format_exc())
+        errorString += 'Error occurred while appending env data:  ' + str(e) + '\n'
+    return render_template('result.html',
+                           download_link='/EnvDataAPI/' + str(file_path.name),
+                           download_text='Download merged csv file',
+                           note='The file will be automatically deleted in {} Minutes: {}.'.format(
+                               FILE_LIFE_SPAN,
+                               (datetime.now(pytz.utc) + timedelta(minutes=FILE_LIFE_SPAN)).strftime("%I:%M %p %Z")
+                           ),
+                           errorFlag=len(errorString) > 0, error=errorString)
+
+
+@app.route('/EnvDataAPI/request_env_data', methods=['GET'])
 @limiter.limit("1/10second")
 def request_env_data():
     logger.debug(request)
