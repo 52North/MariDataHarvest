@@ -6,7 +6,7 @@ import logging
 from flask import Flask, render_template, request, send_from_directory, Response
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from utilities.helper_functions import str_to_date_min
+from utilities.helper_functions import str_to_date_min, create_csv
 from EnvironmentalData.weather import get_global_wave, get_global_wind, get_GFS, get_global_phy_daily, append_to_csv
 from datetime import timedelta, datetime
 import xarray as xr
@@ -72,13 +72,6 @@ def parse_requested_var(args):
     return wave, wind, gfs, phy
 
 
-def create_csv(df, metadata_dict, file_path):
-    csv_str = df.to_csv()
-    csv_coma_line = csv_str[:csv_str.find('\n')].count(',') * ',' + '\n'
-    csv_str = csv_coma_line.join(metadata_dict.values()) + csv_coma_line + csv_str
-    with open(file_path, 'w', newline='', encoding='utf-8') as f:
-        f.write(csv_str)
-
 
 @app.route('/EnvDataAPI/merge_data', methods=['POST'])
 @limiter.limit("1/10second")
@@ -86,6 +79,7 @@ def merge_data():
     logger.debug(request)
     errorString = ''
     wave, wind, gfs, phy = parse_requested_var(json.loads(request.form['var']))
+    col_dict = json.loads(request.form['col'])
     if len(wave + wind + gfs + phy) == 0:
         logger.debug('Error: No variables are selected')
         return render_template('error.html', error='Error: No variables are selected')
@@ -99,10 +93,18 @@ def merge_data():
     file_path_down = Path(dir_path_down, filename)
     file.save(file_path_up)
     try:
-        append_to_csv(file_path_up, file_path_down, wave=wave, wind=wind, gfs=gfs, phy=phy)
+        metadata_dict = dict(
+            credit_CMEMS='Credit (Wave-Wind-Physical): E.U. Copernicus Marine Service Information (CMEMS)',
+            credit_GFS='Credit (GFS): National Centers for Environmental Prediction/National Weather Service/NOAA',
+            created='Accessed on %s' % datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            errors='Error(s): ' + errorString.replace(',', ' ').replace('\n', ' ')
+        )
+        append_to_csv(file_path_up, file_path_down, wave=wave, wind=wind, gfs=gfs, phy=phy, col_dict=col_dict, metadata=metadata_dict)
     except Exception as e:
         logger.error(traceback.format_exc())
-        errorString += 'Error occurred while appending env data:  ' + str(e) + '\n'
+        errorString += 'Error occurred while appending env data: CSV file is not valid.\n'
+        return render_template('error.html',error=errorString)
+    # TODO should we remove uploaded data?
     delete_file_queue[str(file_path_up)] = datetime.now() + timedelta(minutes=FILE_LIFE_SPAN)
     delete_file_queue[str(file_path_down)] = datetime.now()
     return render_template('result.html',

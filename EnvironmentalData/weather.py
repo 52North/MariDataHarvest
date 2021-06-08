@@ -17,7 +17,7 @@ from utilities.check_connection import CheckConnection
 from EnvironmentalData import config
 
 from utilities import helper_functions
-from utilities.helper_functions import FileFailedException, Failed_Files, check_dir
+from utilities.helper_functions import FileFailedException, Failed_Files, check_dir, create_csv
 
 logger = logging.getLogger(__name__)
 
@@ -502,7 +502,10 @@ def select_grid_point(ds: xr.Dataset, ds_name: str, time_point: datetime, lat_po
     return res.fillna(value=0)
 
 
-def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wave=None, phy=None):
+def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wave=None, phy=None, col_dict={}, metadata={}):
+    if not bool(col_dict):
+        # default for marinecadastre
+        col_dict = {'time':'BaseDateTime',  'lat': 'LAT', 'lon': 'LON'}
     if phy is None:
         phy = DAILY_PHY_VAR_LIST
     if wave is None:
@@ -515,26 +518,26 @@ def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wav
 
     header = True
     try:
-        for df_chunk in pd.read_csv(in_path, parse_dates=['BaseDateTime'], date_parser=helper_functions.str_to_date,
+        for df_chunk in pd.read_csv(in_path, parse_dates=[col_dict['time']], date_parser=helper_functions.str_to_date,
                                     chunksize=helper_functions.CHUNK_SIZE):
             if len(df_chunk) > 1:
                 # remove index column
                 df_chunk.drop(['Unnamed: 0'], axis=1, errors='ignore', inplace=True)
 
                 # retrieve the data for each file once
-                lat_hi = df_chunk.LAT.max()
-                lon_hi = df_chunk.LON.max()
+                lat_hi = df_chunk[col_dict['lat']].max()
+                lon_hi = df_chunk[col_dict['lon']].max()
 
-                lat_lo = df_chunk.LAT.min()
-                lon_lo = df_chunk.LON.min()
+                lat_lo = df_chunk[col_dict['lat']].min()
+                lon_lo = df_chunk[col_dict['lon']].min()
 
-                date_lo = df_chunk.BaseDateTime.min()
-                date_hi = df_chunk.BaseDateTime.max()
+                date_lo = df_chunk[col_dict['time']].min()
+                date_hi = df_chunk[col_dict['time']].max()
 
                 # query parameters
-                time_points = xr.DataArray(list(df_chunk['BaseDateTime'].values))
-                lat_points = xr.DataArray(list(df_chunk['LAT'].values))
-                lon_points = xr.DataArray(list(df_chunk['LON'].values))
+                time_points = xr.DataArray(list(df_chunk[col_dict['time']].values))
+                lat_points = xr.DataArray(list(df_chunk[col_dict['lat']].values))
+                lon_points = xr.DataArray(list(df_chunk[col_dict['lon']].values))
 
                 df_chunk.reset_index(drop=True, inplace=True)
 
@@ -563,9 +566,11 @@ def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wav
                          interpolate(*get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi), time_points,
                                      lat_points,
                                      lon_points, wave)], axis=1)
-
-                    df_chunk.to_csv(out_path, mode='a', header=header, index=False)
+                if bool(metadata) and header:
+                    create_csv(df_chunk, metadata, out_path, index=False)
                     header = False
+                else:
+                    df_chunk.to_csv(out_path, mode='a', header=header, index=False)
     except Exception as e:
         # discard the file in case of an error to resume later properly
         if out_path:

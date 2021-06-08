@@ -18,12 +18,13 @@ window.onload = () => {
     var boundingBox_id = L.stamp(boundingBox);
 
     $('.bbox').on('input', (e)=>{
+    if (boundingBox_id !== -1)
         layerGroup.removeLayer(boundingBox_id)
-        var bounds = [[$('#lat_lo').val(),$('#lon_lo').val()], [$('#lat_hi').val(), $('#lon_hi').val()]];
-        var boundingBox = L.rectangle(bounds, {color: "#ffffff", weight: 1}).addTo(layerGroup);
-        mymap.fitBounds(bounds, {padding: [80,80]})
-        mymap.addLayer(boundingBox);
-        boundingBox_id= L.stamp(boundingBox);
+    var bounds = [[$('#lat_lo').val(),$('#lon_lo').val()], [$('#lat_hi').val(), $('#lon_hi').val()]];
+    var boundingBox = L.rectangle(bounds, {color: "#ffffff", weight: 1}).addTo(layerGroup);
+    mymap.fitBounds(bounds, {padding: [80,80]})
+    mymap.addLayer(boundingBox);
+    boundingBox_id= L.stamp(boundingBox);
     });
 
     WAVE_VAR_LIST = {'VHM0_WW':		'sea_surface_wind_wave_significant_height',
@@ -95,16 +96,36 @@ window.onload = () => {
         event.preventDefault();
         $("#csvUpload").val('');
         $("#csvUpload").trigger('change')
+
     });
 
     $('#csvUpload').change(()=>{
-
+        if (boundingBox_id !== -1){
+            layerGroup.removeLayer(boundingBox_id)
+            boundingBox_id = -1
+        }
         var files = $('#csvUpload')[0].files;
         if(files.length > 0 ){
-            $('#boundingBoxPanel').slideUp()
-            $('.uploadFileTools').attr("style", "display:block");
+           $('#boundingBoxPanel').hide()
+           $('.uploadFileTools').attr("style", "display:block");
+            var reader = new FileReader();
+            reader.addEventListener('load', function (e) {
+                var index = e.target.result.indexOf("\r\n");
+                if (index === -1)
+                  index= e.target.result.indexOf("\n");
+                var header_list =e.target.result.substring(0, index).split(',');
+                console.log(header_list);
+                $('.select_header').each( (x, i) => {
+                $(i).children().remove();
+                header_list.forEach(head => {
+                    $(i).append($('<option>'+head+'</option>').val(head));
+                });
+             });
+            });
+            reader.readAsBinaryString(files[0]);
            }else{
-            $('#boundingBoxPanel').slideDown()
+            $('#boundingBoxPanel').show();
+            $('#lat_lo').trigger('input');
             $('.uploadFileTools').attr("style", "display:none");
            }
     });
@@ -112,14 +133,20 @@ window.onload = () => {
     $('#submitBtn').click((event)=>{
         var files = $('#csvUpload')[0].files;
         if(files.length > 0 ){
+            cols = {
+                'time':$('#timestamp_select').find(":selected").text(),
+                'lat':$('#lat_select').find(":selected").text(),
+                'lon':$('#lon_select').find(":selected").text()
+            }
             event.stopImmediatePropagation();
             event.preventDefault();
             $('#submitBtn').prop('disabled',true);
             $('#spinnerPanel').prop('hidden',false);
             var fd = new FormData();
-            data = getVariables();
+            vars = getVariables();
             fd.append('file',files[0]);
-            fd.append('var',JSON.stringify(data));
+            fd.append('var',JSON.stringify(vars));
+            fd.append('col',JSON.stringify(cols));
 
             $.ajax({
               url: window.location + '/merge_data',
