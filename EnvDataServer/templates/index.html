@@ -15,6 +15,8 @@
                     <!--
                         TIMESTAMP
                     -->
+                    <div id="boundingBoxPanel">
+
                     <fieldset class="row m-1" data-toggle="tooltip" data-placement="bottom"
                               title="Maximal temporal bounding box size is {{ max_days }} days. Start must be before end.">
                         <legend>Temporal Bounding Box</legend>
@@ -31,7 +33,7 @@
                     <fieldset class="m-2">
                         <legend>Spatial Bounding Box</legend>
                         <fieldset class="row m-1" data-toggle="tooltip" data-placement="bottom"
-                                  title="Maximal latitude extent is {{ max_lat }}°; start must be lower than end.">
+                                  title="Maximal latitude extent is {{ max_lat }}°; start must be lower than end. Supported values are between [-90, 90]">
                             <div class="col-form-label col-2 text-right">Latitude</div>
                             <input id="lat_lo" class="form-control col-4 bbox" type="number" name="lat_lo" value="53.08"
                                    step="any">
@@ -40,7 +42,7 @@
                                    step="any">
                         </fieldset>
                         <fieldset class="row m-1" data-toggle="tooltip" data-placement="bottom"
-                                  title="Maximal longitude extent is {{ max_lon }}°; start must be lower than end.">
+                                  title="Maximal longitude extent is {{ max_lon }}°; start must be lower than end. Supported values are between [-180, 180]">
                             <div class="col-form-label col-2 text-right">Longitude</div>
                             <input id="lon_lo" class="form-control col-4 bbox" type="number" name="lon_lo" value="1.69"
                                    step="any">
@@ -49,12 +51,42 @@
                                    step="any">
                         </fieldset>
                   </fieldset>
+
+                    </div>
+                    <!--
+                         Upload csv file
+                        -->
+                    <fieldset class="m-3">
+                        <legend>Upload a csv file</legend>
+                        <div class="row m-1">
+                            <input type="file" id="csvUpload" name="csvUpload" class="col-auto m-2">
+                            <a id="removeFileBtn" class="btn uploadFileTools col-auto" style="display: none">x</a>
+                        </div>
+                        <div class="uploadFileTools"  style="display: none">
+                            <div class="row m-1" data-toggle="tooltip" data-placement="bottom"
+                                  title="Must be in format %Y-%m-%d %H:%M:%S">
+                                <div class="col-form-label col-2 text-right">Timestamp</div>
+                                <select id="timestamp_select" class="form-control col-3 select_header"></select>
+                                    </div>
+                            <div class="row m-1" data-toggle="tooltip" data-placement="bottom"
+                                  title="Must be in range of [-90, 90]">
+                                <div class="col-form-label col-2 text-right">Latitude</div>
+                                <select  id="lat_select" class="form-control col-3 select_header"></select>
+                                    </div>
+                            <div class="row m-1" data-toggle="tooltip" data-placement="bottom"
+                                  title="Must be in range of [-180, 180]">
+                                <div class="col-form-label col-2 text-right">Longitude</div>
+                                <select id="lon_select" class="form-control col-3 select_header"></select>
+                            </div>
+                         </div>
+                    </fieldset>
                 </div>
                 <div class="col-6 w-100">
                     <div id="mapid"></div>
                 </div>
             </div>
         </div>
+
         <!--
              Enviromental Parameters
             -->

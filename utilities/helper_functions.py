@@ -42,3 +42,14 @@ def check_dir(dir_name: Path) -> typing.List[str]:
         List all contents of `dir_name` and returns is sorted using `str.lower` for `sorted`.
     """
     return sorted(os.listdir(dir_name), key=str.lower)
+
+
+def create_csv(df, metadata_dict, file_path, index=True):
+    """
+         create a csv file including a metadata object as a dictionary in the beginning of the file.
+     """
+    csv_str = df.to_csv(index=index)
+    csv_coma_line = csv_str[:csv_str.find('\n')].count(',') * ',' + '\n'
+    csv_str = csv_coma_line.join(metadata_dict.values()) + csv_coma_line + csv_str
+    with open(file_path, 'w', newline='', encoding='utf-8') as f:
+        f.write(csv_str)
