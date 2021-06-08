@@ -106,6 +106,8 @@ window.onload = () => {
         }
         var files = $('#csvUpload')[0].files;
         if(files.length > 0 ){
+           $('#format_netcdf').prop('disabled',true);
+           $('#format_csv').prop('checked',true);
            $('#boundingBoxPanel').hide()
            $('.uploadFileTools').attr("style", "display:block");
             var reader = new FileReader();
@@ -124,6 +126,7 @@ window.onload = () => {
             });
             reader.readAsBinaryString(files[0]);
            }else{
+            $('#format_netcdf').prop('disabled',false);
             $('#boundingBoxPanel').show();
             $('#lat_lo').trigger('input');
             $('.uploadFileTools').attr("style", "display:none");
