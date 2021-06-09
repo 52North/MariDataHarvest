@@ -17,6 +17,7 @@ import pytz
 from waitress import serve
 from paste.translogger import TransLogger
 import json
+
 logger = logging.getLogger('EnvDataServer.app')
 
 app = Flask(__name__)
@@ -72,10 +73,10 @@ def parse_requested_var(args):
     return wave, wind, gfs, phy
 
 
-
 @app.route('/EnvDataAPI/merge_data', methods=['POST'])
 @limiter.limit("1/10second")
 def merge_data():
+    return render_template('error.html', error='Service is currently not available')
     logger.debug(request)
     errorString = ''
     wave, wind, gfs, phy = parse_requested_var(json.loads(request.form['var']))
@@ -99,11 +100,12 @@ def merge_data():
             created='Accessed on %s' % datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             errors='Error(s): ' + errorString.replace(',', ' ').replace('\n', ' ')
         )
-        append_to_csv(file_path_up, file_path_down, wave=wave, wind=wind, gfs=gfs, phy=phy, col_dict=col_dict, metadata=metadata_dict)
+        append_to_csv(file_path_up, file_path_down, wave=wave, wind=wind, gfs=gfs, phy=phy, col_dict=col_dict,
+                      metadata=metadata_dict)
     except Exception as e:
         logger.error(traceback.format_exc())
-        errorString += 'Error occurred while appending env data: CSV file is not valid.\n'
-        return render_template('error.html',error=errorString)
+        errorString += 'Error occurred while appending env data: ' + str(e) + '. CSV file is not valid.\n'
+        return render_template('error.html', error=errorString)
     # TODO should we remove uploaded data?
     delete_file_queue[str(file_path_up)] = datetime.now() + timedelta(minutes=FILE_LIFE_SPAN)
     delete_file_queue[str(file_path_down)] = datetime.now()
