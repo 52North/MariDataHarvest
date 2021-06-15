@@ -134,6 +134,10 @@ window.onload = () => {
            }
     });
 
+    $('#submitBtn').submit((event)=>{
+        $('#submitBtn').prop('disabled',true);
+        $('#spinnerPanel').prop('hidden',false);
+    });
     $('#submitBtn').click((event)=>{
         var files = $('#csvUpload')[0].files;
         if(files.length > 0 ){
