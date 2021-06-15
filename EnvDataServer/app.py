@@ -6,7 +6,7 @@ import logging
 from flask import Flask, render_template, request, send_from_directory, Response
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from utilities.helper_functions import str_to_date_min, create_csv
+from utilities.helper_functions import str_to_date_min, create_csv, FileFailedException
 from EnvironmentalData.weather import get_global_wave, get_global_wind, get_GFS, get_global_phy_daily, append_to_csv
 from datetime import timedelta, datetime
 import xarray as xr
@@ -27,7 +27,7 @@ limiter = Limiter(
     default_limits=["70 per hour"]
 )
 
-app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024    # 50 Mb limit
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50 Mb limit
 
 # global variables
 # TODO move to a config file
@@ -103,9 +103,10 @@ def merge_data():
         )
         append_to_csv(file_path_up, file_path_down, wave=wave, wind=wind, gfs=gfs, phy=phy, col_dict=col_dict,
                       metadata=metadata_dict)
-    except Exception as e:
+    except FileFailedException as e:
         logger.error(traceback.format_exc())
-        errorString += 'Error occurred while appending env data: ' + str(e) + '. CSV file is not valid.\n'
+        errorString += 'Error occurred while appending env data: ' + str(
+            e.original_exception) + '. CSV file is not valid.\n'
         return render_template('error.html', error=errorString)
     # TODO should we remove uploaded data?
     delete_file_queue[str(file_path_up)] = datetime.now() + timedelta(minutes=FILE_LIFE_SPAN)

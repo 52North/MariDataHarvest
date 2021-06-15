@@ -533,8 +533,8 @@ def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wav
 
                 date_lo = df_chunk[col_dict['time']].min()
                 date_hi = df_chunk[col_dict['time']].max()
-                if abs(lat_hi - lat_lo) > 50 or abs(lon_hi - lon_lo) > 50 or (date_hi - date_lo).days > 10:
-                    raise ValueError('Large extent ')
+                if abs(lat_hi - lat_lo) > 60 or abs(lon_hi - lon_lo) > 60 or (date_hi - date_lo).days > 10:
+                    raise ValueError('exceeds temporal or spatial extent.')
                 # query parameters
                 time_points = xr.DataArray(list(df_chunk[col_dict['time']].values))
                 lat_points = xr.DataArray(list(df_chunk[col_dict['lat']].values))

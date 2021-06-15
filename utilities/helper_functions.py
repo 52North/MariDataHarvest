@@ -19,6 +19,7 @@ class FileFailedException(Exception):
     def __init__(self, file_name, original_exception: Exception):
         self.file_name = file_name
         self.exceptionType = type(original_exception).__name__
+        self.original_exception = original_exception
         super().__init__('Failed processing file %s' % file_name)
 
 
