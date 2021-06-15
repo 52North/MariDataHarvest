@@ -88,7 +88,8 @@ div.mdash {
 }
 
 #mapid {
-height: 400px;
+min-height: 400px;
+height: 100%
 }
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
@@ -118,3 +119,11 @@ input[type=number] {
 div#download-button {
     margin: auto;
 }
+
+.box-panel{
+    border: 1px solid gray;
+    border-radius: 5px;
+    padding: 4px;
+    margin-bottom: 8px;
+}
+

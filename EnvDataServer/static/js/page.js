@@ -3,14 +3,15 @@ window.onload = () => {
       $('[data-toggle="tooltip"]').tooltip()
      })
     var mymap = L.map('mapid').setView([51.505, -0.09], 13);
+
     L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoic3VmaWFuemEiLCJhIjoiY2twODloeGV5MDZweTJvbXBseWN2anc3ZiJ9.IoiJIA50gTlBv0nCXx1vVw', {
         attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-        maxZoom: 18,
-        id: 'mapbox/streets-v11',
+        maxZoom: 33,
+        id: 'mapbox/satellite-v9',
         tileSize: 512,
         zoomOffset: -1
     }).addTo(mymap);
-
+    window.dispatchEvent(new Event('resize'));
     var bounds = [[$('#lat_lo').val(),$('#lon_lo').val()], [$('#lat_hi').val(), $('#lon_hi').val()]];
     var layerGroup = L.layerGroup().addTo(mymap)
     var boundingBox = L.rectangle(bounds, {color: "#ffffff", weight: 1}).addTo(layerGroup);
@@ -159,7 +160,12 @@ window.onload = () => {
               type: 'POST',
               success: function(data){
                 $('html').html(data)
-              }
+              },
+                error: function(err){
+                alert('Error ' + err.status + ' : ' + err.responseText)
+                $('#submitBtn').prop('disabled',false);
+                $('#spinnerPanel').prop('hidden',true);
+                }
             });
         }
     });

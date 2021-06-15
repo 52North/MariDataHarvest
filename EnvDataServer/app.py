@@ -27,6 +27,8 @@ limiter = Limiter(
     default_limits=["70 per hour"]
 )
 
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024    # 50 Mb limit
+
 # global variables
 # TODO move to a config file
 delete_file_queue = dict()
@@ -76,7 +78,6 @@ def parse_requested_var(args):
 @app.route('/EnvDataAPI/merge_data', methods=['POST'])
 @limiter.limit("1/10second")
 def merge_data():
-    return render_template('error.html', error='Service is currently not available')
     logger.debug(request)
     errorString = ''
     wave, wind, gfs, phy = parse_requested_var(json.loads(request.form['var']))

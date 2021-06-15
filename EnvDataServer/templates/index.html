@@ -15,72 +15,103 @@
                     <!--
                         TIMESTAMP
                     -->
-                    <div id="boundingBoxPanel">
+                    <div class="box-panel" id="boundingBoxPanel">
+                        <legend class="m-0">Bounding Box</legend>
+                        <div><small>
+                            <ul style="list-style: none;">
+                                <li>Maximal bbox dimension ({{ max_lat }}° lat x {{ max_lon }}° lon x {{ max_days }}
+                                    days).
+                                </li>
+                                <li>All data is interpolated to match the following constraints:
+                                    <ul style="list-style: none;">
+                                        <li>Spatial Resolution: 0.083° &times; 0.083°</li>
+                                        <li>Temporal Resolution: 3-hours interval</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </small></div>
+                        <fieldset class="row m-1" data-toggle="tooltip" data-placement="bottom"
+                                  title="Maximal temporal bounding box size is {{ max_days }} days. Start must be before end.">
+                            <legend class="m-0" style="font-size: 16px;">Temporal extent</legend>
 
-                    <fieldset class="row m-1" data-toggle="tooltip" data-placement="bottom"
-                              title="Maximal temporal bounding box size is {{ max_days }} days. Start must be before end.">
-                        <legend>Temporal Bounding Box</legend>
-                        <div class="col-form-label text-right">&nbsp;</div>
-                        <input id="date_lo" class="form-control col-5" type="datetime-local" name="date_lo"
-                               value="2019-06-02T03:44">
-                        <div class="col-1 text-center mdash">&nbsp;&rarr;&nbsp</div>
-                        <input id="date_hi" class="form-control col-5" type="datetime-local" name="date_hi"
-                               value="2019-06-03T09:55">
-                    </fieldset>
-                    <!--
-                        Spatial Bounding Box
-                    -->
-                    <fieldset class="m-2">
-                        <legend>Spatial Bounding Box</legend>
-                        <fieldset class="row m-1" data-toggle="tooltip" data-placement="bottom"
-                                  title="Maximal latitude extent is {{ max_lat }}°; start must be lower than end. Supported values are between [-90, 90]">
-                            <div class="col-form-label col-2 text-right">Latitude</div>
-                            <input id="lat_lo" class="form-control col-4 bbox" type="number" name="lat_lo" value="53.08"
-                                   step="any">
+                            <div class="col-form-label text-right">&nbsp;</div>
+                            <input id="date_lo" class="form-control col-5" type="datetime-local" name="date_lo"
+                                   value="2019-06-02T03:44">
                             <div class="col-1 text-center mdash">&nbsp;&rarr;&nbsp</div>
-                            <input id="lat_hi" class="form-control col-4 bbox" type="number" name="lat_hi" value="55.08"
-                                   step="any">
+                            <input id="date_hi" class="form-control col-5" type="datetime-local" name="date_hi"
+                                   value="2019-06-03T09:55">
                         </fieldset>
-                        <fieldset class="row m-1" data-toggle="tooltip" data-placement="bottom"
-                                  title="Maximal longitude extent is {{ max_lon }}°; start must be lower than end. Supported values are between [-180, 180]">
-                            <div class="col-form-label col-2 text-right">Longitude</div>
-                            <input id="lon_lo" class="form-control col-4 bbox" type="number" name="lon_lo" value="1.69"
-                                   step="any">
-                            <div class="col-1 text-center mdash">&nbsp;&rarr;&nbsp</div>
-                            <input id="lon_hi" class="form-control col-4 bbox" type="number" name="lon_hi" value="6.1"
-                                   step="any">
+                        <!--
+                            Spatial Bounding Box
+                        -->
+                        <fieldset class="m-2">
+                            <legend class="m-0" style="font-size: 16px;">Spatial extent</legend>
+                            <fieldset class="row m-1" data-toggle="tooltip" data-placement="bottom"
+                                      title="Maximal latitude extent is {{ max_lat }}°; start must be lower than end. Supported values are between [-90, 90]">
+                                <div class="col-form-label col-2 text-right">Latitude</div>
+                                <input id="lat_lo" class="form-control col-4 bbox" type="number" name="lat_lo"
+                                       value="53.08"
+                                       step="any">
+                                <div class="col-1 text-center mdash">&nbsp;&rarr;&nbsp</div>
+                                <input id="lat_hi" class="form-control col-4 bbox" type="number" name="lat_hi"
+                                       value="55.08"
+                                       step="any">
+                            </fieldset>
+                            <fieldset class="row m-1" data-toggle="tooltip" data-placement="bottom"
+                                      title="Maximal longitude extent is {{ max_lon }}°; start must be lower than end. Supported values are between [-180, 180]">
+                                <div class="col-form-label col-2 text-right">Longitude</div>
+                                <input id="lon_lo" class="form-control col-4 bbox" type="number" name="lon_lo"
+                                       value="1.69"
+                                       step="any">
+                                <div class="col-1 text-center mdash">&nbsp;&rarr;&nbsp</div>
+                                <input id="lon_hi" class="form-control col-4 bbox" type="number" name="lon_hi"
+                                       value="6.1"
+                                       step="any">
+                            </fieldset>
                         </fieldset>
-                  </fieldset>
 
                     </div>
                     <!--
                          Upload csv file
                         -->
-<!--                    <fieldset class="m-3">-->
-<!--                        <legend data-toggle="tooltip" data-placement="bottom"-->
-<!--                                  title="Supported Output is only a CSV file">Upload a csv file</legend>-->
-<!--                        <div class="row m-1">-->
-<!--                            <input type="file" id="csvUpload" name="csvUpload" class="col-auto m-2">-->
-<!--                            <a id="removeFileBtn" class="btn uploadFileTools col-auto" style="display: none">x</a>-->
-<!--                        </div>-->
-<!--                        <div class="uploadFileTools"  style="display: none">-->
-<!--                            <div class="row m-1" data-toggle="tooltip" data-placement="bottom"-->
-<!--                                  title="Must be in format %Y-%m-%d %H:%M:%S">-->
-<!--                                <div class="col-form-label col-2 text-right">Timestamp</div>-->
-<!--                                <select id="timestamp_select" class="form-control col-3 select_header"></select>-->
-<!--                                    </div>-->
-<!--                            <div class="row m-1" data-toggle="tooltip" data-placement="bottom"-->
-<!--                                  title="Must be in range of [-90, 90]">-->
-<!--                                <div class="col-form-label col-2 text-right">Latitude</div>-->
-<!--                                <select  id="lat_select" class="form-control col-3 select_header"></select>-->
-<!--                                    </div>-->
-<!--                            <div class="row m-1" data-toggle="tooltip" data-placement="bottom"-->
-<!--                                  title="Must be in range of [-180, 180]">-->
-<!--                                <div class="col-form-label col-2 text-right">Longitude</div>-->
-<!--                                <select id="lon_select" class="form-control col-3 select_header"></select>-->
-<!--                            </div>-->
-<!--                         </div>-->
-<!--                    </fieldset>-->
+                    <div class="box-panel">
+                        <fieldset class="m-3">
+                            <legend data-toggle="tooltip" data-placement="bottom"
+                                    title="Supported Output is only a CSV file"> Merge data into a CSV file
+                            </legend>
+                            <div><small>
+                                <ul style="list-style: none;">
+                                    <li>Upload a csv file with max. file size of 50 MB.</li>
+                                    <li>The requested data should not exceed 10 days and 60° in both longitudinal and
+                                        latitudinal extent.
+                                    </li>
+                                    <li>The CSV file should contain one column for Longitude, Latitude and Timestamp.
+                                    </li>
+                                </ul>
+                            </small></div>
+                            <div class="row m-1">
+                                <input type="file" id="csvUpload" name="csvUpload" class="col-auto m-2">
+                                <a id="removeFileBtn" class="btn uploadFileTools col-auto" style="display: none">x</a>
+                            </div>
+                            <div class="uploadFileTools" style="display: none">
+                                <div class="row m-1" data-toggle="tooltip" data-placement="bottom"
+                                     title="Must be in format %Y-%m-%d %H:%M:%S">
+                                    <div class="col-form-label col-2 text-right">Timestamp</div>
+                                    <select id="timestamp_select" class="form-control col-3 select_header"></select>
+                                </div>
+                                <div class="row m-1" data-toggle="tooltip" data-placement="bottom"
+                                     title="Must be in range of [-90, 90]">
+                                    <div class="col-form-label col-2 text-right">Latitude</div>
+                                    <select id="lat_select" class="form-control col-3 select_header"></select>
+                                </div>
+                                <div class="row m-1" data-toggle="tooltip" data-placement="bottom"
+                                     title="Must be in range of [-180, 180]">
+                                    <div class="col-form-label col-2 text-right">Longitude</div>
+                                    <select id="lon_select" class="form-control col-3 select_header"></select>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
                 </div>
                 <div class="col-6 w-100">
                     <div id="mapid"></div>
@@ -117,23 +148,18 @@
         -->
         <div class="row m-3">
             <legend>Please consider the following:</legend>
-            <ul>
-                <li>Missing variables or missing data sets are going to be skipped.</li>
-                <li>Requests are limited to max 1 request per 10 seconds and 70 requests per hour.</li>
-                <li>Maximal bbox dimension ({{ max_lat }}° lat x {{ max_lon }}° lon x {{ max_days }} days).</li>
-                <li>All data is interpolated to match the following constraints:
-                    <ul>
-                        <li>Spatial Resolution: 0.083° &times; 0.083°</li>
-                        <li>Temporal Resolution: 3-hours interval</li>
-                        <li>
-                            <a href="https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit#gid=0"
-                               target="_blank">
-                                Detailed descriptions of the original datasets
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-            </ul>
+            <div><small>
+                <ul style="list-style: none;">
+                    <li>Missing variables or missing datasets are going to be skipped.</li>
+                    <li>Requests are limited to max 1 request per 10 seconds and 70 requests per hour.</li>
+                    <li>
+                        <a href="https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit#gid=0"
+                           target="_blank">
+                            Detailed descriptions of the original datasets
+                        </a>
+                    </li>
+                </ul>
+            </small></div>
         </div>
         <!--
             Submit
