@@ -60,7 +60,7 @@ WORKDIR ${HOME}
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY *.py ./
+COPY ./Harvester/*.py ./
 COPY logging.yaml ./
 
 RUN addgroup --system --gid ${ID} ${GROUP} && \
