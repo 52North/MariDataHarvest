@@ -61,7 +61,10 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./Harvester/*.py ./
-COPY logging.yaml ./
+COPY ./EnvironmentalData ./EnvironmentalData
+COPY ./EnvironmentalData/.env.secret ./EnvironmentalData/.env.secret
+COPY ./utilities ./utilities
+COPY ./utilities/logging.yaml ./utilities/logging.yaml
 
 RUN addgroup --system --gid ${ID} ${GROUP} && \
       adduser --system --home ${HOME} --no-create-home --uid ${ID} --ingroup ${GROUP} ${USER} && \
@@ -71,7 +74,7 @@ RUN addgroup --system --gid ${ID} ${GROUP} && \
 
 USER ${USER}
 
-CMD python ./main.py --year="$YEAR" --minutes="$MINUTES" --dir="$DATA_DIR" --step="$STEP" "$CLEAR" "$DEPTH_FIRST"
+CMD python ./Harvester/main.py --year="$YEAR" --minutes="$MINUTES" --dir="$DATA_DIR" --step="$STEP" "$CLEAR" "$DEPTH_FIRST"
 
 ARG GIT_COMMIT
 LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
