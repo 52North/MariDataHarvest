@@ -151,9 +151,8 @@ You can use the [Dockerfile](./Dockerfile) to build a docker image and run the s
       --label org.52north.contact=dev-opser+mari-data_harvester@example.org \
       --label org.52north.context="MariData Project: Data Harvesting Script" \
       --label org.52north.end-of-life="2021-12-31T23:59:59Z" \
-      --label org.52north.created="$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+      --label org.52north.created='$(date -u +"%Y-%m-%dT%H:%M:%SZ")' \
       --volume mari-data-harvester_data:/mari-data/data \
-      --volume $(pwd)/.env.secret:/mari-data/.env.secret:ro \
       --name=mari-data_harvester \
       --env-file docker.env \
       --detach \
