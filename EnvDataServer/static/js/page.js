@@ -134,7 +134,7 @@ window.onload = () => {
            }
     });
 
-    $('#submitBtn').submit((event)=>{
+    $('#submitForm').submit((event)=>{
         $('#submitBtn').prop('disabled',true);
         $('#spinnerPanel').prop('hidden',false);
     });

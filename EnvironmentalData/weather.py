@@ -3,7 +3,7 @@ import time
 import traceback
 from datetime import datetime, timedelta, date
 from pathlib import Path
-
+import numpy as np
 import pandas as pd
 import xarray as xr
 from glob import glob
@@ -12,12 +12,15 @@ from motu_utils.utils_http import open_url
 from siphon import http_util
 from siphon.catalog import TDSCatalog
 from xarray.backends import NetCDF4DataStore
-
+import matplotlib.pyplot as plt
 from utilities.check_connection import CheckConnection
 from EnvironmentalData import config
-
+from sklearn.cluster import DBSCAN
+from scipy.signal import argrelextrema, peak_prominences
+from mpl_toolkits.mplot3d import Axes3D
 from utilities import helper_functions
 from utilities.helper_functions import FileFailedException, Failed_Files, check_dir, create_csv
+from mpl_toolkits.basemap import Basemap
 
 logger = logging.getLogger(__name__)
 
@@ -469,7 +472,7 @@ def interpolate(ds: xr.Dataset, ds_name: str, time_points: xr.DataArray, lat_poi
         res = ds.interp(longitude=lon_points, latitude=lat_points, time=time_points).to_dataframe()[
             var_list].reset_index(drop=True)
     elif ds_name == 'gfs_50':
-        gfs_var = [var for var in var_list if var in GFS_50_VAR_LIST] # skipping missing variables in older datasets
+        gfs_var = [var for var in var_list if var in GFS_50_VAR_LIST]  # skipping missing variables in older datasets
         res = ds.interp(lon=lon_points, lat=lat_points, time=time_points).to_dataframe()[gfs_var].reset_index(
             drop=True)
     elif ds_name == 'phy':
@@ -502,10 +505,11 @@ def select_grid_point(ds: xr.Dataset, ds_name: str, time_point: datetime, lat_po
     return res.fillna(value=0)
 
 
-def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wave=None, phy=None, col_dict={}, metadata={}):
+def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wave=None, phy=None, col_dict={},
+                  metadata={}):
     if not bool(col_dict):
         # default for marinecadastre
-        col_dict = {'time':'BaseDateTime',  'lat': 'LAT', 'lon': 'LON'}
+        col_dict = {'time': 'BaseDateTime', 'lat': 'LAT', 'lon': 'LON'}
     if phy is None:
         phy = DAILY_PHY_VAR_LIST
     if wave is None:
@@ -521,57 +525,82 @@ def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wav
         for df_chunk in pd.read_csv(in_path, parse_dates=[col_dict['time']], date_parser=helper_functions.str_to_date,
                                     chunksize=helper_functions.CHUNK_SIZE):
             if len(df_chunk) > 1:
-                # remove index column
-                df_chunk.drop(['Unnamed: 0'], axis=1, errors='ignore', inplace=True)
-
-                # retrieve the data for each file once
-                lat_hi = df_chunk[col_dict['lat']].max()
-                lon_hi = df_chunk[col_dict['lon']].max()
-
-                lat_lo = df_chunk[col_dict['lat']].min()
-                lon_lo = df_chunk[col_dict['lon']].min()
 
                 date_lo = df_chunk[col_dict['time']].min()
                 date_hi = df_chunk[col_dict['time']].max()
-                if abs(lat_hi - lat_lo) > 60 or abs(lon_hi - lon_lo) > 60 or (date_hi - date_lo).days > 10:
-                    raise ValueError('exceeds temporal or spatial extent.')
-                # query parameters
-                time_points = xr.DataArray(list(df_chunk[col_dict['time']].values))
-                lat_points = xr.DataArray(list(df_chunk[col_dict['lat']].values))
-                lon_points = xr.DataArray(list(df_chunk[col_dict['lon']].values))
 
-                df_chunk.reset_index(drop=True, inplace=True)
+                # remove index column if exists
+                df_chunk.drop(['Unnamed: 0'], axis=1, errors='ignore', inplace=True)
 
-                if len(gfs) > 0:
-                    df_chunk = pd.concat(
-                        [df_chunk, interpolate(*get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi), time_points,
-                                               lat_points, lon_points, gfs)], axis=1)
-
-                if len(phy) > 0:
-                    df_chunk = pd.concat(
-                        [df_chunk,
-                         interpolate(*get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi),
-                                     time_points,
-                                     lat_points, lon_points, phy)], axis=1)
-
-                if len(wind) > 0:
-                    df_chunk = pd.concat(
-                        [df_chunk,
-                         interpolate(*get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi), time_points,
-                                     lat_points,
-                                     lon_points, wind)], axis=1)
-
-                if len(wave) > 0:
-                    df_chunk = pd.concat(
-                        [df_chunk,
-                         interpolate(*get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi), time_points,
-                                     lat_points,
-                                     lon_points, wave)], axis=1)
-                if bool(metadata) and header:
-                    create_csv(df_chunk, metadata, out_path, index=False)
-                    header = False
+                if (date_hi - date_lo).days > 15:
+                    # discrete requests according to local maxima of the 1d data
+                    lon_maxima = argrelextrema(np.array(df_chunk[col_dict['lon']].values), np.greater,
+                                               order=(len(df_chunk) // 12))[0]
+                    lat_maxima = argrelextrema(np.array(df_chunk[col_dict['lat']].values), np.greater,
+                                               order=(len(df_chunk) // 12))[0]
+                    local_maxima_index = lat_maxima if len(lat_maxima) > len(lon_maxima) else lon_maxima
                 else:
-                    df_chunk.to_csv(out_path, mode='a', header=header, index=False)
+                    df_chunk.sort_values([col_dict['lat']], inplace=True)
+                    local_maxima_index = argrelextrema(np.array(df_chunk[col_dict['lon']].values), np.greater,
+                                                       order=(len(df_chunk) // 12))[0]
+                start_index = 0
+                for index in list(local_maxima_index) + [-1]:
+                    df_chunk_sub = df_chunk[start_index:index]
+                    start_index = index
+
+                    # retrieve the data for each file once
+                    lat_hi = df_chunk_sub[col_dict['lat']].max()
+                    lon_hi = df_chunk_sub[col_dict['lon']].max()
+
+                    lat_lo = df_chunk_sub[col_dict['lat']].min()
+                    lon_lo = df_chunk_sub[col_dict['lon']].min()
+
+                    date_lo = df_chunk_sub[col_dict['time']].min()
+                    date_hi = df_chunk_sub[col_dict['time']].max()
+
+                    if abs(lat_hi - lat_lo) + abs(lon_hi - lon_lo) > 150 or (date_hi - date_lo).days > 30:
+                        raise ValueError('exceeds temporal or spatial extent.')
+
+                    # query parameters
+                    time_points = xr.DataArray(list(df_chunk_sub[col_dict['time']].values))
+                    lat_points = xr.DataArray(list(df_chunk_sub[col_dict['lat']].values))
+                    lon_points = xr.DataArray(list(df_chunk_sub[col_dict['lon']].values))
+                    df_chunk_sub.reset_index(drop=True, inplace=True)
+                    if len(gfs) > 0:
+                        df_chunk_sub = pd.concat(
+                            [df_chunk_sub,
+                             interpolate(*get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi), time_points,
+                                         lat_points, lon_points, gfs)], axis=1)
+
+                    if len(phy) > 0:
+                        df_chunk_sub = pd.concat(
+                            [df_chunk_sub,
+                             interpolate(*get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi),
+                                         time_points,
+                                         lat_points, lon_points, phy)], axis=1)
+
+                    if len(wind) > 0:
+                        df_chunk_sub = pd.concat(
+                            [df_chunk_sub,
+                             interpolate(*get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi),
+                                         time_points,
+                                         lat_points,
+                                         lon_points, wind)], axis=1)
+
+                    if len(wave) > 0:
+                        df_chunk_sub = pd.concat(
+                            [df_chunk_sub,
+                             interpolate(*get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi),
+                                         time_points,
+                                         lat_points,
+                                         lon_points, wave)], axis=1)
+                    if bool(metadata) and header:
+                        create_csv(df_chunk_sub, metadata, out_path, index=False)
+                        header = False
+                    else:
+                        df_chunk_sub.to_csv(out_path, mode='a', header=header, index=False)
+                plt.show()
+
     except Exception as e:
         # discard the file in case of an error to resume later properly
         if out_path:
