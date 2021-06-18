@@ -18,7 +18,7 @@ services:
             - "/etc/ssl/certs/dhparam.pem:/etc/ssl/certs/dhparam.pem:ro"
             - "/etc/letsencrypt/live/harvester.maridata.dev.52north.org/fullchain.pem:/etc/letsencrypt/live/harvester.maridata.dev.52north.org/fullchain.pem:ro"
             - "/etc/letsencrypt/live/harvester.maridata.dev.52north.org/privkey.pem:/etc/letsencrypt/live/harvester.maridata.dev.52north.org/privkey.pem:ro"
-            - "maridata-harvester_data:/www/data/:ro"
+            - "mari-data-harvester_data:/www/data/:ro"
 
     ed2:
         build:
@@ -27,5 +27,5 @@ services:
         restart: unless-stopped
 
 volumes:
-    maridata-harvester_data:
+    mari-data-harvester_data:
         external: true

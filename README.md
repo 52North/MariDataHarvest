@@ -21,7 +21,7 @@
 - [x] style of submit after submit deutlicher anpassen
 - [x] "loading spinner"
 - [x] label von submit: anfrage kann eventuell länger dauern
-- [x] Für Wave-Variablen Tooltip mit "Long-name" einbauen 
+- [x] Für Wave-Variablen Tooltip mit "Long-name" einbauen
 - [x] Response in template rendern und nicht nur rohes html
 - [x] Label "in case of variable is not available it will be skipped in the result data set"
 - [ ] Aktuellen Stand deployen (12 Minuten Proxy-Timeout)
@@ -30,8 +30,8 @@
 <div style="float:right; border: 1px solid #cecece; padding: 5px;">
 <!-- TOC -->
 
-- [MariDataHarvest](#maridataharvest)
-    - [TODOS - Repository-Reconstruction](#todos---repository-reconstruction)
+- [MariDataIngestio](#maridataingestio)
+    - [TODOS](#todos)
     - [Requirements](#requirements)
     - [Usage](#usage)
     - [Docker](#docker)
@@ -151,8 +151,8 @@ You can use the [Dockerfile](./Dockerfile) to build a docker image and run the s
       --label org.52north.contact=dev-opser+mari-data_harvester@example.org \
       --label org.52north.context="MariData Project: Data Harvesting Script" \
       --label org.52north.end-of-life="2021-12-31T23:59:59Z" \
+      --label org.52north.created='$(date -u +"%Y-%m-%dT%H:%M:%SZ")' \
       --volume mari-data-harvester_data:/mari-data/data \
-      --volume $(pwd)/.env.secret:/mari-data/.env.secret:ro \
       --name=mari-data_harvester \
       --env-file docker.env \
       --detach \

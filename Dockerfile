@@ -74,7 +74,7 @@ RUN addgroup --system --gid ${ID} ${GROUP} && \
 
 USER ${USER}
 
-CMD python ./Harvester/main.py --year="$YEAR" --minutes="$MINUTES" --dir="$DATA_DIR" --step="$STEP" "$CLEAR" "$DEPTH_FIRST"
+CMD python ./main.py --year="$YEAR" --minutes="$MINUTES" --dir="$DATA_DIR" --step="$STEP" "$CLEAR" "$DEPTH_FIRST"
 
 ARG GIT_COMMIT
 LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
