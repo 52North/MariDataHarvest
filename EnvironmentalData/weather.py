@@ -12,15 +12,12 @@ from motu_utils.utils_http import open_url
 from siphon import http_util
 from siphon.catalog import TDSCatalog
 from xarray.backends import NetCDF4DataStore
-import matplotlib.pyplot as plt
 from utilities.check_connection import CheckConnection
 from EnvironmentalData import config
-from sklearn.cluster import DBSCAN
-from scipy.signal import argrelextrema, peak_prominences
-from mpl_toolkits.mplot3d import Axes3D
+from scipy.signal import argrelextrema
 from utilities import helper_functions
 from utilities.helper_functions import FileFailedException, Failed_Files, check_dir, create_csv
-from mpl_toolkits.basemap import Basemap
+
 
 logger = logging.getLogger(__name__)
 
