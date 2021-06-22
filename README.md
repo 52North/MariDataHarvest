@@ -128,6 +128,7 @@ You can use the [Dockerfile](./Dockerfile) to build a docker image and run the s
    docker build \
       --build-arg GIT_COMMIT=$(git rev-parse -q --verify HEAD) \
       --build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+      --file Dockerfile.harvester \
       -t 52north/mari-data_harvester:1.0.0 .
    ```
 

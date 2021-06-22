@@ -62,7 +62,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./Harvester/*.py ./
 COPY ./EnvironmentalData ./EnvironmentalData
-COPY ./EnvironmentalData/.env.secret ./EnvironmentalData/.env.secret
 COPY ./utilities ./utilities
 COPY ./utilities/logging.yaml ./utilities/logging.yaml
 
