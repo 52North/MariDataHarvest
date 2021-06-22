@@ -25,6 +25,8 @@ services:
             context: .
             dockerfile: Dockerfile.EnvDataServer
         restart: unless-stopped
+        volumes:
+            - ".env.secret:/mari-data/EnvironmentalData/.env.secret:ro"
 
 volumes:
     mari-data-harvester_data:

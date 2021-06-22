@@ -154,8 +154,9 @@ You can use the [Dockerfile](./Dockerfile) to build a docker image and run the s
       --label org.52north.end-of-life="2021-12-31T23:59:59Z" \
       --label org.52north.created='$(date -u +"%Y-%m-%dT%H:%M:%SZ")' \
       --volume mari-data-harvester_data:/mari-data/data \
-      --name=mari-data_harvester \
+      --volume .env.secret:/mari-data/EnvironmentalData/.env.secret:ro \
       --env-file docker.env \
+      --name=mari-data_harvester \
       --detach \
       52north/mari-data_harvester:1.0.0 \
       && docker logs --follow mari-data_harvester

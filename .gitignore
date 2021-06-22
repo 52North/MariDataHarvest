@@ -9,7 +9,6 @@
 .vscode
 #
 # project stuff
-/EnvironmentalData/.env.secret
 /EnvDataServer/download/*
 /EnvDataServer/upload/*
 

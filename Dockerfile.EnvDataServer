@@ -67,7 +67,6 @@ COPY ./EnvDataServer/*.py ./
 COPY ./EnvDataServer/static ./static
 COPY ./EnvDataServer/templates ./templates
 COPY ./EnvironmentalData ./EnvironmentalData
-COPY ./EnvironmentalData/.env.secret ./EnvironmentalData/.env.secret
 COPY ./utilities ./utilities
 COPY ./utilities/logging.yaml ./utilities/logging.yaml
 
