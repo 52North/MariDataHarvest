@@ -65,7 +65,6 @@ In the following is a description of the datasets used:
 
 This tool is developed with in the [MariData](https://www.maridata.org) project.
 
-
 ## Requirements
 
 MariDataHarvest requires __python 3__ and __pip__ to run. You can install all python requirements with the following command:
@@ -75,7 +74,6 @@ pip install -r requirements.txt
 ```
 
 For a detailed list, see section License below.
-
 
 ## Usage
 
@@ -94,6 +92,7 @@ The credentials of these services MUST be entered into a file called `.env.secre
    ```
 
 Start harvesting with the following command:
+
 ```sh
 python main.py --year=2019 --minutes=30 --dir=C:\..
 ```
@@ -140,10 +139,9 @@ You can use the [Dockerfile](./Dockerfile) to build a docker image and run the s
    docker volume create \
       --label org.52north.contact=dev-opser+mari-data_harvester@example.org \
       --label org.52north.context="MariData Project: Data Harvesting Script" \
-      --label org.52north.end-of-life="2021-12-31T23:59:59Z" \
+      --label org.52north.end-of-life=$(date -d "+365 days" -u +"%Y-%m-%dT%H:%M:%SZ") \
       mari-data-harvester_data
    ```
-
 
 1. Run:
 
@@ -151,7 +149,7 @@ You can use the [Dockerfile](./Dockerfile) to build a docker image and run the s
    docker run \
       --label org.52north.contact=dev-opser+mari-data_harvester@example.org \
       --label org.52north.context="MariData Project: Data Harvesting Script" \
-      --label org.52north.end-of-life="2021-12-31T23:59:59Z" \
+      --label org.52north.end-of-life=$(date -d "+365 days" -u +"%Y-%m-%dT%H:%M:%SZ") \
       --label org.52north.created='$(date -u +"%Y-%m-%dT%H:%M:%SZ")' \
       --volume mari-data-harvester_data:/mari-data/data \
       --volume .env.secret:/mari-data/EnvironmentalData/.env.secret:ro \
@@ -165,14 +163,13 @@ You can use the [Dockerfile](./Dockerfile) to build a docker image and run the s
    with `docker.env` containing the following information:
 
    ```sh
-   YEAR=2019
-   MINUTES=30
+   YEAR=2015-2021
+   MINUTES=5
    DATA_DIR=/mari-data/data
    STEP=0
    DEPTH_FIRST=--depth-first
    CLEAR=--clear
    ```
-
 
 ### CODE-DE
 
@@ -209,7 +206,9 @@ docker-compose up -d --build && docker-compose logs --follow
 
 The data is available directly at the server root via https. All requests to http are redirected to https by default.
 
+
 ## Contact
+
 - [Zaabalawi, Sufian ](https://github.com/SufianZa)
 - [Jürrens, Eike Hinderk](https://github.com/EHJ-52n)
 

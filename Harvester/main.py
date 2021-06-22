@@ -92,7 +92,7 @@ if __name__ == '__main__':
         ','.join(list(map(str, args.year))).join(['[', ']']), int(args.minutes))
 
     logger.info(
-        arg_string + 'The output files will be saved to %s' % (args.dir if args.dir != '' else 'project directory'))
+        arg_string + '. The output files will be saved to %s' % (args.dir if args.dir != '' else 'project directory'))
     init_Failed_list(arg_string, args.dir)
     for year in args.year:
         logger.info('Processing year %s' % str(year))
