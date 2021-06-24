@@ -595,8 +595,8 @@ def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wav
                         create_csv(df_chunk_sub, metadata, out_path, index=False)
                         header = False
                     else:
-                        header = False # TODO add metadata later
                         df_chunk_sub.to_csv(out_path, mode='a', header=header, index=False)
+                        header = False # TODO add metadata later
     except Exception as e:
         # discard the file in case of an error to resume later properly
         if out_path:
