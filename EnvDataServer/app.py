@@ -102,7 +102,7 @@ def merge_data():
             errors='Error(s): ' + errorString.replace(',', ' ').replace('\n', ' ')
         )
         append_to_csv(file_path_up, file_path_down, wave=wave, wind=wind, gfs=gfs, phy=phy, col_dict=col_dict,
-                      metadata=metadata_dict)
+                      metadata=metadata_dict, webapp=True)
     except FileFailedException as e:
         logger.error(traceback.format_exc())
         errorString += 'Error occurred while appending env data: ' + str(
