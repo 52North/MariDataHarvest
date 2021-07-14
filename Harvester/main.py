@@ -6,7 +6,6 @@ import time
 import traceback
 from pathlib import Path
 from ais import download_year_AIS, subsample_year_AIS_to_CSV, download_file, get_files_list, subsample_file
-from utilities.check_connection import CheckConnection
 from utilities.helper_functions import Failed_Files, SaveToFailedList, init_Failed_list, FileFailedException, check_dir
 from EnvironmentalData.weather import append_to_csv
 
@@ -84,10 +83,6 @@ if __name__ == '__main__':
                         help='Clears the raw output directory in order to free memory.',
                         action='store_true')
     args, unknown = parser.parse_known_args()
-    # initialize a Thread to check connection
-    connectionChecker = CheckConnection(check_interval=8)
-    connectionChecker.daemon = True
-    connectionChecker.start()
     arg_string = 'Starting a task for year(s) %s with subsampling of %d minutes' % (
         ','.join(list(map(str, args.year))).join(['[', ']']), int(args.minutes))
 

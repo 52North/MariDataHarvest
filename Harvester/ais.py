@@ -12,7 +12,6 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-from utilities.check_connection import CheckConnection
 from utilities.helper_functions import FileFailedException, Failed_Files, check_dir, CHUNK_SIZE
 
 pd.options.mode.chained_assignment = None
@@ -25,8 +24,6 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 def get_files_list(year: int, exclude_to_resume: typing.List[str]) -> typing.List[str]:
     # url link to data
     url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{0}/".format(year)
-    # check already installed files in the
-    CheckConnection.set_url('coast.noaa.gov')
 
     # request the html file
     html_text = requests.get(url).text
@@ -66,7 +63,6 @@ def download_file(zipped_file_name: str, download_dir: Path, year: int) -> str:
     try:
         # url link to data
         url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/{0}/".format(year)
-        CheckConnection.is_online()
         logger.info('downloading AIS file: %s' % zipped_file_name)
 
         # download zip file using wget with url and file name
