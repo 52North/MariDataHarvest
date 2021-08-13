@@ -86,8 +86,8 @@ if __name__ == '__main__':
     arg_string = 'Starting a task for year(s) %s with subsampling of %d minutes' % (
         ','.join(list(map(str, args.year))).join(['[', ']']), int(args.minutes))
 
-    logger.info(
-        arg_string + '. The output files will be saved to %s' % (args.dir if args.dir != '' else 'project directory'))
+    logger.info( arg_string + '. The output files will be saved to %s' % (args.dir if args.dir != '' else 'project directory'))
+    args.dir = Path().absolute().parent if args.dir == '' else Path(args.dir)
     init_Failed_list(arg_string, args.dir)
     for year in args.year:
         logger.info('Processing year %s' % str(year))
@@ -104,7 +104,7 @@ if __name__ == '__main__':
                 interval = 10
                 while True:
                     try:
-                        if not file_name in filtered_dir_list and not file_name in download_dir_list:
+                        if (args.step == 1 or not file_name in filtered_dir_list) and not file_name in download_dir_list:
                             logger.info('STEP 1/3 downloading AIS data: %s' % file)
                             file_name = download_file(file, download_dir, year)
                         break
@@ -122,7 +122,8 @@ if __name__ == '__main__':
                         logger.error('Re-run in {0} sec'.format(interval))
                         time.sleep(interval)
                         interval += 10
-
+                if args.step == 1:
+                    continue
                 while True:
                     try:
                         if file_failed: break
