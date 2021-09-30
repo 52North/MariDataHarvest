@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 def years_arg_parser(input: str) -> list[int]:
     years = input.split('-')
-    choices = list(range(2009, 2021))
+    choices = list(range(2009, 2022))
     if len(years) == 2:
         start = years[0]
         end = years[1]
