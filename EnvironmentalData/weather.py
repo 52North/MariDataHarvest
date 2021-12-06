@@ -12,12 +12,10 @@ from motu_utils.utils_http import open_url
 from siphon import http_util
 from siphon.catalog import TDSCatalog
 from xarray.backends import NetCDF4DataStore
-from utilities.check_connection import CheckConnection
 from EnvironmentalData import config
 from scipy.signal import argrelextrema
 from utilities import helper_functions
 from utilities.helper_functions import FileFailedException, Failed_Files, check_dir, create_csv
-
 
 logger = logging.getLogger(__name__)
 
@@ -54,14 +52,12 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 
     dataset_temporal_resolution = 180
     if date_lo >= datetime(2019, 1, 1, 6):
-        CheckConnection.set_url('nrt.cmems-du.eu')
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_ANALYSIS_FORECAST_WAV_001_027-TDS'
         product = 'global-analysis-forecast-wav-001-027'
         VM_FOLDER = '/eodata/CMEMS/NRT/GLO/WAV/GLOBAL_ANALYSIS_FORECAST_WAV_001_027'
         offset = 0.1
     elif date_lo >= datetime(1993, 1, 1, 6):
-        CheckConnection.set_url('my.cmems-du.eu')
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_REANALYSIS_WAV_001_032-TDS'
         product = 'global-reanalysis-wav-001-032'
@@ -119,12 +115,9 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 
 def try_get_data(url):
     try:
-        CheckConnection.is_online()
         url_auth = authenticate_CAS_for_URL(url, config['UN_CMEMS'], config['PW_CMEMS'])
         response = open_url(url_auth)
-        CheckConnection.is_online()
         read_bytes = response.read()
-        CheckConnection.is_online()
         return xr.open_dataset(read_bytes)
     except Exception as e:
         logger.error(traceback.format_exc())
@@ -142,14 +135,12 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     if date_lo >= datetime(2018, 1, 1, 6):
         if (date_lo + timedelta(days=2)).date() > date.today() or (date_hi + timedelta(days=2)).date() > date.today():
             raise ValueError('Out of Range values')
-        CheckConnection.set_url('nrt.cmems-du.eu')
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'WIND_GLO_WIND_L4_NRT_OBSERVATIONS_012_004-TDS'
         product = 'CERSAT-GLO-BLENDED_WIND_L4-V6-OBS_FULL_TIME_SERIE'
         VM_FOLDER = '/eodata/CMEMS/NRT/GLO/WIN/WIND_GLO_WIND_L4_NRT_OBSERVATIONS_012_004'
 
     elif date_lo >= datetime(1992, 1, 1, 6):
-        CheckConnection.set_url('my.cmems-du.eu')
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'WIND_GLO_WIND_L4_REP_OBSERVATIONS_012_006-TDS'
         product = 'CERSAT-GLO-BLENDED_WIND_L4_REP-V6-OBS_FULL_TIME_SERIE'
@@ -224,7 +215,6 @@ def get_GFS_prognoses(start_date, end_date, lat_lo, lat_hi, lon_lo, lon_hi):
                                          west=lon_lo - offset).time_range(end_date + timedelta(
         hours=0 if end_date == start_date + timedelta(days=1) else 3), end_date + timedelta(
         days=1)).variables(*GFS_25_VAR_LIST)
-    CheckConnection.is_online()
     try:
         data = ds_subset.get_data(query)
         x_arr = xr.open_dataset(NetCDF4DataStore(data))[GFS_25_VAR_LIST]
@@ -258,7 +248,6 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     offset = 0.25
     x_arr_list = []
     base_url = 'https://rda.ucar.edu/thredds/catalog/files/g/ds084.1'
-    CheckConnection.set_url('rda.ucar.edu')
     # calculate a day prior for midnight interpolation
     http_util.session_manager.set_session_options(auth=(config['UN_RDA'], config['PW_RDA']))
     if (start_date + timedelta(days=4)).date() < date.today():
@@ -273,7 +262,6 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                 *GFS_25_VAR_LIST)
         except Exception as e:
             logger.warning('grib2 file error ' % e)
-        CheckConnection.is_online()
         try:
             data = ds_subset.get_data(query)
             x_arr = xr.open_dataset(NetCDF4DataStore(data)).drop_dims(['bounds_dim'])[GFS_25_VAR_LIST]
@@ -301,7 +289,6 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                                                              south=lat_lo - offset,
                                                              east=lon_hi + offset,
                                                              west=lon_lo - offset).variables(*GFS_25_VAR_LIST)
-                        CheckConnection.is_online()
                         try:
                             data = ds_subset.get_data(query)
                             x_arr = xr.open_dataset(NetCDF4DataStore(data)).drop_dims(['bounds_dim'])[GFS_25_VAR_LIST]
@@ -335,7 +322,6 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     logger.debug('obtaining GFS 0.50 dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     base_url = 'https://www.ncei.noaa.gov/thredds/model-gfs-g4-anl-files-old/'
-    CheckConnection.set_url('ncei.noaa.gov')
     # offset according to the dataset resolution
     offset = 0.5
     x_arr_list = []
@@ -357,7 +343,6 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                                                                  east=lon_hi + offset, west=lon_lo - offset).variables(
                                 *GFS_50_VAR_LIST)
 
-                            CheckConnection.is_online()
                             data = ds_subset.get_data(query)
                             x_arr = xr.open_dataset(NetCDF4DataStore(data))
                             if 'time1' in list(x_arr.coords):
@@ -368,7 +353,6 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                         break
                     except Exception as e:
                         logger.error(traceback.format_exc())
-                        CheckConnection.is_online()
                         logger.error(e)
                         logger.error('Filename %s - Failed connecting to GFS Server - number of attempts: %d' % (
                             name, attempts))
@@ -389,14 +373,12 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     # offset according to the dataset resolution
     offset = 0.1
     if date_lo >= datetime(2019, 1, 2):
-        CheckConnection.set_url('nrt.cmems-du.eu')
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
         product = 'global-analysis-forecast-phy-001-024'
         VM_FOLDER = '/eodata/CMEMS/NRT/GLO/PHY/GLOBAL_ANALYSIS_FORECAST_PHY_001_024'
         NRT_FLAG = True
     elif date_lo >= datetime(1993, 1, 2):
-        CheckConnection.set_url('my.cmems-du.eu')
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_REANALYSIS_PHY_001_030-TDS'
         product = 'global-reanalysis-phy-001-030-daily'
@@ -503,7 +485,7 @@ def select_grid_point(ds: xr.Dataset, ds_name: str, time_point: datetime, lat_po
 
 
 def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wave=None, phy=None, col_dict={},
-                  metadata={}):
+                  metadata={}, webapp=False):
     if not bool(col_dict):
         # default for marinecadastre
         col_dict = {'time': 'BaseDateTime', 'lat': 'LAT', 'lon': 'LON'}
@@ -523,79 +505,82 @@ def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wav
                                     chunksize=helper_functions.CHUNK_SIZE):
             if len(df_chunk) > 1:
 
-                date_lo = df_chunk[col_dict['time']].min()
-                date_hi = df_chunk[col_dict['time']].max()
+                # date_lo = df_chunk[col_dict['time']].min()
+                # date_hi = df_chunk[col_dict['time']].max()
 
                 # remove index column if exists
                 df_chunk.drop(['Unnamed: 0'], axis=1, errors='ignore', inplace=True)
 
-                if (date_hi - date_lo).days > 15:
-                    # discrete requests according to local maxima of the 1d data
-                    lon_maxima = argrelextrema(np.array(df_chunk[col_dict['lon']].values), np.greater,
-                                               order=(len(df_chunk) // 12))[0]
-                    lat_maxima = argrelextrema(np.array(df_chunk[col_dict['lat']].values), np.greater,
-                                               order=(len(df_chunk) // 12))[0]
-                    local_maxima_index = lat_maxima if len(lat_maxima) > len(lon_maxima) else lon_maxima
+                # if (date_hi - date_lo).days > 15:
+                #     # discrete requests according to local maxima of the 1d data
+                #     lon_maxima = argrelextrema(np.array(df_chunk[col_dict['lon']].values), np.greater,
+                #                                order=(len(df_chunk) // 12))[0]
+                #     lat_maxima = argrelextrema(np.array(df_chunk[col_dict['lat']].values), np.greater,
+                #                                order=(len(df_chunk) // 12))[0]
+                #     local_maxima_index = lat_maxima if len(lat_maxima) > len(lon_maxima) else lon_maxima
+                # else:
+                #     df_chunk.sort_values([col_dict['lat']], inplace=True)
+                #     local_maxima_index = argrelextrema(np.array(df_chunk[col_dict['lon']].values), np.greater,
+                #                                        order=(len(df_chunk) // 12))[0]
+                # start_index = 0
+                # for index in list(local_maxima_index) + [-1]:
+                df_chunk_sub = df_chunk
+                # start_index = index
+
+                # retrieve the data for each file once
+                lat_hi = df_chunk_sub[col_dict['lat']].max()
+                lon_hi = df_chunk_sub[col_dict['lon']].max()
+
+                lat_lo = df_chunk_sub[col_dict['lat']].min()
+                lon_lo = df_chunk_sub[col_dict['lon']].min()
+
+                date_lo = df_chunk_sub[col_dict['time']].min()
+                date_hi = df_chunk_sub[col_dict['time']].max()
+
+                if webapp and (abs(lat_hi - lat_lo) + abs(lon_hi - lon_lo) > 150 or (date_hi - date_lo).days > 30):
+                    raise ValueError(
+                        'Exceeds temporal or spatial extent. Longitude + '
+                        'Latitude extent exceeds 150° or requested days exceed 30 day.')
+
+                # query parameters
+                time_points = xr.DataArray(list(df_chunk_sub[col_dict['time']].values))
+                lat_points = xr.DataArray(list(df_chunk_sub[col_dict['lat']].values))
+                lon_points = xr.DataArray(list(df_chunk_sub[col_dict['lon']].values))
+                df_chunk_sub.reset_index(drop=True, inplace=True)
+                if len(gfs) > 0:
+                    df_chunk_sub = pd.concat(
+                        [df_chunk_sub,
+                         interpolate(*get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi), time_points,
+                                     lat_points, lon_points, gfs)], axis=1)
+
+                if len(phy) > 0:
+                    df_chunk_sub = pd.concat(
+                        [df_chunk_sub,
+                         interpolate(*get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi),
+                                     time_points,
+                                     lat_points, lon_points, phy)], axis=1)
+
+                if len(wind) > 0:
+                    df_chunk_sub = pd.concat(
+                        [df_chunk_sub,
+                         interpolate(*get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi),
+                                     time_points,
+                                     lat_points,
+                                     lon_points, wind)], axis=1)
+
+                if len(wave) > 0:
+                    df_chunk_sub = pd.concat(
+                        [df_chunk_sub,
+                         interpolate(*get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi),
+                                     time_points,
+                                     lat_points,
+                                     lon_points, wave)], axis=1)
+                if bool(metadata) and header:
+                    create_csv(df_chunk_sub, metadata, out_path, index=False)
+                    header = False
                 else:
-                    df_chunk.sort_values([col_dict['lat']], inplace=True)
-                    local_maxima_index = argrelextrema(np.array(df_chunk[col_dict['lon']].values), np.greater,
-                                                       order=(len(df_chunk) // 12))[0]
-                start_index = 0
-                for index in list(local_maxima_index) + [-1]:
-                    df_chunk_sub = df_chunk[start_index:index]
-                    start_index = index
-
-                    # retrieve the data for each file once
-                    lat_hi = df_chunk_sub[col_dict['lat']].max()
-                    lon_hi = df_chunk_sub[col_dict['lon']].max()
-
-                    lat_lo = df_chunk_sub[col_dict['lat']].min()
-                    lon_lo = df_chunk_sub[col_dict['lon']].min()
-
-                    date_lo = df_chunk_sub[col_dict['time']].min()
-                    date_hi = df_chunk_sub[col_dict['time']].max()
-
-                    if abs(lat_hi - lat_lo) + abs(lon_hi - lon_lo) > 150 or (date_hi - date_lo).days > 30:
-                        raise ValueError('exceeds temporal or spatial extent.')
-
-                    # query parameters
-                    time_points = xr.DataArray(list(df_chunk_sub[col_dict['time']].values))
-                    lat_points = xr.DataArray(list(df_chunk_sub[col_dict['lat']].values))
-                    lon_points = xr.DataArray(list(df_chunk_sub[col_dict['lon']].values))
-                    df_chunk_sub.reset_index(drop=True, inplace=True)
-                    if len(gfs) > 0:
-                        df_chunk_sub = pd.concat(
-                            [df_chunk_sub,
-                             interpolate(*get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi), time_points,
-                                         lat_points, lon_points, gfs)], axis=1)
-
-                    if len(phy) > 0:
-                        df_chunk_sub = pd.concat(
-                            [df_chunk_sub,
-                             interpolate(*get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi),
-                                         time_points,
-                                         lat_points, lon_points, phy)], axis=1)
-
-                    if len(wind) > 0:
-                        df_chunk_sub = pd.concat(
-                            [df_chunk_sub,
-                             interpolate(*get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi),
-                                         time_points,
-                                         lat_points,
-                                         lon_points, wind)], axis=1)
-
-                    if len(wave) > 0:
-                        df_chunk_sub = pd.concat(
-                            [df_chunk_sub,
-                             interpolate(*get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi),
-                                         time_points,
-                                         lat_points,
-                                         lon_points, wave)], axis=1)
-                    if bool(metadata) and header:
-                        create_csv(df_chunk_sub, metadata, out_path, index=False)
-                        header = False
-                    else:
-                        df_chunk_sub.to_csv(out_path, mode='a', header=header, index=False)
+                    df_chunk_sub.to_csv(out_path, mode='a', header=header, index=False)
+                    header = False  # TODO add metadata later
     except Exception as e:
         # discard the file in case of an error to resume later properly
         if out_path:

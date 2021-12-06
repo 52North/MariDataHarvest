@@ -6,7 +6,6 @@ import time
 import traceback
 from pathlib import Path
 from ais import download_year_AIS, subsample_year_AIS_to_CSV, download_file, get_files_list, subsample_file
-from utilities.check_connection import CheckConnection
 from utilities.helper_functions import Failed_Files, SaveToFailedList, init_Failed_list, FileFailedException, check_dir
 from EnvironmentalData.weather import append_to_csv
 
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 def years_arg_parser(input: str) -> list[int]:
     years = input.split('-')
-    choices = list(range(2009, 2021))
+    choices = list(range(2009, 2022))
     if len(years) == 2:
         start = years[0]
         end = years[1]
@@ -84,15 +83,11 @@ if __name__ == '__main__':
                         help='Clears the raw output directory in order to free memory.',
                         action='store_true')
     args, unknown = parser.parse_known_args()
-    # initialize a Thread to check connection
-    connectionChecker = CheckConnection(check_interval=8)
-    connectionChecker.daemon = True
-    connectionChecker.start()
     arg_string = 'Starting a task for year(s) %s with subsampling of %d minutes' % (
         ','.join(list(map(str, args.year))).join(['[', ']']), int(args.minutes))
 
-    logger.info(
-        arg_string + '. The output files will be saved to %s' % (args.dir if args.dir != '' else 'project directory'))
+    logger.info( arg_string + '. The output files will be saved to %s' % (args.dir if args.dir != '' else 'project directory'))
+    args.dir = Path().absolute().parent if args.dir == '' else Path(args.dir)
     init_Failed_list(arg_string, args.dir)
     for year in args.year:
         logger.info('Processing year %s' % str(year))
@@ -109,7 +104,7 @@ if __name__ == '__main__':
                 interval = 10
                 while True:
                     try:
-                        if not file_name in filtered_dir_list and not file_name in download_dir_list:
+                        if (args.step == 1 or not file_name in filtered_dir_list) and not file_name in download_dir_list:
                             logger.info('STEP 1/3 downloading AIS data: %s' % file)
                             file_name = download_file(file, download_dir, year)
                         break
@@ -127,7 +122,8 @@ if __name__ == '__main__':
                         logger.error('Re-run in {0} sec'.format(interval))
                         time.sleep(interval)
                         interval += 10
-
+                if args.step == 1:
+                    continue
                 while True:
                     try:
                         if file_failed: break
