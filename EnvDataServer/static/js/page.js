@@ -44,7 +44,7 @@ window.onload = () => {
         'VSDY':		'sea_surface_wave_stokes_drift_y_velocity',
         'VHM0':		'sea_surface_wave_significant_height',
         'VTM01_WW':		'sea_surface_wind_wave_mean_period'}
-        WIND_VAR_LIST = {'surface_downward_eastward_stress':'eastward wind stress',
+    WIND_VAR_LIST = {'surface_downward_eastward_stress':'eastward wind stress',
         'wind_stress_divergence':'wind stress divergence',
         'northward_wind':'northward wind speed',
         'sampling_length':'sampling length',
@@ -60,7 +60,7 @@ window.onload = () => {
         'surface_type':'flag - 0:ocean - 1:earth/ice',
         'surface_downward_northward_stress':'northward wind stress'}
 
-        DAILY_PHY_VAR_LIST = {'mlotst':'Density ocean mixed layer thickness',
+    DAILY_PHY_VAR_LIST = {'mlotst':'Density ocean mixed layer thickness',
         'siconc':'Ice concentration',
         'usi':'Sea ice eastward velocity',
         'thetao':'Potential Temperature',
@@ -71,7 +71,8 @@ window.onload = () => {
         'uo':'Eastward velocity',
         'so':'Salinity',
         'zos':'Sea surface height'}
-           GFS_25_VAR_LIST = {
+
+    GFS_25_VAR_LIST = {
         'Temperature_surface':'Temperature	Temperature @ Ground or water surface',
         'Wind_speed_gust_surface':'Wind speed (gust)	Wind speed (gust) @ Ground or water surface',
         'u-component_of_wind_maximum_wind':'u-component of wind	u-component of wind @ Maximum wind level',
@@ -199,26 +200,27 @@ function createList(ls, name) {
     let tomorrow = new Date();
 
     if (name == 'Wind'){
-    tomorrow.setDate(today.getDate()-3)
-    div.append($('<i><small> Data provided til '+tomorrow.toLocaleDateString('en-GB', {
-        day: 'numeric', month: 'short', year: 'numeric'
-    }) +'<small></i>'));
+        tomorrow.setDate(today.getDate()-3)
+        div.append($('<i><small> Data provided til '+tomorrow.toLocaleDateString('en-GB', {
+            day: 'numeric', month: 'short', year: 'numeric'
+        }) +'<small></i>'));
     }else if(name === 'GFS'){
-     tomorrow.setDate(today.getDate()+15)
-    div.append($('<i><small> Data provided til '+tomorrow.toLocaleDateString('en-GB', {
-        day: 'numeric', month: 'short', year: 'numeric'
-    }) +'<small></i>'));
+        tomorrow.setDate(today.getDate()+15)
+        div.append($('<i><small> Data provided til '+tomorrow.toLocaleDateString('en-GB', {
+            day: 'numeric', month: 'short', year: 'numeric'
+        }) +'<small></i>'));
     }
     else if(name === 'Wave' || name === 'Physical'){
-    tomorrow.setDate(today.getDate()+8)
-     div.append($('<i><small> Data provided til '+tomorrow.toLocaleDateString('en-GB', {
-        day: 'numeric', month: 'short', year: 'numeric'
-    }) +'<small></i>'));
+        tomorrow.setDate(today.getDate()+8)
+        div.append($('<i><small> Data provided til '+tomorrow.toLocaleDateString('en-GB', {
+            day: 'numeric', month: 'short', year: 'numeric'
+        }) +'<small></i>'));
     }
     div.append($("<br>"));
     for (let variable in ls){
-        let checkbox = $('<input type="checkbox" class="'+ name + '_checkbox mr-2" name="var-$$-' + name + '-$$-' + variable+'" value="'+variable+'">')
-        let label = $('<label class="col-auto envLabel ' + name +'" data-toggle="tooltip" data-placement="right" title="'+ ls[variable] +'"></label>')
+        let id = name + '__' + variable
+        let checkbox = $('<input type="checkbox" class="'+ name + '_checkbox mr-2" name="' + name + '" value="' + variable + '" id="' + id + '">')
+        let label = $('<label class="col-auto envLabel ' + name + '" for="' + id + '" data-toggle="tooltip" data-placement="right" title="'+ ls[variable] +'"></label>')
         label.append(checkbox);
         label.append(variable);
         div.append(label);

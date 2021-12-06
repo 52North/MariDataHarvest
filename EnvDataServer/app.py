@@ -3,7 +3,7 @@ import threading
 import traceback
 from pathlib import Path
 import logging
-from flask import Flask, render_template, request, send_from_directory, Response
+from flask import Flask, render_template, request, send_from_directory, jsonify
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from utilities.helper_functions import str_to_date_min, create_csv, FileFailedException
@@ -41,6 +41,8 @@ temporal_interpolation_rate = 3
 # max bounding box
 max_lat, max_lon, max_days = 20, 20, 10
 
+BASE_URL = os.getenv("BASE_URL", "http://localhost:5000/")
+
 
 def remove_files():
     while True:
@@ -59,19 +61,21 @@ dir_cleaner_thread.start()
 
 
 def parse_requested_var(args):
+    def _filter(values):
+        if len(values) == 1 and ',' in values[0]:
+            return values[0].split(',')
+        else:
+            return values
     wave, wind, gfs, phy = [], [], [], []
-    for var in args:
-        var = str(var)
-        if var.startswith('var'):
-            _, name, varName = var.split('-$$-')
-            if name == 'Wave':
-                wave.append(varName)
-            elif name == 'Wind':
-                wind.append(varName)
-            elif name == 'GFS':
-                gfs.append(varName)
-            elif name == 'Physical':
-                phy.append(varName)
+    args_dict = args.to_dict(flat=False)
+    if 'Wave' in args_dict.keys():
+        wave = _filter(args_dict.get('Wave'))
+    if 'Wind' in args_dict.keys():
+        wind = _filter(args_dict.get('Wind'))
+    if 'GFS' in args_dict.keys():
+        gfs = _filter(args_dict.get('GFS'))
+    if 'Physical' in args_dict.keys():
+        phy = _filter(args_dict.get('Physical'))
     return wave, wind, gfs, phy
 
 
@@ -79,8 +83,8 @@ def parse_requested_var(args):
 @limiter.limit("1/10second")
 def merge_data():
     logger.debug(request)
-    errorString = ''
-    wave, wind, gfs, phy = parse_requested_var(json.loads(request.form['var']))
+    error_msg = ''
+    wave, wind, gfs, phy = parse_requested_var(json.loads(request.form))
     col_dict = json.loads(request.form['col'])
     if len(wave + wind + gfs + phy) == 0:
         logger.debug('Error: No variables are selected')
@@ -99,15 +103,15 @@ def merge_data():
             credit_CMEMS='Credit (Wave-Wind-Physical): E.U. Copernicus Marine Service Information (CMEMS)',
             credit_GFS='Credit (GFS): National Centers for Environmental Prediction/National Weather Service/NOAA',
             created='Accessed on %s' % datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            errors='Error(s): ' + errorString.replace(',', ' ').replace('\n', ' ')
+            errors='Error(s): ' + error_msg.replace(',', ' ').replace('\n', ' ')
         )
         append_to_csv(file_path_up, file_path_down, wave=wave, wind=wind, gfs=gfs, phy=phy, col_dict=col_dict,
                       metadata=metadata_dict)
     except FileFailedException as e:
         logger.error(traceback.format_exc())
-        errorString += 'Error occurred while appending env data: ' + str(
+        error_msg += 'Error occurred while appending env data: ' + str(
             e.original_exception) + '. CSV file is not valid.\n'
-        return render_template('error.html', error=errorString)
+        return render_template('error.html', error=error_msg)
     # TODO should we remove uploaded data?
     delete_file_queue[str(file_path_up)] = datetime.now() + timedelta(minutes=FILE_LIFE_SPAN)
     delete_file_queue[str(file_path_down)] = datetime.now()
@@ -118,15 +122,40 @@ def merge_data():
                                FILE_LIFE_SPAN,
                                (datetime.now(pytz.utc) + timedelta(minutes=FILE_LIFE_SPAN)).strftime("%I:%M %p %Z")
                            ),
-                           errorFlag=len(errorString) > 0, error=errorString)
+                           errorFlag=len(error_msg) > 0, error=error_msg)
 
 
 @app.route('/EnvDataAPI/request_env_data', methods=['GET'])
 @limiter.limit("1/10second")
 def request_env_data():
+    logger.debug("Accept header: {}".format(request.accept_mimetypes))
     logger.debug(request)
     dataset_list = []
-    wave, wind, gfs, phy = parse_requested_var(request.args)
+    error = []
+    # check for mandatory parameter
+    if 'date_lo' not in request.args:
+        error.append('date_lo')
+    if 'date_hi' not in request.args:
+        error.append('date_hi')
+    if 'lat_lo' not in request.args:
+        error.append('lat_lo')
+    if 'lat_hi' not in request.args:
+        error.append('lat_hi')
+    if 'lon_lo' not in request.args:
+        error.append('lon_lo')
+    if 'lon_hi' not in request.args:
+        error.append('lon_hi')
+    if len(error) > 0:
+        error = 'Missing mandatory parameter{}: {}'.format('s' if len(error) > 1 else '', error)
+        logger.debug(error)
+        if request.accept_mimetypes['text/html']:
+            response = render_template('error.html', error=error)
+            response.status_code = 400
+            return response
+        else:
+            response = jsonify(error=error)
+            response.status_code = 400
+            return response
     date_lo = str_to_date_min(request.args.get('date_lo')) - timedelta(hours=temporal_interpolation_rate)
     date_hi = str_to_date_min(request.args.get('date_hi')) + timedelta(hours=temporal_interpolation_rate)
     lat_lo = float(request.args.get('lat_lo')) - spatial_interpolation_rate
@@ -146,19 +175,33 @@ def request_env_data():
         lat_lo, lat_hi, lon_lo, lon_hi
     ))
     data_format = request.args.get('format')
+    error = []
+    if data_format is None or len(data_format) == 0 or data_format.lower() not in ["csv", "netcdf"]:
+        error.append('format parameter wrong/missing. Allowed values: csv, netcdf')
     if lat_lo > lat_hi:
-        logger.debug('Error: lat_lo > lat_hi')
-        return render_template('error.html', error='Error: lat_lo > lat_hi')
+        error.append('lat_lo > lat_hi')
     if lon_lo > lon_hi:
-        logger.debug('Error: lon_lo > lon_hi ')
-        return render_template('error.html', error='Error: lon_lo > lon_hi')
+        error.append('lon_lo > lon_hi ')
     if date_lo > date_hi:
-        logger.debug('Error: date_lo > date_hi')
-        return render_template('error.html', error='Error: date_lo > date_hi')
+        error.append('date_lo > date_hi')
+
+    wave, wind, gfs, phy = parse_requested_var(request.args)
+    logger.debug("Requested variables: wind: {}; wave: {}; gfs: {}; physical: {}".format(
+        wind, wave, gfs, phy
+    ))
     if len(wave + wind + gfs + phy) == 0:
-        logger.debug('Error: No variables are selected')
-        return render_template('error.html', error='Error: No variables are selected')
-    errorString = ''
+        error.append('No variables are selected')
+
+    if len(error) > 0:
+        logger.debug('Error{}: {}'.format('s' if len(error) > 1 else '', error))
+        if request.accept_mimetypes['text/html']:
+            return render_template('error.html', error=error), 400
+        else:
+            response = jsonify(error=error)
+            response.status_code = 400
+            return response
+
+    error_msg = ''
 
     lat_interpolation = list(np.arange(lat_lo, lat_hi, spatial_interpolation_rate))
     lon_interpolation = list(np.arange(lon_lo, lon_hi, spatial_interpolation_rate))
@@ -173,11 +216,21 @@ def request_env_data():
             time=xr.DataArray(temporal_interpolation, coords=[temporal_interpolation], dims=["time"]))
 
     if int(lat_hi - lat_lo) > max_lat or int(lon_hi - lon_lo) > max_lon or (date_hi - date_lo).days > max_days:
-        error = 'Error occurred: requested bbox ({0}° lat x {1}° lon x {2} days) is too large. Maximal bbox dimension ({3}° lat x {4}° lon x {5} days).'.format(
-            int(lat_hi - lat_lo),
-            int(lon_hi - lon_lo), (date_hi - date_lo).days, max_lat, max_lon, max_days)
+        error = 'Error occurred: requested bbox ({0}° lat x {1}° lon x {2} days) is too large. Maximal bbox ' + \
+                'dimension ({3}° lat x {4}° lon x {5} days).'.format(
+                    int(lat_hi - lat_lo),
+                    int(lon_hi - lon_lo),
+                    (date_hi - date_lo).days,
+                    max_lat,
+                    max_lon,
+                    max_days)
         logger.debug(error)
-        return render_template('error.html', error=error)
+        if request.accept_mimetypes['text/html']:
+            return render_template('error.html', error=error), 400
+        else:
+            response = jsonify(error=error)
+            response.status_code = 400
+            return response
 
     if len(wave) > 0:
         try:
@@ -187,7 +240,7 @@ def request_env_data():
         except Exception as e:
             logger.error(traceback.format_exc())
             wave = []
-            errorString += 'Error occurred while retrieving Wave data:  ' + str(e) + '\n'
+            error_msg += 'Error occurred while retrieving Wave data:  ' + str(e) + '\n'
 
     if len(wind) > 0:
         try:
@@ -198,7 +251,7 @@ def request_env_data():
         except Exception as e:
             logger.error(traceback.format_exc())
             wind = []
-            errorString += 'Error occurred while retrieving Wind data:  ' + str(e) + '\n'
+            error_msg += 'Error occurred while retrieving Wind data:  ' + str(e) + '\n'
 
     if len(phy) > 0:
         try:
@@ -208,7 +261,7 @@ def request_env_data():
         except Exception as e:
             logger.error(traceback.format_exc())
             phy = []
-            errorString += 'Error occurred while retrieving Physical data:  ' + str(e) + '\n'
+            error_msg += 'Error occurred while retrieving Physical data:  ' + str(e) + '\n'
 
     if len(gfs) > 0:
         try:
@@ -220,12 +273,28 @@ def request_env_data():
         except Exception as e:
             logger.error(traceback.format_exc())
             gfs = []
-            errorString += 'Error occurred while retrieving GFS data:  ' + str(e) + '\n'
+            error_msg += 'Error occurred while retrieving GFS data:  ' + str(e) + '\n'
 
     combined = xr.combine_by_coords(dataset_list, combine_attrs='drop', compat='override')[wave + wind + phy + gfs]
+
     if len(combined) == 0:
-        logger.debug(errorString + 'Error occurred: Empty dataset')
-        return render_template('error.html', error=errorString + 'Error occurred: Empty dataset')
+        error = 'Empty dataset'
+        logger.debug(error_msg + 'Error occurred: {}'.format(error))
+        error = error_msg + '\nError occurred: Empty dataset'
+
+        if len(error_msg) == 0:
+            status_code = 400
+        else:
+            status_code = 500
+
+        if request.accept_mimetypes['text/html']:
+            return render_template('error.html', error=error), status_code
+        else:
+            response = jsonify(error=error)
+            response.status_code = status_code
+            return response
+
+
     dir_path = Path(Path(__file__).parent, 'download')
     dir_path.mkdir(exist_ok=True)
     metadata_dict = dict(
@@ -237,7 +306,7 @@ def request_env_data():
         credit_CMEMS='Credit (Wave-Wind-Physical): E.U. Copernicus Marine Service Information (CMEMS)',
         credit_GFS='Credit (GFS): National Centers for Environmental Prediction/National Weather Service/NOAA',
         created='Accessed on %s' % datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        errors='Error(s): ' + errorString.replace(',', ' ').replace('\n', ' ')
+        errors='Error(s): ' + error_msg.replace(',', ' ').replace('\n', ' ')
     )
     if data_format == 'csv':
         file_path = Path(dir_path, str(uuid.uuid1()) + '.csv')
@@ -247,15 +316,30 @@ def request_env_data():
         combined.attrs = metadata_dict
         combined.to_netcdf(file_path)
     delete_file_queue[file_path] = datetime.now()
-    logger.debug('Processing request finished {}'.format(errorString))
-    return render_template('result.html',
-                           download_link='/EnvDataAPI/' + str(file_path.name),
-                           download_text='Download requested {} file '.format(data_format),
-                           note='The file will be automatically deleted in {} Minutes: {}.'.format(
-                               FILE_LIFE_SPAN,
-                               (datetime.now(pytz.utc) + timedelta(minutes=FILE_LIFE_SPAN)).strftime("%I:%M %p %Z")
-                           ),
-                           errorFlag=len(errorString) > 0, error=errorString)
+    logger.debug('Processing request finished {}'.format(error_msg))
+
+    download_link = '{}EnvDataAPI/{}'.format(BASE_URL, str(file_path.name))
+    file_end_of_life = (datetime.now(pytz.utc) + timedelta(minutes=FILE_LIFE_SPAN))
+
+    if request.accept_mimetypes['text/html']:
+        download_text = 'Download requested {} file '.format(data_format)
+        note = 'The file will be automatically deleted in {} Minutes: {}.'.format(FILE_LIFE_SPAN, file_end_of_life.strftime("%I:%M %p %Z"))
+        return render_template('result.html',
+                               download_link=download_link,
+                               download_text=download_text,
+                               note=note,
+                               errorFlag=len(error_msg) > 0,
+                               error=error_msg)
+    else:
+        json_response = {
+            'link': download_link,
+            'limit': file_end_of_life.isoformat(timespec='seconds')
+        }
+        if len(error_msg) > 0:
+            json_response.update({
+                'error': error_msg
+            })
+        return jsonify(json_response)
 
 
 @app.route('/EnvDataAPI/<path:filename>')
