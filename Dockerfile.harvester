@@ -33,7 +33,7 @@
 # See https://wiki.52north.org/Documentation/ImageAndContainerLabelSpecification
 # regarding the used labels
 #
-FROM python:3-slim-buster
+FROM python:3.9-slim-buster
 
 ENV YEAR=2019
 ENV MINUTES=30
