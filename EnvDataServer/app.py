@@ -260,7 +260,7 @@ def request_env_data():
 
 @app.route('/EnvDataAPI/<path:filename>')
 def send_file(filename):
-    return send_from_directory(directory='download', filename=filename)
+    return send_from_directory(directory='download', path="", filename=filename)
 
 
 @app.route('/EnvDataAPI/', methods=['GET'])
