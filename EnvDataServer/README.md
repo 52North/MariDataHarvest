@@ -170,13 +170,12 @@ For environmental data requested in format `csv`.
 }
 ```
 
-For environmental data requested in format `netcdf` but parts of the requested environmental data could not be received.
+For environmental data requested in format `netcdf`.
 
 ```json
 {
   "limit": "2021-12-07T16:53:04+00:00",
-  "link": "http://localhost:5000/EnvDataAPI/43954030-576c-11ec-a278-9361742dc712.nc",
-  "error": "Error occurred while retrieving Wave data:  "
+  "link": "http://localhost:5000/EnvDataAPI/43954030-576c-11ec-a278-9361742dc712.nc"
 }
 ```
 
