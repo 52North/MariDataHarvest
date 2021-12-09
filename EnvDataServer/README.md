@@ -318,7 +318,7 @@ curl -v -G -H "Accept: application/json" https://harvest.maridata.dev.52north.or
   
 ### Responses
 
-Same as for  [Download Data](#download-data), except that the format of the data file will always be `text/csv`.
+Same as for [Download Data](#responses), except that the format of the data file will always be `text/csv`.
 
 ### Example cURL
 
