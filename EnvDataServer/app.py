@@ -86,13 +86,23 @@ def parse_requested_var(args):
 @app.route('/EnvDataAPI/merge_data', methods=['POST'])
 @limiter.limit("1/10second")
 def merge_data():
+    logger.debug("Accept header: {}".format(request.accept_mimetypes))
     logger.debug(request)
     error_msg = ''
-    wave, wind, gfs, phy = parse_requested_var(json.loads(request.form))
+    wave, wind, gfs, phy = parse_requested_var(json.loads(request.form['var']))
+    logger.debug("Requested variables: wind: {}; wave: {}; gfs: {}; physical: {}".format(
+        wind, wave, gfs, phy
+    ))
     col_dict = json.loads(request.form['col'])
     if len(wave + wind + gfs + phy) == 0:
-        logger.debug('Error: No variables are selected')
-        return render_template('error.html', error='Error: No variables are selected')
+        error = 'Error: No variables are selected'
+        logger.error(error)
+        if request.accept_mimetypes['text/html']:
+            return render_template('error.html', error=error), 400
+        else:
+            response = jsonify(error=error)
+            response.status_code = 400
+            return response
     file = request.files['file']
     dir_path_up = Path(Path(__file__).parent, 'upload')
     dir_path_up.mkdir(exist_ok=True)
@@ -113,20 +123,42 @@ def merge_data():
                       metadata=metadata_dict, webapp=True)
     except FileFailedException as e:
         logger.error(traceback.format_exc())
-        error_msg += 'Error occurred while appending env data: ' + str(
-            e.original_exception) + '. CSV file is not valid.\n'
-        return render_template('error.html', error=error_msg)
+        error_msg = 'CSV file is not valid: Error occurred while appending env data: \"' + str(
+            e.original_exception) + '\"'
+        if request.accept_mimetypes['text/html']:
+            return render_template('error.html', error=error_msg), 400
+        else:
+            response = jsonify(error=error_msg)
+            response.status_code = 400
+            return response
     # TODO should we remove uploaded data?
     delete_file_queue[str(file_path_up)] = datetime.now() + timedelta(minutes=FILE_LIFE_SPAN)
     delete_file_queue[str(file_path_down)] = datetime.now()
-    return render_template('result.html',
-                           download_link='/EnvDataAPI/' + str(file_path_up.name),
-                           download_text='Download merged csv file',
-                           note='The file will be automatically deleted in {} Minutes: {}.'.format(
-                               FILE_LIFE_SPAN,
-                               (datetime.now(pytz.utc) + timedelta(minutes=FILE_LIFE_SPAN)).strftime("%I:%M %p %Z")
-                           ),
-                           errorFlag=len(error_msg) > 0, error=error_msg)
+
+    download_link = '{}EnvDataAPI/{}'.format(BASE_URL, str(file_path_up.name))
+    file_end_of_life = (datetime.now(pytz.utc) + timedelta(minutes=FILE_LIFE_SPAN))
+
+    if request.accept_mimetypes['text/html']:
+        download_text = 'Download merged csv file'
+        note = 'The file will be automatically deleted in {} Minutes: {}.'.format(FILE_LIFE_SPAN,
+                                                                                  file_end_of_life.strftime(
+                                                                                      "%I:%M %p %Z"))
+        return render_template('result.html',
+                               download_link=download_link,
+                               download_text=download_text,
+                               note=note,
+                               errorFlag=len(error_msg) > 0,
+                               error=error_msg)
+    else:
+        json_response = {
+            'link': download_link,
+            'limit': file_end_of_life.isoformat(timespec='seconds')
+        }
+        if len(error_msg) > 0:
+            json_response.update({
+                'error': error_msg
+            })
+        return jsonify(json_response)
 
 
 @app.route('/EnvDataAPI/request_env_data', methods=['GET'])
