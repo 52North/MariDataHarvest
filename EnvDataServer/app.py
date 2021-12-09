@@ -217,7 +217,7 @@ def request_env_data():
     if lat_lo > lat_hi:
         error.append('lat_lo > lat_hi')
     if lon_lo > lon_hi:
-        error.append('lon_lo > lon_hi ')
+        error.append('lon_lo > lon_hi')
     if date_lo > date_hi:
         error.append('date_lo > date_hi')
 
@@ -276,7 +276,7 @@ def request_env_data():
         except Exception as e:
             logger.error(traceback.format_exc())
             wave = []
-            error_msg += 'Error occurred while retrieving Wave data:  ' + str(e) + '\n'
+            error_msg += 'Error occurred while retrieving Wave data: ' + str(e) + '\n'
 
     if len(wind) > 0:
         try:
@@ -287,7 +287,7 @@ def request_env_data():
         except Exception as e:
             logger.error(traceback.format_exc())
             wind = []
-            error_msg += 'Error occurred while retrieving Wind data:  ' + str(e) + '\n'
+            error_msg += 'Error occurred while retrieving Wind data: ' + str(e) + '\n'
 
     if len(phy) > 0:
         try:
@@ -309,7 +309,7 @@ def request_env_data():
         except Exception as e:
             logger.error(traceback.format_exc())
             gfs = []
-            error_msg += 'Error occurred while retrieving GFS data:  ' + str(e) + '\n'
+            error_msg += 'Error occurred while retrieving GFS data: ' + str(e) + '\n'
 
     combined = xr.combine_by_coords(dataset_list, combine_attrs='drop', compat='override')[wave + wind + phy + gfs]
 
@@ -329,7 +329,6 @@ def request_env_data():
             response = jsonify(error=error)
             response.status_code = status_code
             return response
-
 
     dir_path = Path(Path(__file__).parent, 'download')
     dir_path.mkdir(exist_ok=True)
