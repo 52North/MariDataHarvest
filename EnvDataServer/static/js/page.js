@@ -152,24 +152,24 @@ window.onload = () => {
             $('#submitBtn').prop('disabled',true);
             $('#spinnerPanel').prop('hidden',false);
             var fd = new FormData();
-            vars = getVariables();
+            var vars = getVariables();
             fd.append('file',files[0]);
-            fd.append('var',JSON.stringify(vars));
-            fd.append('col',JSON.stringify(cols));
+            fd.append('var', JSON.stringify(vars));
+            fd.append('col', JSON.stringify(cols));
 
             $.ajax({
-              url: window.location + '/merge_data',
-              data: fd,
-              processData: false,
-              contentType: false,
-              type: 'POST',
-              success: function(data){
-                $('html').html(data)
-              },
+                url: window.location + 'merge_data',
+                data: fd,
+                processData: false,
+                contentType: false,
+                type: 'POST',
+                success: function(data){
+                    $('html').html(data)
+                },
                 error: function(err){
-                alert('Error ' + err.status + ' : ' + err.responseText)
-                $('#submitBtn').prop('disabled',false);
-                $('#spinnerPanel').prop('hidden',true);
+                    alert('Error ' + err.status + ' : ' + err.responseText)
+                    $('#submitBtn').prop('disabled',false);
+                    $('#spinnerPanel').prop('hidden',true);
                 }
             });
         }
@@ -178,12 +178,13 @@ window.onload = () => {
 }
 
 function getVariables() {
-    data = []
+    data = {}
     ls = ['Wave', 'Wind', 'GFS', 'Physical']
     ls.forEach( ds =>{
-        $('.'+ds+'_checkbox').each( (x, i) => {
+        data[ds] = []
+        $('.' + ds + '_checkbox').each( (x, i) => {
             if ($(i).is(':checked')){
-             data.push(i.name)
+                data[ds].push(i.value)
             }
         });
     });
