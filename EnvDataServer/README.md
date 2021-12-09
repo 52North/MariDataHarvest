@@ -75,8 +75,8 @@ Download environmental data matching the given parameters.
       * `csv`
       * `netcdf` 
 * `GFS`
-  * **Required**: yes
-  * **Type**: list of strings or multiple times
+  * **Required**: no*
+  * **Type**: comma separated list of strings or multiple times
   * **Description**:
     * Allowed values:
       * `Dewpoint_temperature_height_above_ground`: Dewpoint temperature @ Specified height level above ground
@@ -89,7 +89,7 @@ Download environmental data matching the given parameters.
       * `v-component_of_wind_maximum_wind`: v-component of wind @ Maximum wind level
 * `Physical`
   * **Required**: no*
-  * **Type**: list of strings or multiple times
+  * **Type**: comma separated list of strings or multiple times
   * **Description**:
     * Allowed values:
       * `bottomT`: Sea floor potential temperature
@@ -105,7 +105,7 @@ Download environmental data matching the given parameters.
       * `zos`: Sea surface height
 * `Wave`
   * **Required**: no*
-  * **Type**: list of strings or multiple times
+  * **Type**: comma separated list of strings or multiple times
   * **Description**:
     * Allowed values:
       * `VHM0_SW1`: sea surface primary swell wave significant height
@@ -126,7 +126,7 @@ Download environmental data matching the given parameters.
       * `VTPK`: sea surface wave period at variance spectral density maximum
 * `Wind`
   * **Required**: no*
-  * **Type**: list of strings or multiple times
+  * **Type**: comma separated list of strings or multiple times
   * **Description**:
     * Allowed values:
       * `eastward_wind_rms`: eastward wind speed root mean square
@@ -188,10 +188,12 @@ For environmental data requested in format `netcdf`.
 **Response**:
 
 For environmental data retrieval from GFS and another category.
-* `link` denotes the location to download the data.
-* `limit` shows the time from when the file should not be expected to be available anymore.
 * `error` informs about any error that happened when retrieving data of one category (GFS, Physical, Wave or Wind), but at least data retrieval for another category was successful.
-* Errors for *all requested categories* will result in an error response.
+  * The response code will be 500, if *all requested categories/variables* result in an error.
+    In addition, `limit` and `link` will not be set.
+* `limit` shows the time from when the file should not be expected to be available anymore.
+* `link` denotes the location to download the data.
+
 
 ```json
 {
@@ -336,5 +338,29 @@ BaseDateTime,LAT,LON
 2021-12-02 00:06:00,33.99982,-76.29557
 2021-12-02 00:09:00,39.14306,-76.40757
 ```
+
+## List of Error Messages
+
+* "CSV file is not valid: Error occurred while appending env data: "
+* "Error occurred while retrieving GFS data: <EXCEPTION>"
+* "Error occurred while retrieving Physical data: <EXCEPTION>"
+* "Error occurred while retrieving Wave data: <EXCEPTION>"
+* "Error occurred while retrieving Wind data: <EXCEPTION>"
+* "Error occurred: Empty dataset"
+* "Error occurred: requested bbox ({0}° lat x {1}° lon x {2} days) is too large. Maximal bbox dimension ({3}° lat x {4}° lon x {5} days)." with
+  * `0` := integer value of `lat_hi - lat_lo`
+  * `1` := integer value of `lon_hi - lon_lo`
+  * `2` := day value of `date_hi - date_lo`
+  * `3` := currently `20` (see [configuration](./app.py#L42))
+  * `4` := currently `20` (see [configuration](./app.py#L42))
+  * `5` := currently `10` (see [configuration](./app.py#L42))
+* "Missing mandatory parameter{0}: {1}" with
+  * `0` := s if more than one parameter is missing
+  * `1` := list of missing parameters
+* "No variables are selected"
+* "date_lo > date_hi"
+* "format parameter wrong/missing. Allowed values: csv, netcdf"
+* "lat_lo > lat_hi"
+* "lon_lo > lon_hi"
 
 [dataset_details]: https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit#gid=0
