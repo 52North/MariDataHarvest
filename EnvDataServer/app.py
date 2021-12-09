@@ -67,7 +67,11 @@ def parse_requested_var(args):
         else:
             return values
     wave, wind, gfs, phy = [], [], [], []
-    args_dict = args.to_dict(flat=False)
+    logger.debug(type(args))
+    if type(args) is dict:
+        args_dict = args
+    else:
+        args_dict = args.to_dict(flat=False)
     if 'Wave' in args_dict.keys():
         wave = _filter(args_dict.get('Wave'))
     if 'Wind' in args_dict.keys():
