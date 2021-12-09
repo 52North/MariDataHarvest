@@ -73,14 +73,14 @@ window.onload = () => {
         'zos':'Sea surface height'}
 
     GFS_25_VAR_LIST = {
-        'Temperature_surface':'Temperature	Temperature @ Ground or water surface',
-        'Wind_speed_gust_surface':'Wind speed (gust)	Wind speed (gust) @ Ground or water surface',
-        'u-component_of_wind_maximum_wind':'u-component of wind	u-component of wind @ Maximum wind level',
-        'v-component_of_wind_maximum_wind':'v-component of wind	v-component of wind @ Maximum wind level',
-        'Dewpoint_temperature_height_above_ground':'Dewpoint temperature	Dewpoint temperature @ Specified height level above ground',
-        'Relative_humidity_height_above_ground':'Relative humidity	Relative humidity @ Specified height level above ground',
-        'U-Component_Storm_Motion_height_above_ground_layer':'U-Component Storm Motion	U-Component Storm Motion @ Specified height level above ground layer',
-        'V-Component_Storm_Motion_height_above_ground_layer':'V-Component Storm Motion	V-Component Storm Motion @ Specified height level above ground layer'
+        'Temperature_surface':'Temperature @ Ground or water surface',
+        'Wind_speed_gust_surface':'Wind speed (gust) @ Ground or water surface',
+        'u-component_of_wind_maximum_wind':'u-component of wind @ Maximum wind level',
+        'v-component_of_wind_maximum_wind':'v-component of wind @ Maximum wind level',
+        'Dewpoint_temperature_height_above_ground':'Dewpoint temperature @ Specified height level above ground',
+        'Relative_humidity_height_above_ground':'Relative humidity @ Specified height level above ground',
+        'U-Component_Storm_Motion_height_above_ground_layer':'U-Component Storm Motion @ Specified height level above ground layer',
+        'V-Component_Storm_Motion_height_above_ground_layer':'V-Component Storm Motion @ Specified height level above ground layer'
         }
 
         createList(WAVE_VAR_LIST, 'Wave')
