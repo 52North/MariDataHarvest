@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, date
 from pathlib import Path
 import numpy as np
 import pandas as pd
+import requests.exceptions
 import xarray as xr
 from glob import glob
 from motu_utils.utils_cas import authenticate_CAS_for_URL
@@ -196,7 +197,7 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
 def get_GFS_prognoses(start_date, end_date, lat_lo, lat_hi, lon_lo, lon_hi):
     offset = 0.25
     # check meridian bbox for GFS 50
-    if lon_lo < 0 and lon_hi > 0:
+    if lon_lo < 0 < lon_hi:
         logger.debug(
             'GFS prognoses dataset: splitting the requested bbox over the prime meridian into LON [%s, %s] and LON [%s, %s]' % (
                 lon_lo, -0.25, 0, lon_hi))
@@ -258,10 +259,15 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
             name = 'gfs.0p25.%s%.2d%.2d18.f006.grib2' % (start_date.year, start_date.month, start_date.day)
             ds_subset = start_cat.datasets[name].subset()
             query = ds_subset.query().lonlat_box(north=lat_hi + offset, south=lat_lo - offset, east=lon_hi + offset,
-                                                 west=lon_lo - offset).variables(
-                *GFS_25_VAR_LIST)
+                                                 west=lon_lo - offset).variables(*GFS_25_VAR_LIST)
         except Exception as e:
-            logger.warning('grib2 file error ' % e)
+            # TODO be MORE specific regarding the errors to swallow and to not catch nearly all exceptions
+            # e.g. do not catch ConnectionError
+            # Exceptions are swallowed because the temporal offset at the beginning can result in ignorable errors
+            if isinstance(e, requests.exceptions.ConnectionError):
+                raise e
+            else:
+                logger.warning('grib2 file error: {}'.format(str(e)))
         try:
             data = ds_subset.get_data(query)
             x_arr = xr.open_dataset(NetCDF4DataStore(data)).drop_dims(['bounds_dim'])[GFS_25_VAR_LIST]
@@ -269,6 +275,7 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                 x_arr = x_arr.rename({'time1': 'time'})
             x_arr_list.append(x_arr)
         except Exception as e:
+            logger.warning('Exception thrown: {}'.format(str(e)))
             logger.warning('dataset %s is not complete' % name)
     for day in range((date_hi - date_lo).days + 1):
         end_date = datetime(date_lo.year, date_lo.month, date_lo.day) + timedelta(days=day)
@@ -296,7 +303,7 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                                 x_arr = x_arr.rename({'time1': 'time'})
                             x_arr_list.append(x_arr)
                         except Exception as e:
-                            print(e)
+                            logger.warning('Exception thrown: {}'.format(str(e)))
                             logger.warning('dataset %s is not complete' % name)
                     else:
                         logger.warning('dataset %s is not found' % name)
@@ -353,7 +360,7 @@ def get_GFS_50(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
                         break
                     except Exception as e:
                         logger.error(traceback.format_exc())
-                        logger.error(e)
+                        logger.error(str(e))
                         logger.error('Filename %s - Failed connecting to GFS Server - number of attempts: %d' % (
                             name, attempts))
                         if attempts > 15:
@@ -537,10 +544,22 @@ def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wav
                 date_lo = df_chunk_sub[col_dict['time']].min()
                 date_hi = df_chunk_sub[col_dict['time']].max()
 
-                if webapp and (abs(lat_hi - lat_lo) + abs(lon_hi - lon_lo) > 150 or (date_hi - date_lo).days > 30):
-                    raise ValueError(
-                        'Exceeds temporal or spatial extent. Longitude + '
-                        'Latitude extent exceeds 150° or requested days exceed 30 day.')
+                if webapp and (date_hi - date_lo).days > 30:
+                    error = 'Exceeds temporal extent: requested days exceed 30 days: {} - {} = {} days'.format(
+                        date_hi, date_lo, (date_hi - date_lo).days
+                    )
+                    logger.debug(error)
+                    raise ValueError(error)
+
+                if webapp and abs(lat_hi - lat_lo) + abs(lon_hi - lon_lo) > 150:
+                    error = 'Exceeds spatial extent: longitude and latitude extent combined exceed 150°: ' + \
+                            'Lat: {}° - {}° = {}°; Lon: {}° - {}° = {}°; {}° + {}° = {}°'.format(
+                                lat_hi, lat_lo, abs(lat_hi - lat_lo),
+                                lon_hi, lon_lo, abs(lon_hi - lon_lo),
+                                abs(lat_hi - lat_lo), abs(lon_hi - lon_lo), abs(lon_hi - lon_lo) + abs(lat_hi - lat_lo)
+                            )
+                    logger.debug(error)
+                    raise ValueError(error)
 
                 # query parameters
                 time_points = xr.DataArray(list(df_chunk_sub[col_dict['time']].values))
