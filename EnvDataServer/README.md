@@ -237,15 +237,26 @@ For failed retrieval for all selected variables.
 
 ### Example cURL
 
-```shell
-curl -v -G -H "Accept: application/json" https://harvest.maridata.dev.52north.org/EnvDataAPI/request_env_data \
-     -d 'date_lo=2019-06-02T03%3A44' -d 'date_hi=2019-06-03T09%3A55' \
-     -d 'lat_lo=53.08' -d 'lat_hi=55.08' -d 'lon_lo=1.69' -d 'lon_hi=6.1' \
-     -d 'Wave=VHM0_WW' -d 'Wave=VMDR_SW2' \
-     -d 'GFS=U-Component_Storm_Motion_height_above_ground_layer' \
-     -d 'GFS=V-Component_Storm_Motion_height_above_ground_layer' \
-     -d 'format=csv'
-```
+1. Trigger data collection:
+
+   ```shell
+   curl -v -G -H "Accept: application/json" https://harvester.maridata.dev.52north.org/EnvDataAPI/request_env_data \
+        -d 'date_lo=2019-06-02T03%3A44' -d 'date_hi=2019-06-03T09%3A55' \
+        -d 'lat_lo=53.08' -d 'lat_hi=55.08' -d 'lon_lo=1.69' -d 'lon_hi=6.1' \
+        -d 'Wave=VHM0_WW' -d 'Wave=VMDR_SW2' \
+        -d 'GFS=U-Component_Storm_Motion_height_above_ground_layer' \
+        -d 'GFS=V-Component_Storm_Motion_height_above_ground_layer' \
+        -d 'format=csv'
+   ```
+
+1. Download collected data using the `link` value from the response of the command above:
+
+   ```shell
+   curl -v https://harvester.maridata.dev.52north.org/EnvDataAPI/a8f06b94-5f14-11ec-8609-0242ac120003.csv \
+        -o /tmp/env-data-download.csv
+   ```
+
+   The extension of the file `env-data-download` MUST fit the previously requested format: `csv` → `.csv`; `netcdf` → `.nc`.
 
 ## Merge Data
 
