@@ -11,11 +11,11 @@ All data is interpolated to match the following constraints:
 
 Download environmental data matching the given parameters.
 
-**URL**: `/request_env_data` 
+**URL**: `/request_env_data`
 
 **Method**: `GET`
 
-**Headers**: 
+**Headers**:
 
 * `Accept`: if `application/json` than response in json else html
 
@@ -73,7 +73,7 @@ Download environmental data matching the given parameters.
   * **Description**:
     * Allowed values:
       * `csv`
-      * `netcdf` 
+      * `netcdf`
 * `GFS`
   * **Required**: no*
   * **Type**: comma separated list of strings or multiple times
@@ -197,8 +197,8 @@ For environmental data retrieval from GFS and another category.
 
 ```json
 {
-  "error": "Error occurred while retrieving GFS data:  HTTPSConnectionPool(host='rda.ucar.edu', port=443): Max retries exceeded with url: /thredds/catalog/files/g/ds084.1/2019/20190601/catalog.xml (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7f8af2b3dbe0>: Failed to establish a new connection: [Errno 113] No route to host'))\n", 
-  "limit": "2021-12-09T15:45:17+00:00", 
+  "error": "Error occurred while retrieving GFS data:  HTTPSConnectionPool(host='rda.ucar.edu', port=443): Max retries exceeded with url: /thredds/catalog/files/g/ds084.1/2019/20190601/catalog.xml (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7f8af2b3dbe0>: Failed to establish a new connection: [Errno 113] No route to host'))\n",
+  "limit": "2021-12-09T15:45:17+00:00",
   "link": "http://localhost:5000/EnvDataAPI/3e2d0782-58f6-11ec-93f8-99c5f7a9768e.csv"
 }
 ```
@@ -259,10 +259,10 @@ curl -v -G -H "Accept: application/json" https://harvest.maridata.dev.52north.or
 
 **Content-Type**: `multipart/form-data`
 
-**Content**: 
+**Content**:
 
 * **Element**: `var`
-  * **Description**: The requested variables, grouped by category. 
+  * **Description**: The requested variables, grouped by category.
   * **Content-Type**: dictionary of lists
   * **Allowed Values**: see [Download Data](#download-data)
   * **Example**:
@@ -291,7 +291,7 @@ curl -v -G -H "Accept: application/json" https://harvest.maridata.dev.52north.or
     ```
 
 * **Element**: `file`
-  * **Description**: The file with timestamps and coordinates in WGS84 
+  * **Description**: The file with timestamps and coordinates in WGS84
   * **Content-Type**: `text/csv` with
     * `,` as column separator
     * `.` as decimal separator
@@ -316,7 +316,7 @@ curl -v -G -H "Accept: application/json" https://harvest.maridata.dev.52north.or
     2021-12-02 00:06:00,33.99982,-76.29557
     2021-12-02 00:09:00,39.14306,-76.40757
     ```
-  
+
 ### Responses
 
 Same as for [Download Data](#responses), except that the format of the data file will always be `text/csv`.
