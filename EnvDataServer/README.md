@@ -3,6 +3,7 @@
 API for retrieving environmental data.
 
 All data is interpolated to match the following constraints:
+
 * Spatial Resolution: 0.083° &times; 0.083°
 * Temporal Resolution: 3-hours interval
 * All timestamps are assumed to be in UTC, hence no timezone information is expected.
@@ -147,8 +148,6 @@ Download environmental data matching the given parameters.
 
 *: At least one value for GFS, Physical, Wave or Wind is required ([detailed description of the datasets][dataset_details]).
 
-
-
 ### Responses
 
 #### Success
@@ -160,6 +159,7 @@ Download environmental data matching the given parameters.
 **Response**:
 
 For environmental data requested in format `csv`.
+
 * `link` denotes the location to download the data.
 * `limit` shows the time from when the file should not be expected to be available anymore.
 
@@ -188,12 +188,12 @@ For environmental data requested in format `netcdf`.
 **Response**:
 
 For environmental data retrieval from GFS and another category.
+
 * `error` informs about any error that happened when retrieving data of one category (GFS, Physical, Wave or Wind), but at least data retrieval for another category was successful.
   * The response code will be 500, if *all requested categories/variables* result in an error.
     In addition, `limit` and `link` will not be set.
 * `limit` shows the time from when the file should not be expected to be available anymore.
 * `link` denotes the location to download the data.
-
 
 ```json
 {
@@ -266,6 +266,7 @@ curl -v -G -H "Accept: application/json" https://harvest.maridata.dev.52north.or
   * **Content-Type**: dictionary of lists
   * **Allowed Values**: see [Download Data](#download-data)
   * **Example**:
+
     ```json
     {
       "Wave": ["VHM0_WW", "VMDR", "VTM10", "VTPK", "VPED"],
@@ -282,6 +283,7 @@ curl -v -G -H "Accept: application/json" https://harvest.maridata.dev.52north.or
     * MUST contain the three keys: `time`, `lat`, and `lon`
     * Values MUST match the columns names of the `file`
   * **Example**:
+
     ```json
     {
       "time": "BaseDateTime",
@@ -310,6 +312,7 @@ curl -v -G -H "Accept: application/json" https://harvest.maridata.dev.52north.or
       * Between -180.0 and +180.0
       * Must meet `|max(latitude) - min(latitude)| + |max(latitude) - min(latitude)| < 150.0`
   * **Example**:
+
     ```csv
     BaseDateTime,LAT,LON
     2021-12-02 00:03:00,33.63074,-118.33015
@@ -342,10 +345,10 @@ BaseDateTime,LAT,LON
 ## List of Error Messages
 
 * "CSV file is not valid: Error occurred while appending env data: "
-* "Error occurred while retrieving GFS data: <EXCEPTION>"
-* "Error occurred while retrieving Physical data: <EXCEPTION>"
-* "Error occurred while retrieving Wave data: <EXCEPTION>"
-* "Error occurred while retrieving Wind data: <EXCEPTION>"
+* "Error occurred while retrieving GFS data: `<EXCEPTION>`"
+* "Error occurred while retrieving Physical data: `<EXCEPTION>`"
+* "Error occurred while retrieving Wave data: `<EXCEPTION>`"
+* "Error occurred while retrieving Wind data: `<EXCEPTION>`"
 * "Error occurred: Empty dataset"
 * "Error occurred: requested bbox ({0}° lat x {1}° lon x {2} days) is too large. Maximal bbox dimension ({3}° lat x {4}° lon x {5} days)." with
   * `0` := integer value of `lat_hi - lat_lo`
