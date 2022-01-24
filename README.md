@@ -117,6 +117,15 @@ python main.py --year=2019 --minutes=30 --dir=C:\..
 
   - `depth_first`: runs all steps for each file, which automatically deactivates `step` argument.
 
+## Development
+
+Start the EnvDataAPI services locally for testing using the following command in the `EndDataServer` directory:
+
+```shell
+export FLASK_APP=app.py
+flask run --debugger
+```
+
 ## Docker
 
 You can use the [Dockerfile](./Dockerfile) to build a docker image and run the script in its own isolated environment. It is recommended to provide a volume to persist the data between each run. You can specify all arguments including the optional ones as environment variables when creating/starting the container as outlined in the following. The labels used are following the [Image And Container Label Specification](https://wiki.52north.org/Documentation/ImageAndContainerLabelSpecification) of 52°North.

@@ -191,12 +191,32 @@ def request_env_data():
             response = jsonify(error=error)
             response.status_code = 400
             return response
-    date_lo = str_to_date_min(request.args.get('date_lo')) - timedelta(hours=temporal_interpolation_rate)
-    date_hi = str_to_date_min(request.args.get('date_hi')) + timedelta(hours=temporal_interpolation_rate)
-    lat_lo = float(request.args.get('lat_lo')) - spatial_interpolation_rate
-    lat_hi = float(request.args.get('lat_hi')) + spatial_interpolation_rate
-    lon_lo = float(request.args.get('lon_lo')) - spatial_interpolation_rate
-    lon_hi = float(request.args.get('lon_hi')) + spatial_interpolation_rate
+    try:
+        date_lo = str_to_date_min(request.args.get('date_lo')) - timedelta(hours=temporal_interpolation_rate)
+        date_hi = str_to_date_min(request.args.get('date_hi')) + timedelta(hours=temporal_interpolation_rate)
+        lat_lo = float(request.args.get('lat_lo')) - spatial_interpolation_rate
+        lat_hi = float(request.args.get('lat_hi')) + spatial_interpolation_rate
+        lon_lo = float(request.args.get('lon_lo')) - spatial_interpolation_rate
+        lon_hi = float(request.args.get('lon_hi')) + spatial_interpolation_rate
+    except Exception as e:
+        logger.error(traceback.format_exc())
+        error = 'Error occurred: not all submitted parameters could not be parsed as date: {}, {}, or float: {}, {}, {}, {}. {}'.format(
+            request.args.get('date_lo'),
+            request.args.get('date_hi'),
+            request.args.get('lat_lo'),
+            request.args.get('lat_hi'),
+            request.args.get('lon_lo'),
+            request.args.get('lon_hi'),
+            str(e)
+        )
+        logger.debug(error)
+        if request.accept_mimetypes['text/html']:
+            return render_template('error.html', error=error), 400
+        else:
+            response = jsonify(error=error)
+            response.status_code = 400
+            return response
+
     #
     #   rounding coordinates to reasonable accuracy
     #
