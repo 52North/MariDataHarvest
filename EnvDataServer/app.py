@@ -41,6 +41,15 @@ temporal_interpolation_rate = 3
 # max bounding box
 max_lat, max_lon, max_days = 20, 20, 10
 
+WAVE_VAR_LIST = ['VHM0_WW', 'VMDR_SW2', 'VMDR_SW1', 'VMDR', 'VTM10', 'VTPK', 'VPED', 'VTM02',
+                 'VMDR_WW', 'VTM01_SW2', 'VHM0_SW1', 'VTM01_SW1', 'VSDX', 'VSDY', 'VHM0', 'VTM01_WW']
+WIND_VAR_LIST = ['surface_downward_eastward_stress', 'wind_stress_divergence', 'northward_wind', 'sampling_length', 'wind_speed_rms', 'wind_vector_curl', 'northward_wind_rms',
+                 'eastward_wind', 'wind_speed', 'wind_vector_divergence', 'wind_stress', 'wind_stress_curl', 'eastward_wind_rms', 'surface_type', 'surface_downward_northward_stress']
+PHY_VAR_LIST = ['mlotst', 'siconc', 'usi', 'thetao',
+                'sithick', 'bottomT', 'vsi', 'vo', 'uo', 'so', 'zos']
+GFS_VAR_LIST = ['Temperature_surface', 'Wind_speed_gust_surface', 'u-component_of_wind_maximum_wind', 'v-component_of_wind_maximum_wind', 'Dewpoint_temperature_height_above_ground',
+                'Relative_humidity_height_above_ground', 'U-Component_Storm_Motion_height_above_ground_layer', 'V-Component_Storm_Motion_height_above_ground_layer']
+
 BASE_URL = os.getenv("BASE_URL", "http://localhost:5000/")
 
 
@@ -61,17 +70,20 @@ dir_cleaner_thread.start()
 
 
 def parse_requested_var(args):
+    logger.debug(type(args))
+
+    if type(args) is dict:
+        args_dict = args
+    else:
+        args_dict = args.to_dict(flat=False)
+
     def _filter(values):
         if len(values) == 1 and ',' in values[0]:
             return values[0].split(',')
         else:
             return values
+
     wave, wind, gfs, phy = [], [], [], []
-    logger.debug(type(args))
-    if type(args) is dict:
-        args_dict = args
-    else:
-        args_dict = args.to_dict(flat=False)
     if 'Wave' in args_dict.keys():
         wave = _filter(args_dict.get('Wave'))
     if 'Wind' in args_dict.keys():
@@ -80,7 +92,21 @@ def parse_requested_var(args):
         gfs = _filter(args_dict.get('GFS'))
     if 'Physical' in args_dict.keys():
         phy = _filter(args_dict.get('Physical'))
-    return wave, wind, gfs, phy
+
+    # todo: check each array for wrong entries
+    def _check_for_unknown_values(values, allowed_values, unknown_values):
+        for var in values:
+            if var not in allowed_values:
+                unknown_values.append(var)
+        return unknown_values
+
+    unknown_values = []
+    _check_for_unknown_values(wave, WAVE_VAR_LIST, unknown_values)
+    _check_for_unknown_values(wind, WIND_VAR_LIST, unknown_values)
+    _check_for_unknown_values(gfs, GFS_VAR_LIST, unknown_values)
+    _check_for_unknown_values(phy, PHY_VAR_LIST, unknown_values)
+
+    return wave, wind, gfs, phy, unknown_values
 
 
 @app.route('/EnvDataAPI/merge_data', methods=['POST'])
@@ -89,11 +115,73 @@ def merge_data():
     logger.debug("Accept header: {}".format(request.accept_mimetypes))
     logger.debug(request)
     error_msg = ''
-    wave, wind, gfs, phy = parse_requested_var(json.loads(request.form['var']))
-    logger.debug("Requested variables: wind: {}; wave: {}; gfs: {}; physical: {}".format(
-        wind, wave, gfs, phy
-    ))
+
+    error = []
+    if 'col' not in request.form.keys():
+        error.append('col')
+    if 'var' not in request.form.keys():
+        error.append('var')
+    if len(request.files) == 0 or 'file' not in request.files.keys():
+        error.append('file')
+
+    if len(error) > 0:
+        error = 'Missing mandatory parameter{}: {}'.format('s' if len(error) > 1 else '', error)
+        logger.debug(error)
+        if request.accept_mimetypes['text/html']:
+            response = render_template('error.html', error=error)
+            return response, 400
+        else:
+            response = jsonify(error=error)
+            response.status_code = 400
+            return response
+
     col_dict = json.loads(request.form['col'])
+    unknown_cols = []
+    for key in col_dict.keys():
+        if key not in ['time', 'lat', 'lon']:
+            unknown_cols.append(key)
+
+    if len(unknown_cols) > 0:
+        error = 'Received unknown column mapping{}: {}'.format('s' if len(unknown_cols) > 1 else '', unknown_cols)
+        logger.debug(error)
+        if request.accept_mimetypes['text/html']:
+            response = render_template('error.html', error=error)
+            return response, 400
+        else:
+            response = jsonify(error=error)
+            response.status_code = 400
+            return response
+
+    selected_variables = json.loads(request.form['var'])
+    unknown_variables = []
+    for key in selected_variables.keys():
+        if key not in ["GFS", "Physical", "Wave", "Wind"]:
+            unknown_variables.append(key)
+
+    if len(unknown_variables) > 0:
+        error = 'Received unknown parameter{}: {}'.format('s' if len(unknown_variables) > 1 else '', unknown_variables)
+        logger.debug(error)
+        if request.accept_mimetypes['text/html']:
+            response = render_template('error.html', error=error)
+            return response, 400
+        else:
+            response = jsonify(error=error)
+            response.status_code = 400
+            return response
+
+    wave, wind, gfs, phy, unknown_values = parse_requested_var(selected_variables)
+    logger.debug("Requested variables: wind: {}; wave: {}; gfs: {}; physical: {}; unknown: {}".format(
+        wind, wave, gfs, phy, unknown_values
+    ))
+    if len(unknown_values) > 0:
+        error = 'Error: unknown variables submitted: {}'.format(unknown_values)
+        logger.error(error)
+        if request.accept_mimetypes['text/html']:
+            return render_template('error.html', error=error), 400
+        else:
+            response = jsonify(error=error)
+            response.status_code = 400
+            return response
     if len(wave + wind + gfs + phy) == 0:
         error = 'Error: No variables are selected'
         logger.error(error)
@@ -160,13 +248,11 @@ def merge_data():
             })
         return jsonify(json_response)
 
-
 @app.route('/EnvDataAPI/request_env_data', methods=['GET'])
 @limiter.limit("1/10second")
 def request_env_data():
     logger.debug("Accept header: {}".format(request.accept_mimetypes))
     logger.debug(request)
-    dataset_list = []
     error = []
     # check for mandatory parameter
     if 'date_lo' not in request.args:
@@ -181,6 +267,7 @@ def request_env_data():
         error.append('lon_lo')
     if 'lon_hi' not in request.args:
         error.append('lon_hi')
+
     if len(error) > 0:
         error = 'Missing mandatory parameter{}: {}'.format('s' if len(error) > 1 else '', error)
         logger.debug(error)
@@ -191,6 +278,23 @@ def request_env_data():
             response = jsonify(error=error)
             response.status_code = 400
             return response
+
+    unknown_parameter = []
+    for key in request.args.keys():
+        if key not in ["date_lo", "date_hi" ,"lat_lo", "lat_hi", "lon_lo", "lon_hi", "format", "GFS", "Physical", "Wave", "Wind"]:
+            unknown_parameter.append(key)
+
+    if len(unknown_parameter) > 0:
+        error = 'Received unknown parameter{}: {}'.format('s' if len(unknown_parameter) > 1 else '', unknown_parameter)
+        logger.debug(error)
+        if request.accept_mimetypes['text/html']:
+            response = render_template('error.html', error=error)
+            return response, 400
+        else:
+            response = jsonify(error=error)
+            response.status_code = 400
+            return response
+
     try:
         date_lo = str_to_date_min(request.args.get('date_lo')) - timedelta(hours=temporal_interpolation_rate)
         date_hi = str_to_date_min(request.args.get('date_hi')) + timedelta(hours=temporal_interpolation_rate)
@@ -240,15 +344,44 @@ def request_env_data():
     if date_lo > date_hi:
         error.append('date_lo > date_hi')
 
-    wave, wind, gfs, phy = parse_requested_var(request.args)
-    logger.debug("Requested variables: wind: {}; wave: {}; gfs: {}; physical: {}".format(
-        wind, wave, gfs, phy
+    wave, wind, gfs, phy, unknown_values = parse_requested_var(request.args)
+
+    logger.debug("Requested variables: wind: {}; wave: {}; gfs: {}; physical: {}; unknown: {}".format(
+        wind, wave, gfs, phy, unknown_values
     ))
+
+    if len(unknown_values) > 0:
+        error = 'Error: unknown variables submitted: {}'.format(unknown_values)
+        logger.error(error)
+        if request.accept_mimetypes['text/html']:
+            return render_template('error.html', error=error), 400
+        else:
+            response = jsonify(error=error)
+            response.status_code = 400
+            return response
+
     if len(wave + wind + gfs + phy) == 0:
         error.append('No variables are selected')
 
     if len(error) > 0:
         logger.debug('Error{}: {}'.format('s' if len(error) > 1 else '', error))
+        if request.accept_mimetypes['text/html']:
+            return render_template('error.html', error=error), 400
+        else:
+            response = jsonify(error=error)
+            response.status_code = 400
+            return response
+
+    if int(lat_hi - lat_lo) > max_lat or int(lon_hi - lon_lo) > max_lon or (date_hi - date_lo).days > max_days:
+        error = 'Error occurred: requested bbox ({0}° lat x {1}° lon x {2} days) is too large. Maximal bbox ' + \
+                'dimension ({3}° lat x {4}° lon x {5} days).'.format(
+                    int(lat_hi - lat_lo),
+                    int(lon_hi - lon_lo),
+                    (date_hi - date_lo).days,
+                    max_lat,
+                    max_lon,
+                    max_days)
+        logger.debug(error)
         if request.accept_mimetypes['text/html']:
             return render_template('error.html', error=error), 400
         else:
@@ -270,22 +403,7 @@ def request_env_data():
             longitude=xr.DataArray(lon_interpolation, coords=[lon_interpolation], dims=["longitude"]),
             time=xr.DataArray(temporal_interpolation, coords=[temporal_interpolation], dims=["time"]))
 
-    if int(lat_hi - lat_lo) > max_lat or int(lon_hi - lon_lo) > max_lon or (date_hi - date_lo).days > max_days:
-        error = 'Error occurred: requested bbox ({0}° lat x {1}° lon x {2} days) is too large. Maximal bbox ' + \
-                'dimension ({3}° lat x {4}° lon x {5} days).'.format(
-                    int(lat_hi - lat_lo),
-                    int(lon_hi - lon_lo),
-                    (date_hi - date_lo).days,
-                    max_lat,
-                    max_lon,
-                    max_days)
-        logger.debug(error)
-        if request.accept_mimetypes['text/html']:
-            return render_template('error.html', error=error), 400
-        else:
-            response = jsonify(error=error)
-            response.status_code = 400
-            return response
+    dataset_list = []
 
     if len(wave) > 0:
         try:
