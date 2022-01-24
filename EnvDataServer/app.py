@@ -186,8 +186,7 @@ def request_env_data():
         logger.debug(error)
         if request.accept_mimetypes['text/html']:
             response = render_template('error.html', error=error)
-            response.status_code = 400
-            return response
+            return response, 400
         else:
             response = jsonify(error=error)
             response.status_code = 400
