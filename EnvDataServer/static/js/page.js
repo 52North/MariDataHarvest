@@ -19,16 +19,18 @@ window.onload = () => {
     var boundingBox_id = L.stamp(boundingBox);
 
     $('.bbox').on('input', (e)=>{
-    if (boundingBox_id !== -1)
-        layerGroup.removeLayer(boundingBox_id)
-    var bounds = [[$('#lat_lo').val(),$('#lon_lo').val()], [$('#lat_hi').val(), $('#lon_hi').val()]];
-    var boundingBox = L.rectangle(bounds, {color: "#ffffff", weight: 1}).addTo(layerGroup);
-    mymap.fitBounds(bounds, {padding: [80,80]})
-    mymap.addLayer(boundingBox);
-    boundingBox_id= L.stamp(boundingBox);
+        if (boundingBox_id !== -1) {
+            layerGroup.removeLayer(boundingBox_id)
+        }
+        var bounds = [[$('#lat_lo').val(),$('#lon_lo').val()], [$('#lat_hi').val(), $('#lon_hi').val()]];
+        var boundingBox = L.rectangle(bounds, {color: "#ffffff", weight: 1}).addTo(layerGroup);
+        mymap.fitBounds(bounds, {padding: [80,80]})
+        mymap.addLayer(boundingBox);
+        boundingBox_id= L.stamp(boundingBox);
     });
 
-    WAVE_VAR_LIST = {'VHM0_WW':		'sea_surface_wind_wave_significant_height',
+    WAVE_VAR_LIST = {
+        'VHM0_WW':		'sea_surface_wind_wave_significant_height',
         'VMDR_SW2':		'sea_surface_secondary_swell_wave_from_direction',
         'VMDR_SW1':		'sea_surface_primary_swell_wave_from_direction',
         'VMDR':		'sea_surface_wave_from_direction',
@@ -43,8 +45,11 @@ window.onload = () => {
         'VSDX':		'sea_surface_wave_stokes_drift_x_velocity',
         'VSDY':		'sea_surface_wave_stokes_drift_y_velocity',
         'VHM0':		'sea_surface_wave_significant_height',
-        'VTM01_WW':		'sea_surface_wind_wave_mean_period'}
-    WIND_VAR_LIST = {'surface_downward_eastward_stress':'eastward wind stress',
+        'VTM01_WW':		'sea_surface_wind_wave_mean_period'
+    }
+
+    WIND_VAR_LIST = {
+        'surface_downward_eastward_stress':'eastward wind stress',
         'wind_stress_divergence':'wind stress divergence',
         'northward_wind':'northward wind speed',
         'sampling_length':'sampling length',
@@ -58,9 +63,11 @@ window.onload = () => {
         'wind_stress_curl':'wind stress curl',
         'eastward_wind_rms':'eastward wind speed root mean square',
         'surface_type':'flag - 0:ocean - 1:earth/ice',
-        'surface_downward_northward_stress':'northward wind stress'}
+        'surface_downward_northward_stress':'northward wind stress'
+    }
 
-    DAILY_PHY_VAR_LIST = {'mlotst':'Density ocean mixed layer thickness',
+    DAILY_PHY_VAR_LIST = {
+        'mlotst':'Density ocean mixed layer thickness',
         'siconc':'Ice concentration',
         'usi':'Sea ice eastward velocity',
         'thetao':'Potential Temperature',
@@ -70,7 +77,8 @@ window.onload = () => {
         'vo':'Northward velocity',
         'uo':'Eastward velocity',
         'so':'Salinity',
-        'zos':'Sea surface height'}
+        'zos':'Sea surface height'
+    }
 
     GFS_25_VAR_LIST = {
         'Temperature_surface':'Temperature @ Ground or water surface',
@@ -81,12 +89,12 @@ window.onload = () => {
         'Relative_humidity_height_above_ground':'Relative humidity @ Specified height level above ground',
         'U-Component_Storm_Motion_height_above_ground_layer':'U-Component Storm Motion @ Specified height level above ground layer',
         'V-Component_Storm_Motion_height_above_ground_layer':'V-Component Storm Motion @ Specified height level above ground layer'
-        }
+    }
 
-        createList(WAVE_VAR_LIST, 'Wave')
-        createList(WIND_VAR_LIST, 'Wind')
-        createList(DAILY_PHY_VAR_LIST, 'Physical')
-        createList(GFS_25_VAR_LIST, 'GFS')
+    createList(WAVE_VAR_LIST, 'Wave')
+    createList(WIND_VAR_LIST, 'Wind')
+    createList(DAILY_PHY_VAR_LIST, 'Physical')
+    createList(GFS_25_VAR_LIST, 'GFS')
 
     let d = new Date();
     document.getElementById("date").innerHTML = d.toLocaleDateString('en-GB', {
@@ -139,6 +147,7 @@ window.onload = () => {
         $('#submitBtn').prop('disabled',true);
         $('#spinnerPanel').prop('hidden',false);
     });
+
     $('#submitBtn').click((event)=>{
         var files = $('#csvUpload')[0].files;
         if(files.length > 0 ){
@@ -190,6 +199,7 @@ function getVariables() {
     });
     return data
 }
+
 function createList(ls, name) {
     let checkbox_list = $('#checkbox_list');
     let div = $('<div class="col w-75"> </div>')
