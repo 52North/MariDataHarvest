@@ -150,7 +150,10 @@ window.onload = () => {
 
     $('#submitBtn').click((event)=>{
         var files = $('#csvUpload')[0].files;
-        if(files.length > 0 ){
+        if (files.length < 1){
+            $('#csvUpload').remove();
+        }
+        else {
             cols = {
                 'time':$('#timestamp_select').find(":selected").text(),
                 'lat':$('#lat_select').find(":selected").text(),
