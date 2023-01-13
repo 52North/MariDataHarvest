@@ -67,6 +67,8 @@ RUN mkdir ${HOME}/download
 
 CMD ["python", "./app.py"]
 
+EXPOSE 8080
+
 ARG GIT_COMMIT
 LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
 
@@ -75,5 +77,3 @@ LABEL org.opencontainers.image.created="${BUILD_DATE}"
 
 ARG VERSION
 LABEL org.opencontainers.image.version="${VERSION}"
-
-EXPOSE 8080

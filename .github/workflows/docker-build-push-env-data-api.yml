@@ -53,7 +53,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
         with:
-          context: ./Dockerfile.EnvDataServer.k8s
+          context: .
+          file: Dockerfile.EnvDataServer.k8s
           cache-from: type=gha
           cache-to: type=gha
           push: ${{ github.event_name != 'pull_request' }}
