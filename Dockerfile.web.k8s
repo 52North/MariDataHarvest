@@ -40,9 +40,9 @@ LABEL maintainer="Eike Hinderk Jürrens <e.h.juerrens@52north.org>" \
       org.opencontainers.image.vendor="52°North GmbH"
 
 COPY web/default.k8s.conf /etc/nginx/conf.d/default.conf
-COPY EnvDataServer/static /www/static
+COPY EnvDataServer/static /usr/share/nginx/html/EnvDataAPI/static/
 
-RUN chmod +x --recursive /www/static
+RUN chmod +x --recursive /usr/share/nginx/html/EnvDataAPI/
 
 EXPOSE 80
 
