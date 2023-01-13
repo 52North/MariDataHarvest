@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       tags:
-        description: "Please provide a git tag value, e.g. v1.0b1. The build id should be added with prefix b and incremented by each build."
+        description: "Please provide a git tag value, e.g. v1.0.3b4. The build id should be added with prefix b and incremented by each build."
         required: true
         type: string
-        default: "v1.0b1"
+        default: "v1.0.3b4"
   push:
     tags:
       - "v*"
