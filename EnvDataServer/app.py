@@ -490,7 +490,7 @@ def request_env_data():
     delete_file_queue[file_path] = datetime.now()
     logger.debug('Processing request finished {}'.format(error_msg))
 
-    download_link = '{}/{}'.format(BASE_URL, str(file_path.name))
+    download_link = '{}{}'.format(BASE_URL, str(file_path.name))
     file_end_of_life = (datetime.now(pytz.utc) + timedelta(minutes=FILE_LIFE_SPAN))
 
     if request.accept_mimetypes['text/html']:
