@@ -33,7 +33,7 @@ app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50 Mb limit
 # TODO move to a config file
 delete_file_queue = dict()
 # in Minutes
-FILE_LIFE_SPAN = os.getenv("FILE_LIFE_SPAN", "120")
+FILE_LIFE_SPAN = int(os.getenv("FILE_LIFE_SPAN", 120))
 # in degrees
 spatial_interpolation_rate = 0.083
 # in hours
