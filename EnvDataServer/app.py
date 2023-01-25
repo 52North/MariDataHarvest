@@ -31,6 +31,7 @@ app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50 Mb limit
 
 # global variables
 # TODO move to a config file
+# Use https://flask.palletsprojects.com/en/1.1.x/config/#configuration-basics
 delete_file_queue = dict()
 # in Minutes
 FILE_LIFE_SPAN = int(os.getenv("FILE_LIFE_SPAN", 120))
@@ -51,7 +52,7 @@ GFS_VAR_LIST = ['Temperature_surface', 'Wind_speed_gust_surface', 'u-component_o
                 'Relative_humidity_height_above_ground', 'U-Component_Storm_Motion_height_above_ground_layer', 'V-Component_Storm_Motion_height_above_ground_layer']
 
 BASE_URL = os.getenv("BASE_URL", "http://localhost:5000/")
-
+app.config['BASE_URL'] = BASE_URL
 
 def remove_files():
     while True:
