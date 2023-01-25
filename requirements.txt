@@ -18,7 +18,7 @@ idna==2.10
 itsdangerous==1.1.0
 Jinja2==2.11.3
 joblib==1.2.0
-limits==1.5.1
+limits==3.2.0
 locket==0.2.1
 MarkupSafe==1.1.1
 motuclient==1.8.8
