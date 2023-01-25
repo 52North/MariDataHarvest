@@ -9,7 +9,7 @@ click-plugins==1.1.1
 cligj==0.7.2
 cloudpickle==1.6.0
 dask==2021.4.0
-Fiona==1.8.19
+Fiona==1.8.22
 Flask==1.1.2
 Flask-Limiter==1.4
 fsspec==0.9.0
