@@ -156,6 +156,7 @@ def merge_data():
     selected_variables = json.loads(request.form['var'])
     unknown_variables = []
     for key in selected_variables.keys():
+        # TODO make list of supported variables configurable to be able to disable them
         if key not in ["GFS", "Physical", "Wave", "Wind"]:
             unknown_variables.append(key)
 

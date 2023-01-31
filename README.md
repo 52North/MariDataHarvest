@@ -1,49 +1,39 @@
-# MariDataIngestio
+# MariDataHarvest
 
 ## TODOS
 
-- [x] `requirements.txt`: all one
-- [x] `README.md`: one for all
-- [ ] `requirements.(base|harvester).txt`
-- [ ] `requirements.ed2.txt`
-- [ ] Rename packages: lowerCamelCase (e.g. `envDataServer`) and lower case (e.g. `utilities`)
+- [ ] List only required/directly used dependencies in `dev` branch without versions, unless they are required in THIS version.
+      Split `requirements.txt` and list only directly used ones.
+  - [ ] EnvironmentalData
+  - [ ] Harvester
+  - [ ] EnvDataServer
+- [ ] Solve context path problem (via configuration or similar)
+- [ ] Code-Cleaning: Remove unused imports, functions, variables
+- [ ] Establish central location for variable definition: keep in weather.py; EnvDataServer/app.py accesses them via python features;  page.js accesses theme via light weight endpoint implemented in app.py
+      Convert to dictionary and provide helper functions to retrieve the required representation
+
+- [ ] Establish `dev` branch
+
 - [ ] Add Package/Component Overview to root `README.md`
-- [ ] Update `docker-compose.yml`: add ED2
-- [ ] Rename repo to MariDataIngestio
+      Document, who is using what part of the utilities package.
+- [ ] Comment wind variable in webui (and API)
+      page.js:95 comment
+      EnvDataServer/app.py:159 remove Wind from list of variables if not configurable
+
+- [ ] WebUI: set time bbox to current day (limit input to hours only, no minutes, if easily possible)
+- [ ] Store last request in cookie or Browser-Storage
+- [ ] History Back does not work
+
+- [ ] Replace MOTU bei OPeNDAP
 - [ ] `Dockerfile` of harvester:
   - [ ] reuqirements.txt -> new name
   - [ ] copy package and the dependency packages (utilities, environmentData)
   - [ ] adjust `CMD` to match new python package structure
     - [ ] add env pythonpath
-    - [ ] change CMD to variant with "["s
-- [x] "Buttons" unter die Variablen
-- [x] Label neben die Eingabefelder mit den Constraints
-- [x] style of submit after submit deutlicher anpassen
-- [x] "loading spinner"
-- [x] label von submit: anfrage kann eventuell länger dauern
-- [x] Für Wave-Variablen Tooltip mit "Long-name" einbauen
-- [x] Response in template rendern und nicht nur rohes html
-- [x] Label "in case of variable is not available it will be skipped in the result data set"
-- [ ] Aktuellen Stand deployen (12 Minuten Proxy-Timeout)
-- [ ] technischen Account für GFS und CMEMS in der Infrastruktur
+    - [ ] change CMD to variant with "[" s
+- [ ] Identify useful k8s/proxy timeout or switch to asynchronous communication pattern with managed request queue
 
-<div style="float:right; border: 1px solid #cecece; padding: 5px;">
-<!-- TOC -->
-
-- [MariDataIngestio](#maridataingestio)
-    - [TODOS](#todos)
-    - [Requirements](#requirements)
-    - [Usage](#usage)
-    - [Docker](#docker)
-        - [CODE-DE](#code-de)
-    - [Deployment](#deployment)
-        - [Web Access to the Data](#web-access-to-the-data)
-    - [Contact](#contact)
-    - [License](#license)
-    - [Funding](#funding)
-
-<!-- /TOC -->
-</div>
+## Description
 
 MariDataHarvest is a tool for scrapping and harvesting Automatic Identification System (AIS) data provided by [marinecadastre](https://marinecadastre.gov/AIS/)
 then appending it with the weather and environment conditions provided by [CMEMS](https://nrt.cmems-du.eu) and [RDA](https://rda.ucar.edu/index.html) at each geographical and UTC timestamp point.
