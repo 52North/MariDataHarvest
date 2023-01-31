@@ -43,9 +43,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE 1
 # https://flask.palletsprojects.com/en/1.1.x/config/#ENV
 ENV FLASK_ENV=production
-ENV STATIC_URL /EnvDataAPI/static
-ENV STATIC_PATH /www/static/static
-ENV PYTHONPATH "${PYTHONPATH}:."
+ENV PYTHONPATH "${PYTHONPATH}:.:EnvironmentalData:utilities"
 
 LABEL maintainer="Jürrens, Eike Hinderk <e.h.juerrens@52north.org>" \
       org.opencontainers.image.authors="Jürrens, Eike Hinderk <e.h.juerrens@52north.org>" \
@@ -53,19 +51,20 @@ LABEL maintainer="Jürrens, Eike Hinderk <e.h.juerrens@52north.org>" \
 
 WORKDIR ${HOME}
 
-COPY ./requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY ./requirements.util.txt ./
+COPY ./requirements.environmentaldata.txt ./
+COPY ./requirements.envdataserver.txt ./
+RUN pip install --no-cache-dir -r requirements.envdataserver.txt
 
-COPY ./EnvDataServer/*.py ./
-COPY ./EnvDataServer/static ./static
-COPY ./EnvDataServer/templates ./templates
+COPY ./EnvDataServer/*.py ./EnvDataServer/
+COPY ./EnvDataServer/templates ./EnvDataServer/templates
 COPY ./EnvironmentalData ./EnvironmentalData
 COPY ./utilities ./utilities
 COPY ./utilities/logging.yaml ./utilities/logging.yaml
 
 RUN mkdir ${HOME}/download
 
-CMD ["python", "./app.py"]
+CMD ["python", "./EnvDataserver/app.py"]
 
 EXPOSE 8080
 

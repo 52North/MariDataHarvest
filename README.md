@@ -57,7 +57,7 @@ This tool is developed with in the [MariData](https://www.maridata.org) project.
 
 ## Requirements
 
-MariDataHarvest requires __python 3__ and __pip__ to run. You can install all python requirements with the following command:
+MariDataHarvest requires **python 3** and **pip** to run. You can install all python requirements with the following command:
 
 ```sh
 pip install -r requirements.txt
@@ -170,17 +170,6 @@ You can use the [Dockerfile](./Dockerfile) to build a docker image and run the s
    CLEAR=--clear
    ```
 
-### CODE-DE
-
-You can use "local" CMEMS data when running on a [CODE-DE VM](https://code-de.org/en/portfolio/33?q=infrastructure). After requesting access to the data via the [support form](https://code-de.org/en/helpdesk), you can follow the instructions to [access the CREODIAS repository](https://code-de.org/en/help/topic/manual/X4bBsxEAADWjnZas). As a result, the CMEMS data will be available on your VM under `/eodata/CMEMS`.
-
-This directory needs to be mounted into the container, hence the following volume specification must be added to the `docker run` call:
-
-```sh
---volume /eodata/CMEMS:/eodata/CMEMS:ro
-```
-
-
 ## Deployment
 
 Use the following command to send the code to any server for building the image (or clone this repository using `git clone...`) and run it:
@@ -205,12 +194,10 @@ docker-compose up -d --build && docker-compose logs --follow
 
 The data is available directly at the server root via https. All requests to http are redirected to https by default.
 
-
 ## Contact
 
-- [Zaabalawi, Sufian ](https://github.com/SufianZa)
+- [Zaabalawi, Sufian](https://github.com/SufianZa)
 - [Jürrens, Eike Hinderk](https://github.com/EHJ-52n)
-
 
 ## License
 
@@ -278,7 +265,6 @@ docker run --rm --interactive --tty 52north/mari-data_harvester:1.0.0 /bin/bash 
 ```
 
 </details>
-
 
 ## Funding
 

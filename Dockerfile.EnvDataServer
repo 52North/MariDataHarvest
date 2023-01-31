@@ -47,8 +47,8 @@ ENV PYTHONDONTWRITEBYTECODE 1
 # https://flask.palletsprojects.com/en/1.1.x/config/#ENV
 ENV FLASK_ENV=production
 ENV STATIC_URL /static
-ENV STATIC_PATH /www/static/static
-ENV PYTHONPATH "${PYTHONPATH}:."
+ENV STATIC_PATH /${HOME}/EnvDataServer/static
+ENV PYTHONPATH "${PYTHONPATH}:.:EnvironmentalData:utilities"
 
 LABEL maintainer="Jürrens, Eike Hinderk <e.h.juerrens@52north.org>" \
       org.opencontainers.image.authors="Jürrens, Eike Hinderk <e.h.juerrens@52north.org>" \
@@ -60,12 +60,13 @@ LABEL maintainer="Jürrens, Eike Hinderk <e.h.juerrens@52north.org>" \
 
 WORKDIR ${HOME}
 
-COPY ./requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY ./requirements.util.txt ./
+COPY ./requirements.environmentaldata.txt ./
+COPY ./requirements.envdataserver.txt ./
+RUN pip install --no-cache-dir -r requirements.envdataserver.txt
 
-COPY ./EnvDataServer/*.py ./
-COPY ./EnvDataServer/static ./static
-COPY ./EnvDataServer/templates ./templates
+COPY ./EnvDataServer/ ./EnvDataServer/
+COPY ./EnvDataServer/templates ./EnvDataServer/templates
 COPY ./EnvironmentalData ./EnvironmentalData
 COPY ./utilities ./utilities
 COPY ./utilities/logging.yaml ./utilities/logging.yaml
@@ -77,7 +78,7 @@ RUN addgroup --system --gid ${ID} ${GROUP} && \
 
 USER ${USER}
 
-CMD ["python", "./app.py"]
+CMD ["python", "./EnvDataServer/app.py"]
 ARG GIT_COMMIT
 LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
 
@@ -86,6 +87,6 @@ LABEL org.opencontainers.image.created="${BUILD_DATE}"
 
 ARG VERSION=1.0.0
 LABEL org.opencontainers.image.version="${VERSION}" \
-      org.opencontainers.image.ref.name="52north/mari-data_ed2-${VERSION}"
+      org.opencontainers.image.ref.name="52north/mari-data_env-data-api-${VERSION}"
 
 EXPOSE 8080

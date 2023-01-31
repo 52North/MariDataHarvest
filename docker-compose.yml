@@ -6,8 +6,7 @@ services:
             context: .
             dockerfile: Dockerfile.web
         ports:
-            - 443:443
-            - 80:80
+            - 8000:80
         healthcheck:
             test: service nginx status || exit 1
             interval: 10s
@@ -20,12 +19,12 @@ services:
             - "/etc/letsencrypt/live/harvester.maridata.dev.52north.org/privkey.pem:/etc/letsencrypt/live/harvester.maridata.dev.52north.org/privkey.pem:ro"
             - "mari-data-harvester_data:/www/data/:ro"
 
-    ed2:
+    api:
         build:
             context: .
             dockerfile: Dockerfile.EnvDataServer
         environment:
-            - BASE_URL=https://harvester.maridata.dev.52north.org/
+            - BASE_URL=http://localhost:8000/
         restart: unless-stopped
         volumes:
             - ".env.secret:/mari-data/EnvironmentalData/.env.secret:ro"

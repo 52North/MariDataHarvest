@@ -28,8 +28,7 @@ limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["70 per hour"]
 )
-
-app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50 Mb limit
+app.config.from_object('EnvDataServer.config')
 
 # global variables
 # TODO move to a config file
@@ -52,9 +51,6 @@ PHY_VAR_LIST = ['mlotst', 'siconc', 'usi', 'thetao',
                 'sithick', 'bottomT', 'vsi', 'vo', 'uo', 'so', 'zos']
 GFS_VAR_LIST = ['Temperature_surface', 'Wind_speed_gust_surface', 'u-component_of_wind_maximum_wind', 'v-component_of_wind_maximum_wind', 'Dewpoint_temperature_height_above_ground',
                 'Relative_humidity_height_above_ground', 'U-Component_Storm_Motion_height_above_ground_layer', 'V-Component_Storm_Motion_height_above_ground_layer']
-
-BASE_URL = os.getenv("BASE_URL", "http://localhost:5000/")
-app.config['BASE_URL'] = BASE_URL
 
 def remove_files():
     while True:
@@ -227,7 +223,7 @@ def merge_data():
     delete_file_queue[str(file_path_up)] = datetime.now() + timedelta(minutes=FILE_LIFE_SPAN)
     delete_file_queue[str(file_path_down)] = datetime.now()
 
-    download_link = '{}EnvDataAPI/{}'.format(BASE_URL, str(file_path_up.name))
+    download_link = '{}EnvDataAPI/{}'.format(app.config['BASE_URL'], str(file_path_up.name))
     file_end_of_life = (datetime.now(pytz.utc) + timedelta(minutes=FILE_LIFE_SPAN))
 
     if request.accept_mimetypes['text/html']:
@@ -494,7 +490,7 @@ def request_env_data():
     delete_file_queue[file_path] = datetime.now()
     logger.debug('Processing request finished {}'.format(error_msg))
 
-    download_link = '{}{}'.format(BASE_URL, str(file_path.name))
+    download_link = '{}EnvDataAPI/{}'.format(app.config['BASE_URL'], str(file_path.name))
     file_end_of_life = (datetime.now(pytz.utc) + timedelta(minutes=FILE_LIFE_SPAN))
 
     if request.accept_mimetypes['text/html']:
