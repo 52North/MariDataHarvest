@@ -108,7 +108,7 @@ def parse_requested_var(args):
     return wave, wind, gfs, phy, unknown_values
 
 
-@app.route('/EnvDataAPI/merge_data', methods=['POST'])
+@app.route('/merge_data', methods=['POST'])
 @limiter.limit("1/10second")
 def merge_data():
     logger.debug("Accept header: {}".format(request.accept_mimetypes))
@@ -248,7 +248,7 @@ def merge_data():
             })
         return jsonify(json_response)
 
-@app.route('/EnvDataAPI/request_env_data', methods=['GET'])
+@app.route('/request_env_data', methods=['GET'])
 @limiter.limit("1/10second")
 def request_env_data():
     logger.debug("Accept header: {}".format(request.accept_mimetypes))
@@ -490,7 +490,7 @@ def request_env_data():
     delete_file_queue[file_path] = datetime.now()
     logger.debug('Processing request finished {}'.format(error_msg))
 
-    download_link = '{}EnvDataAPI/{}'.format(app.config['BASE_URL'], str(file_path.name))
+    download_link = '{}{}'.format(app.config['BASE_URL'], str(file_path.name))
     file_end_of_life = (datetime.now(pytz.utc) + timedelta(minutes=FILE_LIFE_SPAN))
 
     if request.accept_mimetypes['text/html']:
@@ -514,12 +514,12 @@ def request_env_data():
         return jsonify(json_response)
 
 
-@app.route('/EnvDataAPI/<path:filename>')
+@app.route('/<path:filename>')
 def send_file(filename):
     return send_from_directory(directory='download', filename=filename)
 
 
-@app.route('/EnvDataAPI/', methods=['GET'])
+@app.route('/', methods=['GET'])
 def index():
     return render_template('index.html', max_lat=max_lat, max_lon=max_lon, max_days=max_days)
 
