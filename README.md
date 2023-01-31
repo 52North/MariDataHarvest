@@ -39,14 +39,14 @@ MariDataHarvest is a tool for scrapping and harvesting Automatic Identification 
 then appending it with the weather and environment conditions provided by [CMEMS](https://nrt.cmems-du.eu) and [RDA](https://rda.ucar.edu/index.html) at each geographical and UTC timestamp point.
 In the following is a description of the datasets used:
 
-* <details>
+- <details>
   <summary>Datasets Description</summary>
 
   [<img alt="Datasets Description" align="middle" src="./img/datasets_description.PNG"/>](https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit?usp=sharing)
 
   </details>
 
-* <details>
+- <details>
   <summary>Variables Description</summary>
 
   [<img alt="Variables Description" align="middle" src="./img/variables_description.PNG"/>](https://docs.google.com/spreadsheets/d/1GxcBtnaAa2GQDwZibYFbWPXGi7BPpPdYLZwyetpsJOQ/edit?usp=sharing)
