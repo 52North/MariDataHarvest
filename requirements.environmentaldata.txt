@@ -6,5 +6,5 @@ requests~=2.25
 scikit-learn==0.24
 scipy~=1.6
 siphon==0.9
-xarray==0.17
+xarray==2023.1.0
 -r requirements.util.txt
