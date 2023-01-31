@@ -7,8 +7,9 @@
   - [x] EnvironmentalData
   - [x] Harvester
   - [x] EnvDataServer
-- [ ] Solve context path problem (via configuration or similar)
+- [x] Solve context path problem (via configuration or similar)
 - [ ] Code-Cleaning: Remove unused imports, functions, variables
+- [ ] Move every config variable to config.py
 - [ ] Establish central location for variable definition: keep in weather.py; EnvDataServer/app.py accesses them via python features;  page.js accesses theme via light weight endpoint implemented in app.py
       Convert to dictionary and provide helper functions to retrieve the required representation
 
@@ -112,8 +113,8 @@ python main.py --year=2019 --minutes=30 --dir=C:\..
 Start the EnvDataAPI services locally for testing using the following command in the `EndDataServer` directory:
 
 ```shell
-export FLASK_APP=app.py
-flask run --debugger
+export PYTHONPATH="$PYTHONPATH:.:EnvironmentalData:utilities"
+python ./EnvDataServer/app.py
 ```
 
 ## Docker
