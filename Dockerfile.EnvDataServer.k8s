@@ -64,7 +64,7 @@ COPY ./utilities/logging.yaml ./utilities/logging.yaml
 
 RUN mkdir ${HOME}/download
 
-CMD ["python", "./EnvDataserver/app.py"]
+CMD ["python", "./EnvDataServer/app.py"]
 
 EXPOSE 8080
 
