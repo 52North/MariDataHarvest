@@ -1,9 +1,13 @@
 import logging.config
-import yaml
 import os
 from pathlib import Path
+
+import yaml
+
 logging_config_file = Path(Path(__file__).parent, 'logging.yaml')
+
 level = logging.DEBUG
+
 if os.path.exists(logging_config_file):
     with open(logging_config_file, 'rt') as file:
         try:

@@ -1,22 +1,23 @@
+from datetime import datetime, timedelta, date
+from glob import glob
+from pathlib import Path
 import logging
 import time
 import traceback
-from datetime import datetime, timedelta, date
-from pathlib import Path
+
+from motu_utils.utils_cas import authenticate_CAS_for_URL
+from motu_utils.utils_http import open_url
+from scipy.signal import argrelextrema
+from siphon import http_util
+from siphon.catalog import TDSCatalog
+from xarray.backends import NetCDF4DataStore
 import numpy as np
 import pandas as pd
 import requests.exceptions
 import xarray as xr
-from glob import glob
-from motu_utils.utils_cas import authenticate_CAS_for_URL
-from motu_utils.utils_http import open_url
-from siphon import http_util
-from siphon.catalog import TDSCatalog
-from xarray.backends import NetCDF4DataStore
+
 from EnvironmentalData import config
-from scipy.signal import argrelextrema
 from utilities import helper_functions
-from utilities.helper_functions import FileFailedException, Failed_Files, check_dir, create_csv
 
 logger = logging.getLogger(__name__)
 
@@ -597,7 +598,7 @@ def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wav
                                      lat_points,
                                      lon_points, wave)], axis=1)
                 if bool(metadata) and header:
-                    create_csv(df_chunk_sub, metadata, out_path, index=False)
+                    helper_functions.create_csv(df_chunk_sub, metadata, out_path, index=False)
                     header = False
                 else:
                     df_chunk_sub.to_csv(out_path, mode='a', header=header, index=False)
@@ -606,5 +607,5 @@ def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wav
         # discard the file in case of an error to resume later properly
         if out_path:
             out_path.unlink(missing_ok=True)
-            raise FileFailedException(out_path.name, e)
+            raise helper_functions.FileFailedException(out_path.name, e)
         raise e

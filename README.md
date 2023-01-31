@@ -2,11 +2,11 @@
 
 ## TODOS
 
-- [ ] List only required/directly used dependencies in `dev` branch without versions, unless they are required in THIS version.
+- [x] List only required/directly used dependencies in `dev` branch without versions, unless they are required in THIS version.
       Split `requirements.txt` and list only directly used ones.
-  - [ ] EnvironmentalData
-  - [ ] Harvester
-  - [ ] EnvDataServer
+  - [x] EnvironmentalData
+  - [x] Harvester
+  - [x] EnvDataServer
 - [ ] Solve context path problem (via configuration or similar)
 - [ ] Code-Cleaning: Remove unused imports, functions, variables
 - [ ] Establish central location for variable definition: keep in weather.py; EnvDataServer/app.py accesses them via python features;  page.js accesses theme via light weight endpoint implemented in app.py

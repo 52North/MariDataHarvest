@@ -1,16 +1,16 @@
 from datetime import datetime
-import warnings
+from pathlib import Path
 import logging
 import os
 import shutil
-import zipfile
 import typing
-from pathlib import Path
+import warnings
+import zipfile
 
+from bs4 import BeautifulSoup
 import geopandas as gpd
 import pandas as pd
 import requests
-from bs4 import BeautifulSoup
 
 from utilities.helper_functions import FileFailedException, Failed_Files, check_dir, CHUNK_SIZE
 
