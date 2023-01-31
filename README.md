@@ -196,71 +196,60 @@ The data is available directly at the server root via https. All requests to htt
 
 ## Contact
 
-- [Zaabalawi, Sufian](https://github.com/SufianZa)
+- [Demmich, Katharina](https://github.com/kdemmich)
 - [Jürrens, Eike Hinderk](https://github.com/EHJ-52n)
+- [Pontius, Martin](https://github.com/MartinPontius)
 
 ## License
 
-- [ ] Add License Header to source files
+This application is licensed under the GPLv2 (see [LICENSE](./LICENSE)).
 
-| Name            | Version   | License                                             |
-|-----------------|-----------|-----------------------------------------------------|
-| Fiona           | 1.8.18    | BSD License                                         |
-| Flask           | 1.1.2     | BSD License                                         |
-| Flask-Limiter   | 1.4       | MIT License                                         |
-| GDAL            | 3.2.2     | MIT                                                 |
-| Jinja2          | 2.11.3    | BSD License                                         |
-| MarkupSafe      | 1.1.1     | BSD License                                         |
-| PyYAML          | 5.4.1     | MIT License                                         |
-| Shapely         | 1.7.1     | BSD License                                         |
-| Werkzeug        | 1.0.1     | BSD License                                         |
-| attrs           | 20.3.0    | MIT License                                         |
-| beautifulsoup4  | 4.9.3     | MIT License                                         |
-| bs4             | 0.0.1     | MIT License                                         |
-| certifi         | 2020.12.5 | Mozilla Public License 2.0 (MPL 2.0)                |
-| cftime          | 1.4.1     | MIT License                                         |
-| chardet         | 4.0.0     | GNU Library or Lesser General Public License (LGPL) |
-| click           | 7.1.2     | BSD License                                         |
-| click-plugins   | 1.1.1     | BSD License                                         |
-| cligj           | 0.7.1     | BSD                                                 |
-| cloudpickle     | 1.6.0     | BSD License                                         |
-| dask            | 2021.4.0  | BSD License                                         |
-| fsspec          | 0.9.0     | BSD License                                         |
-| geopandas       | 0.9.0     | BSD                                                 |
-| idna            | 2.10      | BSD License                                         |
-| itsdangerous    | 1.1.0     | BSD License                                         |
-| joblib          | 1.0.1     | BSD License                                         |
-| limits          | 1.5.1     | MIT License                                         |
-| locket          | 0.2.1     | BSD License                                         |
-| motuclient      | 1.8.8     | GNU Lesser General Public License v3 (LGPLv3)       |
-| munch           | 2.5.0     | MIT License                                         |
-| netCDF4         | 1.5.6     | MIT License                                         |
-| numpy           | 1.20.1    | BSD License                                         |
-| pandas          | 1.2.3     | BSD                                                 |
-| partd           | 1.2.0     | BSD                                                 |
-| protobuf        | 3.15.6    | 3-Clause BSD License                                |
-| pyproj          | 3.0.1     | MIT License                                         |
-| python-dateutil | 2.8.1     | BSD License, Apache Software License                |
-| python-dotenv   | 0.15.0    | BSD License                                         |
-| pytz            | 2021.1    | MIT License                                         |
-| requests        | 2.25.1    | Apache Software License                             |
-| scikit-learn    | 0.24.2    | new BSD                                             |
-| scipy           | 1.6.1     | BSD License                                         |
-| siphon          | 0.9       | BSD License                                         |
-| six             | 1.15.0    | MIT License                                         |
-| soupsieve       | 2.2.1     | MIT License                                         |
-| threadpoolctl   | 2.1.0     | BSD License                                         |
-| toolz           | 0.11.1    | BSD License                                         |
-| urllib3         | 1.26.4    | MIT License                                         |
-| waitress        | 2.0.0     | Zope Public License                                 |
-| wget            | 3.2       | Public Domain                                       |
-| xarray          | 0.17.0    | Apache Software License                             |
+| Name               | Version     | License                                       |
+|--------------------|-------------|-----------------------------------------------|
+| Deprecated         | 1.2.13      | MIT License                                   |
+| Flask              | 1.1.4       | BSD License                                   |
+| Flask-Limiter      | 1.5         | MIT License                                   |
+| Jinja2             | 2.11.3      | BSD License                                   |
+| MarkupSafe         | 1.1.1       | BSD License                                   |
+| Paste              | 3.5.2       | MIT License                                   |
+| PyYAML             | 5.4.1       | MIT License                                   |
+| Werkzeug           | 1.0.1       | BSD License                                   |
+| beautifulsoup4     | 4.11.1      | MIT License                                   |
+| certifi            | 2022.12.7   | Mozilla Public License 2.0 (MPL 2.0)          |
+| cftime             | 1.6.2       | MIT License                                   |
+| charset-normalizer | 3.0.1       | MIT License                                   |
+| click              | 7.1.2       | BSD License                                   |
+| idna               | 3.4         | BSD License                                   |
+| itsdangerous       | 1.1.0       | BSD License                                   |
+| joblib             | 1.2.0       | BSD License                                   |
+| limits             | 3.2.0       | MIT License                                   |
+| motuclient         | 1.8.8       | GNU Lesser General Public License v3 (LGPLv3) |
+| netCDF4            | 1.6.2       | MIT License                                   |
+| numpy              | 1.24.1      | BSD License                                   |
+| packaging          | 23.0        | Apache Software License; BSD License          |
+| pandas             | 1.5.3       | BSD License                                   |
+| protobuf           | 4.21.12     | 3-Clause BSD License                          |
+| python-dateutil    | 2.8.2       | Apache Software License; BSD License          |
+| python-dotenv      | 0.17.0      | BSD License                                   |
+| pytz               | 2021.1      | MIT License                                   |
+| requests           | 2.28.2      | Apache Software License                       |
+| scikit-learn       | 0.24.0      | new BSD                                       |
+| scipy              | 1.10.0      | BSD License                                   |
+| siphon             | 0.9         | BSD License                                   |
+| six                | 1.16.0      | MIT License                                   |
+| soupsieve          | 2.3.2.post1 | MIT License                                   |
+| threadpoolctl      | 3.1.0       | BSD License                                   |
+| typing_extensions  | 4.4.0       | Python Software Foundation License            |
+| urllib3            | 1.26.14     | MIT License                                   |
+| waitress           | 2.1.2       | Zope Public License                           |
+| wrapt              | 1.14.1      | BSD License                                   |
+| xarray             | 0.17.0      | Apache Software License                       |
 
 <details>
 <summary>generate license list</summary>
 
 ```sh
-docker run --rm --interactive --tty 52north/mari-data_harvester:1.0.0 /bin/bash \
+docker compose run --interactive --rm api /bin/bash \
    -c "pip install --no-warn-script-location --no-cache-dir pip-licenses > /dev/null && .local/bin/pip-licenses -f markdown"
 ```
 
