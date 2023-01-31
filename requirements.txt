@@ -16,7 +16,7 @@ fsspec==0.9.0
 geopandas==0.9.0
 idna==2.10
 itsdangerous==1.1.0
-Jinja2==2.11.3
+Jinja2==3.1.2
 joblib==1.2.0
 limits==1.5.1
 locket==0.2.1
