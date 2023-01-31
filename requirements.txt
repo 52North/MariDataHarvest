@@ -21,7 +21,7 @@ joblib==1.2.0
 limits==1.5.1
 locket==0.2.1
 MarkupSafe==1.1.1
-motuclient==1.8.8
+motuclient==3.0.0
 munch==2.5.0
 netCDF4==1.6.2
 numpy==1.24.1
