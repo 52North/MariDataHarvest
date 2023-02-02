@@ -8,7 +8,9 @@
   - [x] Harvester
   - [x] EnvDataServer
 - [x] Solve context path problem (via configuration or similar)
-- [ ] Code-Cleaning: Remove unused imports, functions, variables
+- [ ] Code-Cleaning: 
+  - [x] Remove unused imports
+  - [] functions, variables
 - [ ] Move every config variable to config.py
 - [ ] Establish central location for variable definition: keep in weather.py; EnvDataServer/app.py accesses them via python features;  page.js accesses theme via light weight endpoint implemented in app.py
       Convert to dictionary and provide helper functions to retrieve the required representation

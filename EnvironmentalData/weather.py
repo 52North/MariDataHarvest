@@ -47,28 +47,76 @@ from utilities import helper_functions
 
 logger = logging.getLogger(__name__)
 
-WIND_VAR_LIST = ['surface_downward_eastward_stress', 'wind_stress_divergence', 'northward_wind', 'sampling_length',
-                 'wind_speed_rms', 'wind_vector_curl',
-                 'northward_wind_rms', 'eastward_wind', 'wind_speed', 'wind_vector_divergence', 'wind_stress',
-                 'wind_stress_curl', 'eastward_wind_rms', 'surface_type',
-                 'surface_downward_northward_stress']
+WAVE_VAR_DICT = {
+        'VHM0_WW':		'sea_surface_wind_wave_significant_height',
+        'VMDR_SW2':		'sea_surface_secondary_swell_wave_from_direction',
+        'VMDR_SW1':		'sea_surface_primary_swell_wave_from_direction',
+        'VMDR':		'sea_surface_wave_from_direction',
+        'VTM10':		'sea_surface_wave_mean_period_from_variance_spectral_density_inverse_frequency_moment',
+        'VTPK':		'sea_surface_wave_period_at_variance_spectral_density_maximum',
+        'VPED':		'sea_surface_wave_from_direction_at_variance_spectral_density_maximum',
+        'VTM02':		'sea_surface_wave_mean_period_from_variance_spectral_density_second_frequency_moment',
+        'VMDR_WW':		'sea_surface_wind_wave_from_direction',
+        'VTM01_SW2':		'sea_surface_secondary_swell_wave_mean_period',
+        'VHM0_SW1':		'sea_surface_primary_swell_wave_significant_height',
+        'VTM01_SW1':		'sea_surface_primary_swell_wave_mean_period',
+        'VSDX':		'sea_surface_wave_stokes_drift_x_velocity',
+        'VSDY':		'sea_surface_wave_stokes_drift_y_velocity',
+        'VHM0':		'sea_surface_wave_significant_height',
+        'VTM01_WW':		'sea_surface_wind_wave_mean_period'
+}
 
-WAVE_VAR_LIST = ['VHM0_WW', 'VMDR_SW2', 'VMDR_SW1', 'VMDR', 'VTM10', 'VTPK', 'VPED',
-                 'VTM02', 'VMDR_WW', 'VTM01_SW2', 'VHM0_SW1',
-                 'VTM01_SW1', 'VSDX', 'VSDY', 'VHM0', 'VTM01_WW', 'VHM0_SW2']
+WIND_VAR_DICT = {
+        'surface_downward_eastward_stress':'eastward wind stress',
+        'wind_stress_divergence':'wind stress divergence',
+        'northward_wind':'northward wind speed',
+        'sampling_length':'sampling length',
+        'wind_speed_rms':'wind speed root mean square',
+        'wind_vector_curl':'wind vector curl',
+        'northward_wind_rms':'northward wind speed root mean square',
+        'eastward_wind':'eastward wind speed',
+        'wind_speed':'wind speed',
+        'wind_vector_divergence':'wind vector divergence',
+        'wind_stress':'wind stress',
+        'wind_stress_curl':'wind stress curl',
+        'eastward_wind_rms':'eastward wind speed root mean square',
+        'surface_type':'flag - 0:ocean - 1:earth/ice',
+        'surface_downward_northward_stress':'northward wind stress'
+}
 
-DAILY_PHY_VAR_LIST = ['thetao', 'so', 'uo', 'vo', 'zos', 'mlotst', 'bottomT', 'siconc', 'sithick', 'usi', 'vsi']
+DAILY_PHY_VAR_DICT = {
+        'mlotst':'Density ocean mixed layer thickness',
+        'siconc':'Ice concentration',
+        'usi':'Sea ice eastward velocity',
+        'thetao':'Potential Temperature',
+        'sithick':'Sea ice thickness',
+        'bottomT':'Sea floor potential temperature',
+        'vsi':'Sea ice northward velocity',
+        'vo':'Northward velocity',
+        'uo':'Eastward velocity',
+        'so':'Salinity',
+        'zos':'Sea surface height'
+}
 
-GFS_25_VAR_LIST = ['Temperature_surface', 'Wind_speed_gust_surface', 'u-component_of_wind_maximum_wind',
-                   'v-component_of_wind_maximum_wind', 'Dewpoint_temperature_height_above_ground',
-                   'U-Component_Storm_Motion_height_above_ground_layer',
-                   'V-Component_Storm_Motion_height_above_ground_layer', 'Relative_humidity_height_above_ground']
+GFS_25_VAR_DICT = {
+        'Temperature_surface':'Temperature @ Ground or water surface',
+        'Wind_speed_gust_surface':'Wind speed (gust) @ Ground or water surface',
+        'u-component_of_wind_maximum_wind':'u-component of wind @ Maximum wind level',
+        'v-component_of_wind_maximum_wind':'v-component of wind @ Maximum wind level',
+        'Dewpoint_temperature_height_above_ground':'Dewpoint temperature @ Specified height level above ground',
+        'Relative_humidity_height_above_ground':'Relative humidity @ Specified height level above ground',
+        'U-Component_Storm_Motion_height_above_ground_layer':'U-Component Storm Motion @ Specified height level above ground layer',
+        'V-Component_Storm_Motion_height_above_ground_layer':'V-Component Storm Motion @ Specified height level above ground layer'
+}
 
-GFS_50_VAR_LIST = ['Temperature_surface', 'u-component_of_wind_maximum_wind',
-                   'v-component_of_wind_maximum_wind', 'U-Component_Storm_Motion_height_above_ground_layer',
-                   'V-Component_Storm_Motion_height_above_ground_layer',
-                   'Relative_humidity_height_above_ground']
+def get_parameter_list(parameter_dict):
+    keys_list = list(parameter_dict.keys())
+    return list(parameter_dict)
 
+WAVE_VAR_LIST = get_parameter_list(WAVE_VAR_DICT)
+WIND_VAR_LIST = get_parameter_list(WIND_VAR_DICT)
+DAILY_PHY_VAR_LIST = get_parameter_list(DAILY_PHY_VAR_DICT)
+GFS_25_VAR_LIST = get_parameter_list(GFS_25_VAR_DICT)
 
 def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     """

@@ -43,7 +43,7 @@ from flask_limiter.util import get_remote_address
 from paste.translogger import TransLogger
 from waitress import serve
 
-from EnvironmentalData.weather import get_global_wave, get_global_wind, get_GFS, get_global_phy_daily, append_to_csv
+from EnvironmentalData.weather import *
 from utilities.helper_functions import str_to_date_min, create_csv, FileFailedException
 
 logger = logging.getLogger('EnvDataServer.app')
@@ -68,15 +68,6 @@ spatial_interpolation_rate = 0.083
 temporal_interpolation_rate = 3
 # max bounding box
 max_lat, max_lon, max_days = 20, 20, 10
-
-WAVE_VAR_LIST = ['VHM0_WW', 'VMDR_SW2', 'VMDR_SW1', 'VMDR', 'VTM10', 'VTPK', 'VPED', 'VTM02',
-                 'VMDR_WW', 'VTM01_SW2', 'VHM0_SW1', 'VTM01_SW1', 'VSDX', 'VSDY', 'VHM0', 'VTM01_WW']
-WIND_VAR_LIST = ['surface_downward_eastward_stress', 'wind_stress_divergence', 'northward_wind', 'sampling_length', 'wind_speed_rms', 'wind_vector_curl', 'northward_wind_rms',
-                 'eastward_wind', 'wind_speed', 'wind_vector_divergence', 'wind_stress', 'wind_stress_curl', 'eastward_wind_rms', 'surface_type', 'surface_downward_northward_stress']
-PHY_VAR_LIST = ['mlotst', 'siconc', 'usi', 'thetao',
-                'sithick', 'bottomT', 'vsi', 'vo', 'uo', 'so', 'zos']
-GFS_VAR_LIST = ['Temperature_surface', 'Wind_speed_gust_surface', 'u-component_of_wind_maximum_wind', 'v-component_of_wind_maximum_wind', 'Dewpoint_temperature_height_above_ground',
-                'Relative_humidity_height_above_ground', 'U-Component_Storm_Motion_height_above_ground_layer', 'V-Component_Storm_Motion_height_above_ground_layer']
 
 def remove_files():
     while True:
@@ -128,8 +119,8 @@ def parse_requested_var(args):
     unknown_values = []
     _check_for_unknown_values(wave, WAVE_VAR_LIST, unknown_values)
     _check_for_unknown_values(wind, WIND_VAR_LIST, unknown_values)
-    _check_for_unknown_values(gfs, GFS_VAR_LIST, unknown_values)
-    _check_for_unknown_values(phy, PHY_VAR_LIST, unknown_values)
+    _check_for_unknown_values(gfs, GFS_25_VAR_LIST, unknown_values)
+    _check_for_unknown_values(phy, DAILY_PHY_VAR_LIST, unknown_values)
 
     return wave, wind, gfs, phy, unknown_values
 
