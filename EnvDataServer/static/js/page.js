@@ -109,7 +109,12 @@ window.onload = () => {
 
     GFS_25_VAR_LIST = {
         'Temperature_surface':'Temperature @ Ground or water surface',
+        'Pressure_surface':'Pressure @ Ground or water surface',
         'Wind_speed_gust_surface':'Wind speed (gust) @ Ground or water surface',
+        'u-component_of_wind_height_above_ground':'u-component of wind @ Specified height level above ground',
+        'v-component_of_wind_height_above_ground':'v-component of wind @ Specified height level above ground',
+        'u-component_of_wind_sigma':'u-component of wind @ Sigma level',
+	    'v-component_of_wind_sigma':'v-component of wind @ Sigma level',
         'u-component_of_wind_maximum_wind':'u-component of wind @ Maximum wind level',
         'v-component_of_wind_maximum_wind':'v-component of wind @ Maximum wind level',
         'Dewpoint_temperature_height_above_ground':'Dewpoint temperature @ Specified height level above ground',
