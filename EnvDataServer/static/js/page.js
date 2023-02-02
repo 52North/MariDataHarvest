@@ -128,6 +128,9 @@ window.onload = () => {
         day: 'numeric', month: 'short', year: 'numeric'
     });
 
+    document.getElementById("date_lo").value = get_Date(-1)
+    document.getElementById("date_hi").value = get_Date(0)
+
     $('#removeFileBtn').click((event)=>{
         event.stopImmediatePropagation();
         event.preventDefault();
@@ -214,6 +217,21 @@ window.onload = () => {
         }
     });
 
+}
+
+function get_Date(day_offset){
+    let date = new Date();
+
+    let day = date.getDate() + day_offset;
+    let month = date.getMonth() + 1;
+    let year = date.getFullYear();
+    let hour = date.getHours();
+
+    if (month < 10) month = "0" + month;
+    if (day < 10) day = "0" + day;
+
+    let date_string = year + "-" + month + "-" + day + "T" + hour + ":00";
+    return date_string
 }
 
 function getVariables() {
