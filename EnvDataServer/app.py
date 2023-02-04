@@ -343,10 +343,14 @@ def request_env_data():
     #
     #   see https://gis.stackexchange.com/a/208739
     #
-    lat_lo = round(lat_lo, 4)
-    lat_hi = round(lat_hi, 4)
-    lon_hi = round(lon_hi, 4)
-    lon_lo = round(lon_lo, 4)
+    lat_lo = float(lat_lo) 
+    lat_lo = float("%.4f" % lat_lo)
+    lat_hi = float(lat_hi)
+    lat_hi = float("%.4f" % lat_hi)
+    lon_hi = float(lon_hi)
+    lon_hi = float("%.4f" % lon_hi)
+    lon_lo = float(lon_lo)
+    lon_lo = float("%.4f" % lon_lo)
     logger.debug("Rounded coordinates to 4 decimal places: Lat: [{}, {}]; Lon: [{}, {}]".format(
         lat_lo, lat_hi, lon_lo, lon_hi
     ))
