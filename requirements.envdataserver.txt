@@ -5,6 +5,6 @@ MarkupSafe~=1.1
 numpy~=1.20
 pytz==2021.1
 waitress~=2.0
-xarray==0.17
+xarray==2023.2.0
 -r requirements.environmentaldata.txt
 -r requirements.util.txt
