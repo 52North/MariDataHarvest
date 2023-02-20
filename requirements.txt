@@ -40,7 +40,7 @@ scipy==1.10.0
 Shapely==1.7.1
 siphon==0.9
 six==1.16.0
-soupsieve==2.3.2.post1
+soupsieve==2.4
 threadpoolctl==2.1.0
 urllib3==1.26.14
 toolz==0.12.0
