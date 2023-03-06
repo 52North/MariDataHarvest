@@ -23,7 +23,7 @@ locket==0.2.1
 MarkupSafe==1.1.1
 motuclient==1.8.8
 munch==2.5.0
-netCDF4==1.6.2
+netCDF4==1.6.3
 numpy==1.24.1
 pandas==1.5.3
 partd==1.3.0
