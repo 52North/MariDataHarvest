@@ -1,7 +1,7 @@
 motuclient~=1.8
 netCDF4~=1.5
 numpy~=1.20
-pandas~=1.2
+pandas~=2.0
 python-dotenv==0.17.0
 requests~=2.25
 scikit-learn==0.24
