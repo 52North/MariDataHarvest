@@ -1,4 +1,4 @@
-beautifulsoup4~=4.9
+beautifulsoup4~=4.12
 click<8.0,>=5.1
 geopandas==0.9
 pandas~=1.2
