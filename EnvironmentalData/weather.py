@@ -24,7 +24,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 # Public License for more details.
 #
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from glob import glob
 from pathlib import Path
 import logging
@@ -33,6 +33,8 @@ import traceback
 
 from motu_utils.utils_cas import authenticate_CAS_for_URL
 from motu_utils.utils_http import open_url
+from pydap.cas.get_cookies import setup_session
+from pydap.client import open_url as open_url_pydap
 from scipy.signal import argrelextrema
 from siphon import http_util
 from siphon.catalog import TDSCatalog
@@ -67,31 +69,37 @@ WAVE_VAR_DICT = {
 }
 
 WIND_VAR_DICT = {
-        'surface_downward_eastward_stress':'eastward wind stress',
-        'wind_stress_divergence':'wind stress divergence',
-        'northward_wind':'northward wind speed',
-        'sampling_length':'sampling length',
-        'wind_speed_rms':'wind speed root mean square',
-        'wind_vector_curl':'wind vector curl',
-        'northward_wind_rms':'northward wind speed root mean square',
-        'eastward_wind':'eastward wind speed',
-        'wind_speed':'wind speed',
-        'wind_vector_divergence':'wind vector divergence',
-        'wind_stress':'wind stress',
-        'wind_stress_curl':'wind stress curl',
-        'eastward_wind_rms':'eastward wind speed root mean square',
-        'surface_type':'flag - 0:ocean - 1:earth/ice',
-        'surface_downward_northward_stress':'northward wind stress'
+        'northward_wind': 'stress-equivalent wind northward component at 10 m',
+        'northward_wind_bias': 'scatterometer-model bias of stress-equivalent wind northward component at 10 m',
+        'northward_wind_sdd': 'standard deviation of differences of stress-equivalent wind northward component at 10',
+        'eastward_wind': 'stress-equivalent wind eastward component at 10 m',
+        'eastward_wind_bias': 'scatterometer-model bias of stress-equivalent wind eastward component at 10 m',
+        'eastward_wind_sdd': 'standard deviation of differences of stress-equivalent wind eastward component at 10',
+        'wind_divergence': 'scatterometer-model bias of divergence of stress-equivalent wind at 10 m',
+        'wind_divergence_bias': 'scatterometer-model bias of divergence of stress-equivalent wind at 10 m',
+        'wind_divergence_dv': 'difference of scatterometer and model variances of divergence of stress-equivalent wind at 10 m',
+        'wind_curl': 'curl of stress-equivalent wind at 10 m',
+        'wind_curl_bias': 'scatterometer-model bias of curl of stress-equivalent wind at 10 m',
+        'wind_curl_dv': 'difference of scatterometer and model variances of curl of stress-equivalent wind at 10 m',
+        'eastward_stress': 'surface wind stress eastward component',
+        'eastward_stress_bias': 'scatterometer-model bias of surface wind stress eastward component',
+        'eastward_stress_sdd': 'standard deviation of differences of surface wind stress eastward component',
+        'northward_stress': 'surface wind stress northward component',
+        'northward_stress_bias': 'scatterometer-model bias of surface wind stress northward component',
+        'northward_stress_sdd': 'standard deviation of differences of surface wind stress northward component',
+        'stress_divergence': 'divergence of surface wind stress',
+        'stress_divergence_bias': 'scatterometer-model bias of divergence of surface wind stress',
+        'stress_divergence_dv': 'difference of scatterometer and model variances of divergence of surface wind stress',
+        'stress_curl': 'rotation of surface wind stress',
+        'stress_curl_bias': 'scatterometer-model bias of curl of surface wind stress',
+        'stress_curl_dv': 'difference of scatterometer and model variances of curl of surface wind stress',
+        'air_density': 'air density at 10 m',
+        'number_of_observations': 'number of observations used for scatterometer-model bias',
+        'number_of_observations_divcurl': 'number of observations used for scatterometer-model divergence and curl bias'
 }
 
 DAILY_PHY_VAR_DICT = {
-        'mlotst':'Density ocean mixed layer thickness',
-        'siconc':'Ice concentration',
-        'usi':'Sea ice eastward velocity',
         'thetao':'Potential Temperature',
-        'sithick':'Sea ice thickness',
-        'bottomT':'Sea floor potential temperature',
-        'vsi':'Sea ice northward velocity',
         'vo':'Northward velocity',
         'uo':'Eastward velocity',
         'so':'Salinity',
@@ -131,8 +139,10 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     logger.debug('obtaining GLOBAL_REANALYSIS_WAV dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
 
+    first_nrt_datetime = get_first_cmems_datetime('cmems_mod_glo_wav_anfc_0.083deg_PT3H-i', 'nrt')
     dataset_temporal_resolution = 180
-    if date_lo >= datetime(2019, 1, 1, 6):
+    # .replace does not modify date_lo in place but creates a new datetime object
+    if date_lo.replace(tzinfo=timezone.utc) >= first_nrt_datetime:
         # nrt => near real time
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
         service = 'GLOBAL_ANALYSISFORECAST_WAV_001_027-TDS'
@@ -142,8 +152,8 @@ def get_global_wave(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     elif date_lo >= datetime(1993, 1, 1, 6):
         # my => multi year
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
-        service = 'GLOBAL_REANALYSIS_WAV_001_032-TDS'
-        product = 'global-reanalysis-wav-001-032'
+        service = 'GLOBAL_MULTIYEAR_WAV_001_032-TDS'
+        product = 'cmems_mod_glo_wav_my_0.2_PT3H-i'
         VM_FOLDER = '/eodata/CMEMS/REP/GLO/WAV/GLOBAL_REANALYSIS_WAV_001_032'
         offset = 0.2
     else:
@@ -215,18 +225,20 @@ def get_global_wind(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     offset = 0.25
     dataset_temporal_resolution = 360
     # TODO Split request if date_lo and date_hi intersect with dataset's time boundaries
-    if date_lo >= datetime(2018, 1, 1, 6):
+    first_nrt_datetime = get_first_cmems_datetime('cmems_obs-wind_glo_phy_nrt_l4_0.125deg_PT1H', 'nrt')
+    # .replace does not modify date_lo in place but creates a new datetime object
+    if date_lo.replace(tzinfo=timezone.utc) >= first_nrt_datetime:
         if (date_lo + timedelta(days=2)).date() > date.today() or (date_hi + timedelta(days=2)).date() > date.today():
             raise ValueError('Out of Range values')
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
-        service = 'WIND_GLO_WIND_L4_NRT_OBSERVATIONS_012_004-TDS'
-        product = 'CERSAT-GLO-BLENDED_WIND_L4-V6-OBS_FULL_TIME_SERIE'
+        service = 'WIND_GLO_PHY_L4_NRT_012_004-TDS'
+        product = 'cmems_obs-wind_glo_phy_nrt_l4_0.125deg_PT1H'
         VM_FOLDER = '/eodata/CMEMS/NRT/GLO/WIN/WIND_GLO_WIND_L4_NRT_OBSERVATIONS_012_004'
 
     elif date_lo >= datetime(1992, 1, 1, 6):
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
-        service = 'WIND_GLO_WIND_L4_REP_OBSERVATIONS_012_006-TDS'
-        product = 'CERSAT-GLO-BLENDED_WIND_L4_REP-V6-OBS_FULL_TIME_SERIE'
+        service = 'WIND_GLO_PHY_L4_MY_012_006-TDS'
+        product = 'cmems_obs-wind_glo_phy_my_l4_0.125deg_PT1H'
         VM_FOLDER = '/eodata/CMEMS/REP/GLO/WIN/WIND_GLO_WIND_L4_REP_OBSERVATIONS_012_006'
     else:
         raise ValueError('Out of Range values')
@@ -460,17 +472,19 @@ def get_global_phy_daily(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     logger.debug('obtaining GLOBAL_ANALYSIS_FORECAST_PHY Daily dataset for DATE [%s, %s] LAT [%s, %s] LON [%s, %s]' % (
         str(date_lo), str(date_hi), str(lat_lo), str(lat_hi), str(lon_lo), str(lon_hi)))
     # offset according to the dataset resolution
+    first_nrt_datetime = get_first_cmems_datetime('cmems_mod_glo_phy_anfc_0.083deg_PT1H-m', 'nrt')
     offset = 0.1
-    if date_lo >= datetime(2019, 1, 2):
+    # .replace does not modify date_lo in place but creates a new datetime object
+    if date_lo.replace(tzinfo=timezone.utc) >= first_nrt_datetime:
         base_url = 'https://nrt.cmems-du.eu/motu-web/Motu?action=productdownload'
-        service = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS'
-        product = 'global-analysis-forecast-phy-001-024'
+        service = 'GLOBAL_ANALYSISFORECAST_PHY_001_024-TDS'
+        product = 'cmems_mod_glo_phy_anfc_0.083deg_PT1H-m'
         VM_FOLDER = '/eodata/CMEMS/NRT/GLO/PHY/GLOBAL_ANALYSIS_FORECAST_PHY_001_024'
         NRT_FLAG = True
     elif date_lo >= datetime(1993, 1, 2):
         base_url = 'https://my.cmems-du.eu/motu-web/Motu?action=productdownload'
-        service = 'GLOBAL_REANALYSIS_PHY_001_030-TDS'
-        product = 'global-reanalysis-phy-001-030-daily'
+        service = 'GLOBAL_MULTIYEAR_PHY_001_030-TDS'
+        product = 'cmems_mod_glo_phy_my_0.083_P1D-m'
         VM_FOLDER = '/eodata/CMEMS/REP/GLO/PHY/GLOBAL_REANALYSIS_PHY_001_030'
         NRT_FLAG = False
     else:
@@ -688,3 +702,27 @@ def append_to_csv(in_path: Path, out_path: Path = None, gfs=None, wind=None, wav
             out_path.unlink(missing_ok=True)
             raise helper_functions.FileFailedException(out_path.name, e)
         raise e
+
+
+def get_cmems_data_store(product, product_type, username, password):
+    cas_url = 'https://cmems-cas.cls.fr/cas/login'
+    session = setup_session(cas_url, username, password)
+    session.cookies.set("CASTGC", session.cookies.get_dict()['CASTGC'])
+    url = f'https://{product_type}.cmems-du.eu/thredds/dodsC/{product}'
+    try:
+        data_store = xr.backends.PydapDataStore(open_url_pydap(url, session=session))
+    except Exception as err:
+        raise err
+    return data_store
+
+def get_first_cmems_datetime(product, product_type):
+    first_cmems_datetime = datetime(2021, 1, 1, 3, 0, tzinfo=timezone.utc)
+    try:
+        data_store = get_cmems_data_store(product, product_type,
+                                          config['UN_CMEMS'], config['PW_CMEMS'])
+        ds = xr.open_dataset(data_store)
+        first_cmems_datetime = helper_functions.convert_datetime(ds.time[0].values)
+    except Exception as err:
+        logger.warning(f"could not retrieve latest nrt date. Setting it to {str(first_cmems_datetime)}. Error message: {err}")
+    finally:
+        return first_cmems_datetime

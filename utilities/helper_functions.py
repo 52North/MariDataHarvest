@@ -24,7 +24,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 # Public License for more details.
 #
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 import typing
 import os
@@ -80,3 +80,22 @@ def create_csv(df, metadata_dict, file_path, index=True):
     csv_str = csv_coma_line.join(metadata_dict.values()) + csv_coma_line + csv_str
     with open(file_path, 'w', newline='', encoding='utf-8') as f:
         f.write(csv_str)
+
+
+def convert_datetime(dt64):
+    """Convert numpy.datetime64 to datetime.datetime
+
+    :returns: datetime.datetime object or None
+    """
+    if dt64.dtype == '<M8[s]' or dt64.dtype == '<m8[s]':
+        return datetime.fromtimestamp(dt64.astype(int), tz=timezone.utc)
+    elif dt64.dtype == '<M8[ms]' or dt64.dtype == '<m8[ms]':
+        return datetime.fromtimestamp(dt64.astype(int) * 1e-3, tz=timezone.utc)
+    elif dt64.dtype == '<M8[us]' or dt64.dtype == '<m8[us]':
+        return datetime.fromtimestamp(dt64.astype(int) * 1e-6, tz=timezone.utc)
+    elif dt64.dtype == '<M8[ns]' or dt64.dtype == '<m8[ns]':
+        return datetime.fromtimestamp(dt64.astype(int) * 1e-9, tz=timezone.utc)
+    elif dt64.dtype == '<M8[ps]' or dt64.dtype == '<m8[ps]':
+        return datetime.fromtimestamp(dt64.astype(int) * 1e-12, tz=timezone.utc)
+    else:
+        raise Excpetion("... do not know how to convert numpy.datetime64 with dtype '{}' to datetime.datetime object".format(dt64.dtype))

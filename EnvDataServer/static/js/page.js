@@ -76,35 +76,41 @@ window.onload = () => {
     }
 
     WIND_VAR_LIST = {
-        'surface_downward_eastward_stress':'eastward wind stress',
-        'wind_stress_divergence':'wind stress divergence',
-        'northward_wind':'northward wind speed',
-        'sampling_length':'sampling length',
-        'wind_speed_rms':'wind speed root mean square',
-        'wind_vector_curl':'wind vector curl',
-        'northward_wind_rms':'northward wind speed root mean square',
-        'eastward_wind':'eastward wind speed',
-        'wind_speed':'wind speed',
-        'wind_vector_divergence':'wind vector divergence',
-        'wind_stress':'wind stress',
-        'wind_stress_curl':'wind stress curl',
-        'eastward_wind_rms':'eastward wind speed root mean square',
-        'surface_type':'flag - 0:ocean - 1:earth/ice',
-        'surface_downward_northward_stress':'northward wind stress'
+            'northward_wind': 'stress-equivalent wind northward component at 10 m',
+            'northward_wind_bias': 'scatterometer-model bias of stress-equivalent wind northward component at 10 m',
+            'northward_wind_sdd': 'standard deviation of differences of stress-equivalent wind northward component at 10',
+            'eastward_wind': 'stress-equivalent wind eastward component at 10 m',
+            'eastward_wind_bias': 'scatterometer-model bias of stress-equivalent wind eastward component at 10 m',
+            'eastward_wind_sdd': 'standard deviation of differences of stress-equivalent wind eastward component at 10',
+            'wind_divergence': 'scatterometer-model bias of divergence of stress-equivalent wind at 10 m',
+            'wind_divergence_bias': 'scatterometer-model bias of divergence of stress-equivalent wind at 10 m',
+            'wind_divergence_dv': 'difference of scatterometer and model variances of divergence of stress-equivalent wind at 10 m',
+            'wind_curl': 'curl of stress-equivalent wind at 10 m',
+            'wind_curl_bias': 'scatterometer-model bias of curl of stress-equivalent wind at 10 m',
+            'wind_curl_dv': 'difference of scatterometer and model variances of curl of stress-equivalent wind at 10 m',
+            'eastward_stress': 'surface wind stress eastward component',
+            'eastward_stress_bias': 'scatterometer-model bias of surface wind stress eastward component',
+            'eastward_stress_sdd': 'standard deviation of differences of surface wind stress eastward component',
+            'northward_stress': 'surface wind stress northward component',
+            'northward_stress_bias': 'scatterometer-model bias of surface wind stress northward component',
+            'northward_stress_sdd': 'standard deviation of differences of surface wind stress northward component',
+            'stress_divergence': 'divergence of surface wind stress',
+            'stress_divergence_bias': 'scatterometer-model bias of divergence of surface wind stress',
+            'stress_divergence_dv': 'difference of scatterometer and model variances of divergence of surface wind stress',
+            'stress_curl': 'rotation of surface wind stress',
+            'stress_curl_bias': 'scatterometer-model bias of curl of surface wind stress',
+            'stress_curl_dv': 'difference of scatterometer and model variances of curl of surface wind stress',
+            'air_density': 'air density at 10 m',
+            'number_of_observations': 'number of observations used for scatterometer-model bias',
+            'number_of_observations_divcurl': 'number of observations used for scatterometer-model divergence and curl bias'
     }
 
     DAILY_PHY_VAR_LIST = {
-        'mlotst':'Density ocean mixed layer thickness',
-        'siconc':'Ice concentration',
-        'usi':'Sea ice eastward velocity',
-        'thetao':'Potential Temperature',
-        'sithick':'Sea ice thickness',
-        'bottomT':'Sea floor potential temperature',
-        'vsi':'Sea ice northward velocity',
-        'vo':'Northward velocity',
-        'uo':'Eastward velocity',
-        'so':'Salinity',
-        'zos':'Sea surface height'
+            'thetao':'Potential Temperature',
+            'vo':'Northward velocity',
+            'uo':'Eastward velocity',
+            'so':'Salinity',
+            'zos':'Sea surface height'
     }
 
     GFS_25_VAR_LIST = {
