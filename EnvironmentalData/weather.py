@@ -342,7 +342,7 @@ def get_GFS(date_lo, date_hi, lat_lo, lat_hi, lon_lo, lon_hi):
     # offset according to the dataset resolution
     offset = 0.25
     x_arr_list = []
-    base_url = 'https://rda.ucar.edu/thredds/catalog/files/g/ds084.1'
+    base_url = 'https://thredds.rda.ucar.edu/thredds/catalog/files/g/ds084.1'
     # calculate a day prior for midnight interpolation
     http_util.session_manager.set_session_options(auth=(config['UN_RDA'], config['PW_RDA']))
     if (start_date + timedelta(days=4)).date() < date.today():
